@@ -77,7 +77,7 @@ FLAGS = PLOT_SIGNAL | (PLOT_FILTERED << 1) | (PLOT_SIGNAL_SPECTRUM << 2) | (PLOT
 
 
 READ_WAV = 0
-SEND = 0
+SEND = 1
 PLOT = bool(1) and bool(FLAGS)
 
 #####################################################
