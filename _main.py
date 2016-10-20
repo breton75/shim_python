@@ -16,7 +16,7 @@ import _spectrum_main as spectrum
 
 # генератор  s_type_noise | s_type_sinus | s_type_sinus_noise | s_type_sinus_sinus_noise
 
-signal_type = gen.s_type_sinus
+signal_type = gen.s_type_noise
 freq = 200
 sampling = 100000
 duration = 1000
@@ -37,24 +37,23 @@ try:
     for i in range(len(lst)):
       for j in range(len(lst[i])):
         lst[i][j] = lst[i][j].strip()
-  
+    print(lst)
     voc = dict(lst)
   
     if not 'filename_template' in voc:
       raise Exception('_main.ini must contains param "filename_template" specifing path and names of created files\nexample: filename_template = "home/user/test_main"')
   
-    filename_template = "d:/c++/AME/Generators/test_main" # добавляем разные расширения
+    filename_template = voc['filename_template']  # "d:/c++/AME/Generators/test_main" # добавляем разные расширения
 
 except Exception as E:
   print('error on reading ini file: ', file=sys.stderr, end='')
-  print(E, file=sys.stderr)
-  
-sys.exit(1)
+  print(E, file=sys.stderr)  
+  sys.exit(1)
 
 
 # фильтр
-freq_min = 500
-freq_max = 3000
+freq_min = 200
+freq_max = 23000
 
 # filter_algorithm = fld.f_algorithm_cheby1
 # filter_type = fld.f_type_bandpass
@@ -92,7 +91,7 @@ AFC_ONLY = 0
 
 EDIT_SPECTRUM = bool(0) and (signal_type != gen.s_type_sinus)
 filename_spectrum = filename_template + '.spectrum'
-APPLY_SPECTRUM = bool(0) | EDIT_SPECTRUM
+APPLY_SPECTRUM = bool(1) | EDIT_SPECTRUM
 
 FILTRATE = bool(1) and (signal_type != gen.s_type_sinus)
 
@@ -117,17 +116,17 @@ if SEND_STOP:
   sock.sendSTOP(host, port)
   sys.exit(0)
 
-if AFC_ONLY:
-    afc.afc(fmin=freq_min,
-            fmax=freq_max,
-            s=sampling,
-            falg=filter_algorithm,
-            ftype=filter_type,
-            rp=filter_rp,
-            rs=filter_rs,
-            tb=transition_band)
+# if AFC_ONLY:
+#     afc.afc(fmin=freq_min,
+#             fmax=freq_max,
+#             s=sampling,
+#             falg=filter_algorithm,
+#             ftype=filter_type,
+#             rp=filter_rp,
+#             rs=filter_rs,
+#             tb=transition_band)
 
-    sys.exit(0)
+#     sys.exit(0)
 
 if READ_WAV:
   araw = wav.wav(file_name="D:/c++/AME/imperia march r.wav",
@@ -201,14 +200,14 @@ if MAKE_SHIM:
                    chgap=channel_gap,
                    chcnt=channel_count,
                    sawpp=saw_count_per_point,
-                   fmin=freq_min,
-                   fmax=freq_max,
-                   falg=filter_algorithm,
-                   ftype=filter_type,
-                   rp=filter_rp,
-                   rs=filter_rs,
-                   tb=transition_band,
                    data=arawf):
+                   # fmin=freq_min,
+                   # fmax=freq_max,
+                   # falg=filter_algorithm,
+                   # ftype=filter_type,
+                   # rp=filter_rp,
+                   # rs=filter_rs,
+                   # tb=transition_band,
     sys.exit(1)
 
 if SEND:

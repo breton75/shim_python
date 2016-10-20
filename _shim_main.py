@@ -10,10 +10,10 @@ import _filters_design as fd
 MIN_10NS_PSAW = 5
 SAW_FREQ = 100000000
 
-FILE_VER = 0x00000001 # 0.0.0.1
+FILE_VER = 0x00000002 # 0.0.0.1
 SIGNATURE = b'SHIM    '
 
-HEADER_PACK = '<8sIIIIdddIIIIIIIiIIIIII'
+HEADER_PACK = '<8sIIIIdddIIIIIII' #iIIIIII'
 
 HEADER_PACK_2 = {'order':'<', 'signature':'8s', 'version':'I',
                  'signal_sampling':'I',
@@ -28,14 +28,14 @@ HEADER_PACK_2 = {'order':'<', 'signature':'8s', 'version':'I',
                  'saw_freq':'I',
                  'saw_count_per_point':'I',
                  'i10ns_count_per_point':'I',
-                 'i10ns_count_per_saw':'I',
-                 'filter_algorithm':'i',
-                 'filter_type':'I',
-                 'filter_freq_min':'I',
-                 'filter_freq_max':'I',
-                 'filter_rp':'I',
-                 'filter_rs':'I',
-                 'filter_transition_band':'I'}
+                 'i10ns_count_per_saw':'I'}
+                 # 'filter_algorithm':'i',
+                 # 'filter_type':'I',
+                 # 'filter_freq_min':'I',
+                 # 'filter_freq_max':'I',
+                 # 'filter_rp':'I',
+                 # 'filter_rs':'I',
+                 # 'filter_transition_band':'I'}
 
 # для определения позиции нужного значения
 HEADER_PACK_KEYS = ['signature',
@@ -52,14 +52,14 @@ HEADER_PACK_KEYS = ['signature',
                     'saw_freq',
                     'saw_count_per_point',
                     'i10ns_count_per_point',
-                    'i10ns_count_per_saw',
-                    'filter_algorithm',
-                    'filter_type',
-                    'filter_freq_min',
-                    'filter_freq_max',
-                    'filter_rp',
-                    'filter_rs',
-                    'filter_transition_band']
+                    'i10ns_count_per_saw']
+                    # 'filter_algorithm',
+                    # 'filter_type',
+                    # 'filter_freq_min',
+                    # 'filter_freq_max',
+                    # 'filter_rp',
+                    # 'filter_rs',
+                    # 'filter_transition_band']
 
 ##struct HEADER_PACK {
 ##  char    signature[8];	    // (8s) SHIM.... 
@@ -101,27 +101,27 @@ def createParser ():
     parser.add_argument('-chcnt', '--channel_count', type=int, required=False)
     parser.add_argument('-sawpp', '--saw_count_per_point', type=int, required=False)
 
-    parser.add_argument('-fmin', '--filter_frequency_min', type=int, required=False)
-    parser.add_argument('-fmax', '--filter_frequency_max', type=int, required=False)
-    parser.add_argument('-falg', '--filter_algorithm', type=int, required=False)
-    parser.add_argument('-ftype', '--filter_type', type=int, required=False)
-    parser.add_argument('-rp', '--filter_max_ripple', type=float, required=False)
-    parser.add_argument('-rs', '--filter_min_attenuation', type=float, required=False)
-    parser.add_argument('-tb', '--filter_transition_band', type=int, required=False)
+    # parser.add_argument('-fmin', '--filter_frequency_min', type=int, required=False)
+    # parser.add_argument('-fmax', '--filter_frequency_max', type=int, required=False)
+    # parser.add_argument('-falg', '--filter_algorithm', type=int, required=False)
+    # parser.add_argument('-ftype', '--filter_type', type=int, required=False)
+    # parser.add_argument('-rp', '--filter_max_ripple', type=float, required=False)
+    # parser.add_argument('-rs', '--filter_min_attenuation', type=float, required=False)
+    # parser.add_argument('-tb', '--filter_transition_band', type=int, required=False)
 
     
     namespace = parser.parse_args(sys.argv[1:])
     
-    if (namespace.frequency == None or namespace.sampling == None or
-        namespace.duration == None or namespace.amplitude == None or
-        namespace.raw_file_name == None or shim_file_name == None or
-        namespace.zero_smooth == None or namespace.channel_gap == None or
-        namespace.channel_count == None or namespace.saw_count_per_point == None or
+    if (namespace.frequency is None or namespace.sampling is None or
+        namespace.duration is None or namespace.amplitude is None or
+        namespace.raw_file_name is None or shim_file_name is None or
+        namespace.zero_smooth is None or namespace.channel_gap is None or
+        namespace.channel_count is None or namespace.saw_count_per_point is None):
 
-        namespace.filter_frequency_min == None or namespace.filter_frequency_max == None or
-        namespace.filter_algorithm == None or namespace.filter_type == None or        
-        namespace.filter_max_ripple == None or namespace.filter_min_attenuation == None or        
-        namespace.filter_transition_band == None):
+        # namespace.filter_frequency_min is None or namespace.filter_frequency_max is None or
+        # namespace.filter_algorithm is None or namespace.filter_type is None or        
+        # namespace.filter_max_ripple is None or namespace.filter_min_attenuation is None or        
+        # namespace.filter_transition_band is None):
 
         return None
     
@@ -143,13 +143,13 @@ def shim(**kwargs):
     SAW_COUNT_PER_POINT = kwargs['sawpp']
 
     # эти параметры не учавствуют в вычисленияях, они только записываются в заголовок файла
-    FILTER_FREQUENCY_MIN = kwargs['fmin']
-    FILTER_FREQUENCY_MAX = kwargs['fmax']
-    FILTER_ALGORITHM = kwargs['falg']
-    FILTER_TYPE = kwargs['ftype']
-    Rp = kwargs['rp']
-    Rs = kwargs['rs']
-    TRANSITION_BAND = kwargs['tb']
+    # FILTER_FREQUENCY_MIN = kwargs['fmin']
+    # FILTER_FREQUENCY_MAX = kwargs['fmax']
+    # FILTER_ALGORITHM = kwargs['falg']
+    # FILTER_TYPE = kwargs['ftype']
+    # Rp = kwargs['rp']
+    # Rs = kwargs['rs']
+    # TRANSITION_BAND = kwargs['tb']
 
     
     signal_len = int(SIGNAL_SAMPLING * SIGNAL_DURATION / 1000)  
@@ -235,14 +235,14 @@ def shim(**kwargs):
                             SAW_FREQ,
                             SAW_COUNT_PER_POINT,
                             N,
-                            saw_N,
-                            FILTER_ALGORITHM,
-                            FILTER_TYPE,
-                            FILTER_FREQUENCY_MIN,
-                            FILTER_FREQUENCY_MAX,
-                            Rp,
-                            Rs,
-                            TRANSITION_BAND))
+                            saw_N))
+                            # FILTER_ALGORITHM,
+                            # FILTER_TYPE,
+                            # FILTER_FREQUENCY_MIN,
+                            # FILTER_FREQUENCY_MAX,
+                            # Rp,
+                            # Rs,
+                            # TRANSITION_BAND))
     
 ##
 ##  file_signal.write("SIGNAL  \0");
@@ -363,14 +363,14 @@ if __name__ == "__main__":
         SHIM_CHANNEL_COUNT = 1
 
         # эти параметры не участвуют в вычисленияях, они только записываются в заголовок файла
-        SIGNAL_FREQUENCY = 4000
-        FILTER_FREQUENCY_MIN = 2000
-        FILTER_FREQUENCY_MAX = 4000
-        FILTER_ALGORITHM = fd.f_algorithm_none
-        FILTER_TYPE = fd.f_type_low
-        Rp = 2
-        Rs = 40
-        TRANSITION_BAND = 200
+        # SIGNAL_FREQUENCY = 4000
+        # FILTER_FREQUENCY_MIN = 2000
+        # FILTER_FREQUENCY_MAX = 4000
+        # FILTER_ALGORITHM = fd.f_algorithm_none
+        # FILTER_TYPE = fd.f_type_low
+        # Rp = 2
+        # Rs = 40
+        # TRANSITION_BAND = 200
 
     else:
 
@@ -389,13 +389,13 @@ if __name__ == "__main__":
         SAW_COUNT_PER_POINT = parser.saw_count_per_point
         
         # эти параметры не участвуют в вычисленияях, они только записываются в заголовок файла
-        FILTER_FREQUENCY_MIN = parser.filter_frequency_min
-        FILTER_FREQUENCY_MAX = parser.filter_frequency_max
-        FILTER_ALGORITHM = parser.filter_algorithm
-        FILTER_TYPE = parser.filter_type
-        Rp = parser.filter_max_ripple
-        Rs = parser.filter_min_attenuation
-        TRANSITION_BAND = parser.filter_transition_band
+        # FILTER_FREQUENCY_MIN = parser.filter_frequency_min
+        # FILTER_FREQUENCY_MAX = parser.filter_frequency_max
+        # FILTER_ALGORITHM = parser.filter_algorithm
+        # FILTER_TYPE = parser.filter_type
+        # Rp = parser.filter_max_ripple
+        # Rs = parser.filter_min_attenuation
+        # TRANSITION_BAND = parser.filter_transition_band
 
     shim(f=SIGNAL_FREQUENCY,
          s=SIGNAL_SAMPLING,
@@ -406,12 +406,12 @@ if __name__ == "__main__":
          zero=SHIM_ZERO_SMOOTH,
          chgap=SHIM_CHANNEL_GAP,
          chcnt=SHIM_CHANNEL_COUNT,
-         sawpp=SAW_COUNT_PER_POINT,
-         fmin=FILTER_FREQUENCY_MIN,
-         fmax=FILTER_FREQUENCY_MAX,
-         falg=FILTER_ALGORITHM,
-         ftype=FILTER_TYPE,
-         rp=Rp,
-         rs=Rs,
-         tb=TRANSITION_BAND)
+         sawpp=SAW_COUNT_PER_POINT)
+         # fmin=FILTER_FREQUENCY_MIN,
+         # fmax=FILTER_FREQUENCY_MAX,
+         # falg=FILTER_ALGORITHM,
+         # ftype=FILTER_TYPE,
+         # rp=Rp,
+         # rs=Rs,
+         # tb=TRANSITION_BAND)
 
