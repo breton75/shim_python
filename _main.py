@@ -1,3 +1,5 @@
+﻿# -*- coding: utf-8 -*-
+
 ##from _generator_main import *
 import sys
 import _generator_main as gen
@@ -21,17 +23,44 @@ duration = 1000
 amplitude = 256
 fadein = 0
 fadeout = 0
-filename_template = "d:/c++/AME/Generators/test_main" # добавляем разные расширения
+
+try:
+
+  with open('_main.ini', 'r') as inifile:
+    lines = inifile.readlines()
+  
+    # разбираем параметры записанные в файле ini
+    lst = []
+    for line in lines:
+      lst.append(line.split('='))
+  
+    for i in range(len(lst)):
+      for j in range(len(lst[i])):
+        lst[i][j] = lst[i][j].strip()
+  
+    voc = dict(lst)
+  
+    if not 'filename_template' in voc:
+      raise Exception('_main.ini must contains param "filename_template" specifing path and names of created files\nexample: filename_template = "home/user/test_main"')
+  
+    filename_template = "d:/c++/AME/Generators/test_main" # добавляем разные расширения
+
+except Exception as E:
+  print('error on reading ini file: ', file=sys.stderr, end='')
+  print(E, file=sys.stderr)
+  
+sys.exit(1)
+
 
 # фильтр
 freq_min = 500
 freq_max = 3000
 
-filter_algorithm = fld.f_algorithm_cheby1
-filter_type = fld.f_type_bandpass
-filter_rp = 2    # Уровень пульсаций в полосе пропускания в dB
-filter_rs = 45   # Уровень ослабления сигнала на частотах задержания в dB
-transition_band = 1500
+# filter_algorithm = fld.f_algorithm_cheby1
+# filter_type = fld.f_type_bandpass
+# filter_rp = 2    # Уровень пульсаций в полосе пропускания в dB
+# filter_rs = 45   # Уровень ослабления сигнала на частотах задержания в dB
+# transition_band = 1500
 
 # преобразование ШИМ
 channel_count = 2
@@ -54,6 +83,7 @@ mode = sock.e_mode_loop
 point1=0
 point2=1000
 
+# KJHSKJHKJHSKJHS
 #####################################################
 #####################################################
 
