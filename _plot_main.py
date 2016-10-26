@@ -15,7 +15,7 @@ import _duty as duty
 from _spectrum_main import signal2spectrum
 
 from matplotlib import rc
-rc('font', family='Ubuntu') # для отображения русского шрифта
+rc('font', family='Verdana') # для отображения русского шрифта
 
 from scipy.fftpack import rfft
 # from scipy.fftpack import fft

@@ -18,7 +18,7 @@ import _spectrum_main as spectrum
 
 signal_type = gen.s_type_noise
 freq = 200
-sampling = 100000
+sampling = 10000
 duration = 1000
 amplitude = 256
 fadein = 0
@@ -37,7 +37,7 @@ try:
     for i in range(len(lst)):
       for j in range(len(lst[i])):
         lst[i][j] = lst[i][j].strip()
-    print(lst)
+    # print(lst)
     voc = dict(lst)
   
     if not 'filename_template' in voc:
@@ -52,8 +52,8 @@ except Exception as E:
 
 
 # фильтр
-freq_min = 200
-freq_max = 23000
+freq_min = 2000
+freq_max = 4000
 
 # filter_algorithm = fld.f_algorithm_cheby1
 # filter_type = fld.f_type_bandpass
@@ -69,6 +69,7 @@ channel_gap = 0
 
 # имена файлов
 filename_raw = filename_template + '.raw'
+print(filename_raw)
 filename_flt = filename_template + '.rawf'
 filename_flt2 = filename_template + '.rawf2'
 filename_shim = filename_template + '.shim'
@@ -89,7 +90,7 @@ point2=1000
 SEND_STOP = 0
 AFC_ONLY = 0
 
-EDIT_SPECTRUM = bool(0) and (signal_type != gen.s_type_sinus)
+EDIT_SPECTRUM = bool(1) and (signal_type != gen.s_type_sinus)
 filename_spectrum = filename_template + '.spectrum'
 APPLY_SPECTRUM = bool(1) | EDIT_SPECTRUM
 
@@ -147,23 +148,27 @@ if araw is None:
 
 
 if EDIT_SPECTRUM:
-  spectrum.edit_spectrum(s=sampling,
-                   d=duration,
-                   signal_data=araw,
-                   sffn=filename_spectrum)
+  spectrum.edit_spectrum(s=sampling, d=duration,
+                         signal_data=araw,
+                         sffn=filename_spectrum,
+                         band_pass=FILTRATE,
+                         fmin=freq_min, fmax=freq_max)
+
+# sys.exit(0)
 
 if APPLY_SPECTRUM:
-  araw = spectrum.apply_spectrum(s=sampling,
-                   d=duration,
-                   signal_data=araw,
-                   sffn=filename_spectrum,
-                   rawf=filename_flt)
+  arawf = spectrum.apply_spectrum(s=sampling, d=duration,
+                                 signal_data=araw,
+                                 sffn=filename_spectrum,
+                                 rawf=filename_flt,
+                                 band_pass=FILTRATE,
+                                 fmin=freq_min, fmax=freq_max)
 
 
-if araw is None:
-  sys.exit(1)
+# if araw is None:
+#   sys.exit(1)
 
-if FILTRATE:
+elif FILTRATE:
     # arawf = flt.filtrate(fmin=freq_min,
     #                      fmax=freq_max,
     #                      s=sampling,

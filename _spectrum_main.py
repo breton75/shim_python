@@ -42,14 +42,16 @@ class PolygonInteractor(object):
     epsilon = 5  # max pixel distance to count as a vertex hit
     x_const = 0
 
-    def __init__(self, ax, poly, file_name, aspec):
+    def __init__(self, ax, poly, file_name, aspec, fmin, fmax):
         if poly.figure is None:
             raise RuntimeError('You must first add the polygon to a figure or canvas before defining the interactor')
         self.ax = ax
         canvas = poly.figure.canvas
         self.poly = poly
         self.file_name = file_name
-        self.aspec = aspec
+        self.fmin = fmin
+        self.fmax = fmax
+        self.aspec = aspec[fmin:fmax]
         self.maxY = float(max(self.aspec))
         self.xstep = get_xstep(len(aspec), len(poly.xy) - 2)
 
@@ -123,7 +125,7 @@ class PolygonInteractor(object):
         #     return
 
         if event.inaxes:
-            if event.key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']:
+            if event.key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-']:
                 ind = self.get_ind_under_point(event)
                 if not (ind is None or ind == 0 or ind == len(self.poly.xy) - 1):
                     # val = int(event.key) / 10
@@ -131,7 +133,7 @@ class PolygonInteractor(object):
                     self.line.set_data(zip(*self.poly.xy))
 
         if event.key == 'ctrl+w':
-            print('saving...')
+            print('saving specrtum form... ', end='')
 
             x, y = zip(*self.poly.xy)
 
@@ -152,22 +154,26 @@ class PolygonInteractor(object):
 
             
             f.close()
-            print('saved successfully')
+            print('ok')
 
         if event.key == 'ctrl+r':
             x, y = zip(*self.poly.xy)
 
-            fpcnt = len(self.aspec) # int(self.sampling / 2)
+            # fpcnt =  # len(self.aspec) # int(self.sampling / 2)
             controls_count = len(x)
-            step = fpcnt / (controls_count - 3)
+            step = get_xstep(self.fmax - self.fmin, controls_count - 2) #  fpcnt / (controls_count - 3)
 
-            self.poly.xy[0][0] = 0
-            self.poly.xy[-1][0] = fpcnt
+            # print('fpcnt=%i  controls_count=%i  step=%d' % (fpcnt,controls_count,step))
+            self.poly.xy[0][0] = self.fmin #0
+            self.poly.xy[-1][0] = self.fmax # fpcnt
 
+            maxY = max(self.aspec)
             for i in range(1, controls_count - 1):
-                self.poly.xy[i][0] = (i - 1) * step
-                self.poly.xy[i][1] = max(self.aspec)
-                self.line.set_data(zip(*self.poly.xy))
+                self.poly.xy[i][0] = self.fmin + (i - 1) * step
+                self.poly.xy[i][1] = maxY
+                # print('x=%i  y=%f' % (self.poly.xy[i][0], self.poly.xy[i][1]))
+            
+            self.line.set_data(zip(*self.poly.xy))
 
 
         if event.key == 't':
@@ -348,18 +354,18 @@ def get_xstep(spectrum_len, controls_count):
 
     return spectrum_len / (controls_count - 1)
 
-def get_xs_ys(spectrum_len, controls_count):
+def get_xs_ys(fmin, fmax, controls_count):
     try:
-        xstep = get_xstep(spectrum_len, controls_count)
+        xstep = get_xstep(fmax - fmin, controls_count)
         
         xs = None
         ys = None
 
         # добавляем две точки в начало и конец, для декоративных целей
         xs = np.empty(controls_count + 2, dtype=float)
-        xs[0] = 0
-        xs[-1] = spectrum_len
-        for i in range(1, controls_count + 1, 1): xs[i] = (i - 1) * xstep
+        xs[0] = fmin
+        xs[-1] = fmax
+        for i in range(1, controls_count + 1, 1): xs[i] = fmin + (i - 1) * xstep
 
         ys = np.empty(controls_count + 2, dtype=float)
         ys[0] = 0
@@ -385,12 +391,25 @@ def edit_spectrum(**kwargs):
         duration = kwargs['d']
         point_count = int(sampling * duration / 1000)
 
+
         spectrum, aspec, araw = signal2spectrum(**kwargs)
         
         if spectrum is None or aspec is None:
             raise Exception('no spectrum got')
 
-        spectrumMax = max(aspec)
+
+        # задаем границы массива. если нужно применить полосовой фильтр, то отсекаем все, что не входит в [fmin:fmax]
+        fmin = 0
+        fmax = len(aspec)
+        if 'band_pass' in kwargs and kwargs['band_pass'] == True:
+            if not ('fmin' in kwargs and 'fmax' in kwargs):
+                raise Exception('params for band pass filter are not specified')
+
+            fmin = kwargs['fmin']
+            fmax = kwargs['fmax']
+
+
+        spectrumMax = max(aspec[fmin:fmax])
 
         spectrum_form_file_name = ''
         if 'sffn' in kwargs:
@@ -400,10 +419,10 @@ def edit_spectrum(**kwargs):
         # print('max(spectrum)=%d  len(aspec)=%i' % (spectrumMax, len(aspec)))
 
         fig, ax = plt.subplots()
-        plt.vlines(range(len(aspec)), 0, aspec, label=' ', color='b')
-        # plt.plot(aspec, drawstyle='steps', label=' ')
+        plt.vlines(range(fmin, fmax, 1), 0, aspec[fmin:fmax], label=' ', color='b')
+        # plt.plot(aspec[fmin:fmax], drawstyle='steps', label=' ')
         plt.legend(title='Редактор формы спектра\nctrl + r - сброс\nctrl + w - сохранить и выйти\n0..9 - установить уровень регулятора', loc='upper left', shadow=True, frameon=True, fontsize='small')
-        plt.axis([0, len(aspec), 0, spectrumMax + spectrumMax * 0.5])
+        plt.axis([fmin, fmax, 0, spectrumMax * 1.5])
 
         ver, controls_count, controls = read_spectrum_form_file(**kwargs)
         # print(ver, controls_count)
@@ -411,27 +430,27 @@ def edit_spectrum(**kwargs):
         # если не удалось прочитать сохраненную форму спектра, то создаем новую
         if controls_count is None or controls is None:
         
-            xs, ys = get_xs_ys(len(aspec), CONTROL_COUNT)
+            xs, ys = get_xs_ys(fmin, fmax, CONTROL_COUNT)
 
             ys[1:-1] = spectrumMax
             
-            plt.xticks(arange(0, len(aspec), int(get_xstep(len(aspec), CONTROL_COUNT)) * 2)) #, arange(0, len(aspec), get_xstep(len(aspec), CONTROL_COUNT)))
+            plt.xticks(arange(fmin, fmax, int(get_xstep(fmax - fmin, CONTROL_COUNT)) * 2)) #, arange(0, len(aspec), get_xstep(len(aspec), CONTROL_COUNT)))
 
         else:
 
-            xs, ys = get_xs_ys(len(aspec), controls_count)
+            xs, ys = get_xs_ys(fmin, fmax, controls_count)
             
             for i in range(1, controls_count + 1, 1):
                 ys[i] = controls[i - 1] * spectrumMax
 
-            plt.xticks(arange(0, len(aspec), int(get_xstep(len(aspec), controls_count)) * 2)) #, arange(0, len(aspec), get_xstep(len(aspec), controls_count) * 4))
+            plt.xticks(arange(fmin, fmax, int(get_xstep(fmax - fmin, controls_count)) * 2)) #, arange(0, len(aspec), get_xstep(len(aspec), controls_count) * 4))
 
 
         from matplotlib.colors import colorConverter
         from matplotlib.patches import Polygon
         poly = Polygon(list(zip(xs, ys)), animated=True, closed=False, color=colorConverter.to_rgba('r', 0.500), visible=True)
         ax.add_patch(poly)
-        p = PolygonInteractor(ax, poly, spectrum_form_file_name, aspec)
+        p = PolygonInteractor(ax, poly, spectrum_form_file_name, aspec, fmin, fmax)
         
         plt.autumn()
         plt.grid()
@@ -459,17 +478,30 @@ def apply_spectrum(**kwargs):
         spectrum_form_file_name = kwargs['sffn']
         rawf = kwargs['rawf']      # путь к файлу в который будет записан отфильтрованный сигнал
 
-        # sampling = kwargs['s'] # дискретизация
-        # duration = kwargs['d']
-        # point_count = int(sampling * duration / 1000)
-        # fpcnt = int(sampling / 2)
+        sampling = kwargs['s'] # дискретизация
+        duration = kwargs['d']
+        point_count = int(sampling * duration / 1000)
+        fsdpcnt = int((sampling / 2) * (duration / 1000))
+        fpcnt = int(sampling / 2)
 
         spectrum, aspec, araw = signal2spectrum(**kwargs)
 
         if spectrum is None or araw is None:
             raise Exception('converting to spectrum error')
 
-        spectrumMax = max(aspec)
+        # задаем границы массива. если нужно применить полосовой фильтр, то отсекаем все, что не входит в [fmin:fmax]
+        fmin = 0
+        fmax = len(aspec)
+        if 'band_pass' in kwargs and kwargs['band_pass'] == True:
+            if not ('fmin' in kwargs and 'fmax' in kwargs):
+                raise Exception('params for band pass filter are not specified')
+
+            fmin = kwargs['fmin']
+            fmax = kwargs['fmax']
+
+
+        spectrumMax = max(aspec[fmin:fmax])
+
 
         ver, controls_count, controls = read_spectrum_form_file(**kwargs)
     
@@ -477,13 +509,16 @@ def apply_spectrum(**kwargs):
         if controls_count is None or controls is None:
             raise Exception('error on reading spectrum form')
 
-        xstep = get_xstep(len(aspec), controls_count)
-        x = 0
-        x1 = 0
+        fmin_n = int(fmin * fsdpcnt / fpcnt)
+        fmax_n = int(fmax * fsdpcnt / fpcnt)
+
+        xstep = get_xstep(fmax_n - fmin_n, controls_count)
+        x = fmin_n
+        x1 = fmin_n
         y1 = controls[0]
         
         for i in range(1, controls_count, 1):
-            x2 = i * xstep
+            x2 = fmin_n + i * xstep
             y2 = controls[i]
 
 
@@ -506,6 +541,13 @@ def apply_spectrum(**kwargs):
     
             x1 = x2
             y1 = y2
+
+        # обнуляем все значения, которые не входят в диапазон частот
+        spectrum[:fmin_n] = 0.0   # в основной части спектра
+        spectrum[-fmin_n:] = 0.0  # в зеркальной части спектра
+    
+        spectrum[fmax_n:fsdpcnt] = 0.0   # в основной части спектра
+        spectrum[fsdpcnt:-fmax_n] = 0.0  # в зеркальной части спектра
 
         # фильтрация
         yf = ifft(spectrum)
@@ -551,7 +593,7 @@ if __name__ == "__main__":
         # путь к файлу с формой спектра        
         SPECTRUM_FORM_FILE_NAME = "D:/c++/AME/Generators/test_main.spectrum"
 
-        SIGNAL_SAMPLING = 2000 # дискретизация
+        SIGNAL_SAMPLING = 100000 # дискретизация
         SIGNAL_DURATION = 1000
 
     else:
@@ -573,4 +615,7 @@ if __name__ == "__main__":
         edit_spectrum(raw=RAW_FILE_NAME,
                   sffn=SPECTRUM_FORM_FILE_NAME,
                   s=SIGNAL_SAMPLING,
-                  d=SIGNAL_DURATION)
+                  d=SIGNAL_DURATION,
+                  band_pass=True,
+                  fmin=1500,
+                  fmax=3000)
