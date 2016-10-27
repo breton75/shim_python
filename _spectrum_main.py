@@ -16,11 +16,12 @@ rc('font', family='Verdana') # для отображения русского ш
 from matplotlib.lines import Line2D
 from matplotlib.artist import Artist
 from matplotlib.mlab import dist_point_to_segment
+from matplotlib.text import Text
 
-HEADER_STRUCT = '16sII' # заголовок, версия, кол-во точек
+HEADER_STRUCT = '16sIIII' # заголовок, версия, кол-во точек # fmin, fmax
 FILE_DESIGNATION = b'SPECTRUM FORM   '
-FILE_VER = 0x00000001 # 0.0.0.1
-CONTROL_COUNT = 41
+FILE_VER = 0x00000001 # 0.0.0.2
+CONTROL_COUNT = 40
 
 class PolygonInteractor(object):
     """
@@ -48,6 +49,14 @@ class PolygonInteractor(object):
         self.ax = ax
         canvas = poly.figure.canvas
         self.poly = poly
+
+        self.text = Text(x=0, y=0, text='', color='b')
+        self.text.set_horizontalalignment('center')
+        self.text.set_weight('bold')
+        self.text.set_clip_on(False)
+        self.text.set_bbox(dict(facecolor='yellow', alpha=0.5))
+        self.ax.add_artist(self.text)
+
         self.file_name = file_name
         self.fmin = fmin
         self.fmax = fmax
@@ -59,6 +68,7 @@ class PolygonInteractor(object):
         
         self.line = Line2D(x, y, marker='o', markerfacecolor='r', markersize=10, animated=True, drawstyle='steps-mid', color='red', lw=2)
         self.ax.add_line(self.line)
+        
         #self._update_line(poly)
 
         cid = self.poly.add_callback(self.poly_changed)
@@ -75,6 +85,7 @@ class PolygonInteractor(object):
         self.background = self.canvas.copy_from_bbox(self.ax.bbox)
         self.ax.draw_artist(self.poly)
         self.ax.draw_artist(self.line)
+        self.ax.draw_artist(self.text)
         self.canvas.blit(self.ax.bbox)
 
     def poly_changed(self, poly):
@@ -147,7 +158,7 @@ class PolygonInteractor(object):
 
             # при сохранении отбрасываем две точки - первую и последнюю, тк они имеют только декоративную функцию
 
-            f.write(struct.pack(HEADER_STRUCT, FILE_DESIGNATION, FILE_VER, len(x) - 2)) 
+            f.write(struct.pack(HEADER_STRUCT, FILE_DESIGNATION, FILE_VER, len(x) - 2, self.fmin, self.fmax)) 
 
             for i in range(1, len(x) - 1, 1):
                 f.write(struct.pack('d', float(y[i]) / self.maxY))
@@ -207,23 +218,42 @@ class PolygonInteractor(object):
         'on mouse movement'
         if not self.showverts:
             return
-        if self._ind is None or self._ind == 0 or self._ind == len(self.poly.xy) - 1:
+
+
+        if self._ind is None:
+            ind = self.get_ind_under_point(event)
+            if not ind is None:
+                self.text.set_text('%i Гц' % int(self.poly.xy[ind][0]))
+                self.text.set_position([self.poly.xy[ind][0], event.ydata + 1])
+                self.update()
+
             return
+
+        if self._ind == 0 or self._ind == len(self.poly.xy) - 1:
+            return
+        
         if event.inaxes is None:
             return
+
+            
         if event.button != 1:
             return
-        # x, y = event.xdata, event.ydata
-        y = event.ydata
 
+        y = event.ydata
         self.poly.xy[self._ind] = self.x_const, y
         
         self.line.set_data(zip(*self.poly.xy))
 
+        self.update()
+
+
+    def update(self):
         self.canvas.restore_region(self.background)
         self.ax.draw_artist(self.poly)
         self.ax.draw_artist(self.line)
+        self.ax.draw_artist(self.text)
         self.canvas.blit(self.ax.bbox)
+        
 
 
 def createParser():
@@ -308,6 +338,9 @@ def signal2spectrum(**kwargs):
 
 
     finally:
+        # ВНИМАНИЕ.
+        # spectrum содержит результат преобразования фурье без изменений, без учета длительности и дискретизации сигнала.
+        # aspec содержит уровни частот, пересчитанных с учетом длительности и дискретизации сигнала. для отображения на графике и редактирования формы спектра
         return spectrum, aspec, araw
 
 
@@ -321,7 +354,9 @@ def read_spectrum_form_file(**kwargs):
         spectrum_form_file_name = kwargs['sffn']
         ver = None
         controls_count = None
-        controls = None   
+        controls = None
+        minX = None
+        maxX = None
 
 
         header = duty.read_header(spectrum_form_file_name, HEADER_STRUCT)
@@ -334,8 +369,8 @@ def read_spectrum_form_file(**kwargs):
 
         ver = header[1]
         controls_count = header[2]
-        # maxX = header[3]
-        # maxY = header[4]
+        minX = header[3]
+        maxX = header[4]
 
         controls = duty.read_file(spectrum_form_file_name, 'd', struct.calcsize(HEADER_STRUCT), controls_count)
         # print(ver, point_count, dataY)
@@ -348,7 +383,7 @@ def read_spectrum_form_file(**kwargs):
         # return None, No
 
     
-    return ver, controls_count, controls
+    return ver, controls_count, controls, minX, maxX
 
 def get_xstep(spectrum_len, controls_count):
 
@@ -389,7 +424,7 @@ def edit_spectrum(**kwargs):
 
         sampling = kwargs['s'] # дискретизация
         duration = kwargs['d']
-        point_count = int(sampling * duration / 1000)
+        # point_count = int(sampling * duration / 1000)
 
 
         spectrum, aspec, araw = signal2spectrum(**kwargs)
@@ -399,15 +434,10 @@ def edit_spectrum(**kwargs):
 
 
         # задаем границы массива. если нужно применить полосовой фильтр, то отсекаем все, что не входит в [fmin:fmax]
-        fmin = 0
+        fmin = 1
         fmax = len(aspec)
-        if 'band_pass' in kwargs and kwargs['band_pass'] == True:
-            if not ('fmin' in kwargs and 'fmax' in kwargs):
-                raise Exception('params for band pass filter are not specified')
-
-            fmin = kwargs['fmin']
-            fmax = kwargs['fmax']
-
+        if 'fmin' in kwargs and kwargs['fmin'] in range(fmin, fmax) : fmin = kwargs['fmin']
+        if 'fmax' in kwargs and kwargs['fmax'] in range(fmin, fmax): fmax = kwargs['fmax']
 
         spectrumMax = max(aspec[fmin:fmax])
 
@@ -424,8 +454,7 @@ def edit_spectrum(**kwargs):
         plt.legend(title='Редактор формы спектра\nctrl + r - сброс\nctrl + w - сохранить и выйти\n0..9 - установить уровень регулятора', loc='upper left', shadow=True, frameon=True, fontsize='small')
         plt.axis([fmin, fmax, 0, spectrumMax * 1.5])
 
-        ver, controls_count, controls = read_spectrum_form_file(**kwargs)
-        # print(ver, controls_count)
+        ver, controls_count, controls, minX, maxX = read_spectrum_form_file(**kwargs)
 
         # если не удалось прочитать сохраненную форму спектра, то создаем новую
         if controls_count is None or controls is None:
@@ -434,9 +463,13 @@ def edit_spectrum(**kwargs):
 
             ys[1:-1] = spectrumMax
             
-            plt.xticks(arange(fmin, fmax, int(get_xstep(fmax - fmin, CONTROL_COUNT)) * 2)) #, arange(0, len(aspec), get_xstep(len(aspec), CONTROL_COUNT)))
+            plt.xticks(arange(fmin, fmax, int(get_xstep(fmax - fmin, CONTROL_COUNT)) * 3)) #, arange(0, len(aspec), get_xstep(len(aspec), CONTROL_COUNT)))
 
         else:
+
+            # если диапазон частот форма спектра не соответствует заданным параметрам fmin и fmax, то выходим с ошибкой
+            if not (fmin == minX and fmax == maxX):
+                raise Exception('frequency band of spectrum form (%i - %i) does not match to given params (%i - %i)' % (minX, maxX, fmin, fmax))
 
             xs, ys = get_xs_ys(fmin, fmax, controls_count)
             
@@ -465,105 +498,129 @@ def edit_spectrum(**kwargs):
 
 def apply_spectrum(**kwargs):
     try:
-        # print('Start spectrum appling')
-
         aflt = None
 
-        if not 'sffn' in kwargs: raise Exception('Не указано имя файла с формой спектра')
-        if not 'rawf' in kwargs: raise Exception('Не указано имя файла для сохранения')
-        
-        # if not 's' in kwargs: raise Exception('Не указана дискретизация')
-        # if not 'd' in kwargs: raise Exception('Не указана длительность сигнала')
+        # обязательные параметры
+        if not 'rawf' in kwargs: raise Exception('File for saving is not specified')
+        if not 's' in kwargs: raise Exception('Sampling is not specified')
+        if not 'd' in kwargs: raise Exception('Signal duration is not specified')
 
-        spectrum_form_file_name = kwargs['sffn']
-        rawf = kwargs['rawf']      # путь к файлу в который будет записан отфильтрованный сигнал
-
+        rawf = kwargs['rawf']  # путь к файлу в который будет записан отфильтрованный сигнал
         sampling = kwargs['s'] # дискретизация
-        duration = kwargs['d']
-        point_count = int(sampling * duration / 1000)
-        fsdpcnt = int((sampling / 2) * (duration / 1000))
-        fpcnt = int(sampling / 2)
+        duration = kwargs['d'] # длительность сигнала
 
+        # преобразуем заданный сигнал в спектр
         spectrum, aspec, araw = signal2spectrum(**kwargs)
 
         if spectrum is None or araw is None:
             raise Exception('converting to spectrum error')
 
-        # задаем границы массива. если нужно применить полосовой фильтр, то отсекаем все, что не входит в [fmin:fmax]
-        fmin = 0
+        # границы частот спктра определяют диапазон наложения формы спектра
+        # для применения полосового фильтра, отсекаем все, что не входит в [fmin:fmax]
+        fmin = 1
         fmax = len(aspec)
-        if 'band_pass' in kwargs and kwargs['band_pass'] == True:
-            if not ('fmin' in kwargs and 'fmax' in kwargs):
-                raise Exception('params for band pass filter are not specified')
+        if 'fmin' in kwargs and kwargs['fmin'] in range(fmin, fmax) : fmin = kwargs['fmin']
+        if 'fmax' in kwargs and kwargs['fmax'] in range(fmin, fmax): fmax = kwargs['fmax']
 
-            fmin = kwargs['fmin']
-            fmax = kwargs['fmax']
-
-
-        spectrumMax = max(aspec[fmin:fmax])
-
-
-        ver, controls_count, controls = read_spectrum_form_file(**kwargs)
-    
-        # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
-        if controls_count is None or controls is None:
-            raise Exception('error on reading spectrum form')
-
-        fmin_n = int(fmin * fsdpcnt / fpcnt)
+        # значения для вычислений
+        # point_count = int(sampling * duration / 1000)
+        fsdpcnt = int((sampling / 2) * (duration / 1000)) # количество точек спектра исходя из длительности и дискретизации
+        fpcnt = int(sampling / 2) # реальное количество точек спектра
+        fmin_n = int(fmin * fsdpcnt / fpcnt) # реальные границы диапазона частот 
         fmax_n = int(fmax * fsdpcnt / fpcnt)
 
-        xstep = get_xstep(fmax_n - fmin_n, controls_count)
-        x = fmin_n
-        x1 = fmin_n
-        y1 = controls[0]
+
+        # максимальное значение спектра в заданной области частот
+        spectrumMax = max(aspec[fmin:fmax])
+
+        # ЕСЛИ ЗАДАНА ФОРМА СПЕКТРА, ТО НАКЛАДЫВАЕМ ЕЕ НА СПЕКТР
+        # * начало 1 *
+        if 'apply_spectrum_form' in kwargs and kwargs['apply_spectrum_form'] == True: 
+            
+            print('applying spectrum form ...', end='')
+
+            if not 'sffn' in kwargs:
+                raise Exception('Spectrum form file name is not specified')
+
+            spectrum_form_file_name = kwargs['sffn']
+
+            # читаем файл с сохраненной формой спектра
+            ver, controls_count, controls, minX, maxX = read_spectrum_form_file(**kwargs)
+
+            # если диапазон частот форма спектра не соответствует заданным параметрам fmin и fmax, то выходим с ошибкой
+            if not (fmin == minX and fmax == maxX):
+                raise Exception('frequency band of spectrum form (%i - %i) does not match to given params (%i - %i)' % (minX, maxX, fmin, fmax))
+    
+            # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
+            if controls_count is None or controls is None:
+                raise Exception('error on reading spectrum form')
+
+
+            xstep = get_xstep(fmax_n - fmin_n, controls_count)
+            x = fmin_n
+            x1 = fmin_n
+            y1 = controls[0]
         
-        for i in range(1, controls_count, 1):
-            x2 = fmin_n + i * xstep
-            y2 = controls[i]
-
-
-            # print('i=%d' % i)
-            while x < x2:
+            for i in range(1, controls_count, 1):
+                x2 = fmin_n + i * xstep
+                y2 = controls[i]
     
-                # находим значение (у) точки пересечения прямой x = j и прямой (x1,y1)-(x2,y2)
-                # уравнение прямой (х1,у1)-(х2,у2):  (x - x1)/(x2 - x1) = (y - y1)/(y2 - y1), отсюда
-                # y = (x - x1)/(x2 - x1) * (y2 - y1) + y1. так как x = j, получим:
-
-                y = (x - x1) / (x2 - x1) * (y2 - y1) + y1
-                # print('i=%i  x1=%d y1=%0.2f  x2=%d y2=%0.2f  x=%i  y=%0.2f  araw[x]=%0.2f' % (i, x1, y1, x2, y2, x, y, araw[x]) )
-                # print('y={}'.format(y))
-                if abs(spectrum[x]) > y * spectrumMax:
-                    # print('complex={}'.format(complex(y * spectrumMax, spectrum[x].imag)))
-                    spectrum[x] =  complex(y * spectrum[x].real, spectrum[x].imag)
-                    spectrum[-x] =  complex(y * spectrum[x].real, spectrum[x].imag)
+                # проходим по всем точкам между x1 и x2
+                while x < x2:
+        
+                    # находим значение (у) точки пересечения вертикальной прямой в точке x и прямой (x1,y1)-(x2,y2)
+                    # уравнение прямой (х1,у1)-(х2,у2):  (x - x1)/(x2 - x1) = (y - y1)/(y2 - y1), отсюда
+                    # y = (x - x1)/(x2 - x1) * (y2 - y1) + y1. получим:
     
-                x+=1
-    
-            x1 = x2
-            y1 = y2
+                    y = (x - x1) / (x2 - x1) * (y2 - y1) + y1
+                    # print('i=%i  x1=%d y1=%0.2f  x2=%d y2=%0.2f  x=%i  y=%0.2f  araw[x]=%0.2f' % (i, x1, y1, x2, y2, x, y, araw[x]) )
+                    # print('y={}'.format(y))
 
-        # обнуляем все значения, которые не входят в диапазон частот
-        spectrum[:fmin_n] = 0.0   # в основной части спектра
-        spectrum[-fmin_n:] = 0.0  # в зеркальной части спектра
+                    # если уровень спектра в данной точке выше линии (x1,y1)-(x2,y2), то опускаем его пропорционально spectrumMax
+                    if abs(spectrum[x]) > y * spectrumMax:
+                        # print('complex={}'.format(complex(y * spectrumMax, spectrum[x].imag)))
+                        spectrum[x] =  complex(y * spectrum[x].real, spectrum[x].imag)  
+                        spectrum[-x] =  complex(y * spectrum[x].real, spectrum[x].imag) # в зеркальной части спектра такое же значение
+        
+                    x+=1
     
-        spectrum[fmax_n:fsdpcnt] = 0.0   # в основной части спектра
-        spectrum[fsdpcnt:-fmax_n] = 0.0  # в зеркальной части спектра
+                x1 = x2
+                y1 = y2
 
-        # фильтрация
+            print('ok')
+
+        # * конец 1 *
+
+        # ПРИМЕНЯЕМ ПОЛОСОВОЙ ФИЛЬТР
+        # * начало 2 *
+        if 'band_pass_filter' in kwargs and kwargs['band_pass_filter'] == True:
+            # обнуляем все значения, которые не входят в диапазон частот
+            spectrum[:fmin_n] = 0.0   # в основной части спектра
+            spectrum[-fmin_n:] = 0.0  # в зеркальной части спектра
+    
+            spectrum[fmax_n:fsdpcnt] = 0.0   # в основной части спектра
+            spectrum[fsdpcnt:-fmax_n] = 0.0  # в зеркальной части спектра
+
+        # * конец 2 *
+
+
+        # преобразуем спектр обратно в сигнал
         yf = ifft(spectrum)
         aflt = arr.array('d', yf.real)
 
         # сохраняем отфильтрованный сигнал в файл
+        print('saving filtered signal ... ', end='')
         try:
+            
             f = open(rawf, 'wb')
             aflt.tofile(f)
             f.close()
 
+            print('ok')
+
         except Exception as E:
             raise Exception(E)
-        
-        print('filtered signal saved successfully')
-                        
+                                
 
     except Exception as E:
         print('error in function apply_spectrum(): ', file=sys.stderr, end='')

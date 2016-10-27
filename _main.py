@@ -17,7 +17,7 @@ import _spectrum_main as spectrum
 # генератор  s_type_noise | s_type_sinus | s_type_sinus_noise | s_type_sinus_sinus_noise
 
 signal_type = gen.s_type_noise
-freq = 200
+freq = 3000
 sampling = 10000
 duration = 1000
 amplitude = 256
@@ -52,8 +52,8 @@ except Exception as E:
 
 
 # фильтр
-freq_min = 2000
-freq_max = 4000
+freq_min = 1000
+freq_max = 5000
 
 # filter_algorithm = fld.f_algorithm_cheby1
 # filter_type = fld.f_type_bandpass
@@ -92,14 +92,14 @@ AFC_ONLY = 0
 
 EDIT_SPECTRUM = bool(1) and (signal_type != gen.s_type_sinus)
 filename_spectrum = filename_template + '.spectrum'
-APPLY_SPECTRUM = bool(1) | EDIT_SPECTRUM
+APPLY_SPECTRUM = bool(1)  and (signal_type != gen.s_type_sinus)
 
 FILTRATE = bool(1) and (signal_type != gen.s_type_sinus)
 
 MAKE_SHIM = bool(1)
 
 PLOT_SIGNAL = 1
-PLOT_FILTERED = 1 & (int(FILTRATE) | int(APPLY_SPECTRUM))
+PLOT_FILTERED = 1  & (int(FILTRATE) | int(APPLY_SPECTRUM))
 PLOT_SIGNAL_SPECTRUM = 1
 PLOT_FILTERED_SPECTRUM = 1 & (int(FILTRATE) | int(APPLY_SPECTRUM))
 PLOT_SHIM = bool(0) and MAKE_SHIM
@@ -156,19 +156,20 @@ if EDIT_SPECTRUM:
 
 # sys.exit(0)
 
-if APPLY_SPECTRUM:
-  arawf = spectrum.apply_spectrum(s=sampling, d=duration,
+# if APPLY_SPECTRUM:
+arawf = spectrum.apply_spectrum(s=sampling, d=duration,
                                  signal_data=araw,
-                                 sffn=filename_spectrum,
                                  rawf=filename_flt,
-                                 band_pass=FILTRATE,
+                                 apply_spectrum_form=APPLY_SPECTRUM,
+                                 sffn=filename_spectrum,
+                                 band_pass_filter=FILTRATE,
                                  fmin=freq_min, fmax=freq_max)
 
 
 # if araw is None:
 #   sys.exit(1)
 
-elif FILTRATE:
+# elif FILTRATE:
     # arawf = flt.filtrate(fmin=freq_min,
     #                      fmax=freq_max,
     #                      s=sampling,
@@ -181,15 +182,15 @@ elif FILTRATE:
     #                      ofn=filename_flt,
     #                      data=araw)
 
-    arawf = fourier.filtrate(fmin=freq_min, fmax=freq_max,
-                             s=sampling,
-                             d=duration,
-                             raw=filename_raw,
-                             rawf=filename_flt,
-                             signal_data=araw)
+#     arawf = fourier.filtrate(fmin=freq_min, fmax=freq_max,
+#                              s=sampling,
+#                              d=duration,
+#                              raw=filename_raw,
+#                              rawf=filename_flt,
+#                              signal_data=araw)
 
-else:
-    arawf = araw
+# else:
+#     arawf = araw
 
 if arawf is None:
     sys.exit(1)
