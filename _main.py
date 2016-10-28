@@ -13,6 +13,10 @@ import _AFC_main as afc
 import _plot_shim as plotshim
 import _read_wav as wav
 import _spectrum_main as spectrum
+import _ui as ui
+
+
+# ui.showWindow()
 
 # генератор  s_type_noise | s_type_sinus | s_type_sinus_noise | s_type_sinus_sinus_noise
 
