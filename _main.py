@@ -73,7 +73,6 @@ channel_gap = 0
 
 # имена файлов
 filename_raw = filename_template + '.raw'
-print(filename_raw)
 filename_flt = filename_template + '.rawf'
 filename_flt2 = filename_template + '.rawf2'
 filename_shim = filename_template + '.shim'
