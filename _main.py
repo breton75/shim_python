@@ -16,13 +16,14 @@ import _spectrum_main as spectrum
 import _ui as ui
 
 
-# ui.showWindow()
+params = ui.showWindow()
+print(params)
 
 # генератор  s_type_noise | s_type_sinus | s_type_sinus_noise | s_type_sinus_sinus_noise
 
-signal_type = gen.s_type_noise
-freq = 3000
-sampling = 10000
+signal_type = gen.s_type_sinus
+freq = 1000
+sampling = 100000
 duration = 1000
 amplitude = 256
 fadein = 0
@@ -42,12 +43,17 @@ try:
       for j in range(len(lst[i])):
         lst[i][j] = lst[i][j].strip()
     # print(lst)
-    voc = dict(lst)
+    ini = dict(lst)
   
-    if not 'filename_template' in voc:
-      raise Exception('_main.ini must contains param "filename_template" specifing path and names of created files\nexample: filename_template = "home/user/test_main"')
-  
-    filename_template = voc['filename_template']  # "d:/c++/AME/Generators/test_main" # добавляем разные расширения
+    if not ('workdir' in ini and 'filename_template' in ini):
+      raise Exception('_main.ini must contains params "filename_template" and "workdir" specifing path and names of created files\nexample: filename_template = home/user/  workdir=test_main')
+    
+    filename_template = ini['workdir']
+    if len(filename_template) == 0:
+      raise Exception("Path not found")
+
+    if filename_template[-1] != '/': filename_template += '/'
+    filename_template += ini['filename_template']  # "d:/c++/AME/Generators/test_main" # добавляем разные расширения
 
 except Exception as E:
   print('error on reading ini file: ', file=sys.stderr, end='')
@@ -58,6 +64,7 @@ except Exception as E:
 # фильтр
 freq_min = 1000
 freq_max = 5000
+
 
 # filter_algorithm = fld.f_algorithm_cheby1
 # filter_type = fld.f_type_bandpass
@@ -86,11 +93,21 @@ mode = sock.e_mode_loop
 point1=0
 point2=1000
 
+if 'freq_min' in ini: freq_min = ini['freq_min']
+if 'freq_max' in ini: freq_max = ini['freq_max']
+if 'channel_count' in ini: channel_count = ini['channel_count']
+if 'saw_count_per_point' in ini: saw_count_per_point = ini['saw_count_per_point']
+if 'zero_smooth' in ini: zero_smooth = ini['zero_smooth']
+if 'channel_gap' in ini: channel_gap = ini['channel_gap']
+
+
 # KJHSKJHKJHSKJHS
+
 #####################################################
 #####################################################
 
 SEND_STOP = 0
+
 AFC_ONLY = 0
 
 EDIT_SPECTRUM = bool(1) and (signal_type != gen.s_type_sinus)

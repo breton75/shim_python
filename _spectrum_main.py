@@ -136,7 +136,7 @@ class PolygonInteractor(object):
         #     return
 
         if event.inaxes:
-            if event.key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-']:
+            if event.key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']:
                 ind = self.get_ind_under_point(event)
                 if not (ind is None or ind == 0 or ind == len(self.poly.xy) - 1):
                     # val = int(event.key) / 10
@@ -418,7 +418,7 @@ def edit_spectrum(**kwargs):
     try:
         # print('Start spectrum editing')
 
-        if not 'sffn' in kwargs: raise Exception('spectrum form file name is not specified')
+        # if not 'sffn' in kwargs: raise Exception('spectrum form file name is not specified')
         if not 's' in kwargs: raise Exception('sampling is not specified')
         if not 'd' in kwargs: raise Exception('duration is not specified')
 
