@@ -56,6 +56,9 @@ def plot(**kwargs):
 
         POINT_COUNT = int(SIGNAL_SAMPLING * SIGNAL_DURATION / 1000)
     
+        if POINT_1 < 0: POINT_1 = POINT_COUNT + POINT_1
+        if POINT_2 < 0: POINT_2 = POINT_COUNT + POINT_2
+
         if not POINT_1 or (POINT_1 not in range(POINT_COUNT)): POINT_1 = 0
         if not POINT_2 or (POINT_2 not in range(POINT_1, POINT_COUNT)): POINT_2 = POINT_COUNT
 

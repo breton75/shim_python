@@ -5,7 +5,6 @@ import argparse
 import matplotlib.pyplot as plt
 import array as arr
 import random
-import _filters_design as fd
 
 MIN_10NS_PSAW = 5
 SAW_FREQ = 100000000
@@ -362,16 +361,6 @@ if __name__ == "__main__":
         SHIM_ZERO_SMOOTH = 0
         SHIM_CHANNEL_COUNT = 1
 
-        # эти параметры не участвуют в вычисленияях, они только записываются в заголовок файла
-        # SIGNAL_FREQUENCY = 4000
-        # FILTER_FREQUENCY_MIN = 2000
-        # FILTER_FREQUENCY_MAX = 4000
-        # FILTER_ALGORITHM = fd.f_algorithm_none
-        # FILTER_TYPE = fd.f_type_low
-        # Rp = 2
-        # Rs = 40
-        # TRANSITION_BAND = 200
-
     else:
 
         # параметры сигнала
@@ -388,15 +377,6 @@ if __name__ == "__main__":
         SHIM_CHANNEL_COUNT = parser.channel_count
         SAW_COUNT_PER_POINT = parser.saw_count_per_point
         
-        # эти параметры не участвуют в вычисленияях, они только записываются в заголовок файла
-        # FILTER_FREQUENCY_MIN = parser.filter_frequency_min
-        # FILTER_FREQUENCY_MAX = parser.filter_frequency_max
-        # FILTER_ALGORITHM = parser.filter_algorithm
-        # FILTER_TYPE = parser.filter_type
-        # Rp = parser.filter_max_ripple
-        # Rs = parser.filter_min_attenuation
-        # TRANSITION_BAND = parser.filter_transition_band
-
     shim(f=SIGNAL_FREQUENCY,
          s=SIGNAL_SAMPLING,
          d=SIGNAL_DURATION,

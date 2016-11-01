@@ -549,7 +549,8 @@ def apply_spectrum(**kwargs):
 
             # если диапазон частот форма спектра не соответствует заданным параметрам fmin и fmax, то выходим с ошибкой
             if not (fmin == minX and fmax == maxX):
-                raise Exception('frequency band of spectrum form (%i - %i) does not match to given params (%i - %i)' % (minX, maxX, fmin, fmax))
+                raise Exception('полоса частот формы спектра (%i - %i) не соответствует заданным параметрам (%i - %i)' % (minX, maxX, fmin, fmax))
+                # raise Exception('frequency band of spectrum form (%i - %i) does not match to given params (%i - %i)' % (minX, maxX, fmin, fmax))
     
             # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
             if controls_count is None or controls is None:
