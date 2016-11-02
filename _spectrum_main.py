@@ -10,9 +10,14 @@ from scipy import signal
 import _duty as duty
 from scipy.fftpack import fft
 
-from matplotlib import rc
-rc('font', family='Verdana') # для отображения русского шрифта
+from matplotlib import rc # для отображения русского шрифта
+if 'win' in sys.platform: 
+    rc('font', family='Verdana')
+else:
+    rc('font', family='Verdana')
 
+from matplotlib.colors import colorConverter
+from matplotlib.patches import Polygon
 from matplotlib.lines import Line2D
 from matplotlib.artist import Artist
 from matplotlib.mlab import dist_point_to_segment
@@ -21,7 +26,7 @@ from matplotlib.text import Text
 HEADER_STRUCT = '16sIIII' # заголовок, версия, кол-во точек # fmin, fmax
 FILE_DESIGNATION = b'SPECTRUM FORM   '
 FILE_VER = 0x00000001 # 0.0.0.2
-CONTROL_COUNT = 40
+CONTROL_COUNT = 41
 
 class PolygonInteractor(object):
     """
@@ -43,7 +48,7 @@ class PolygonInteractor(object):
     epsilon = 5  # max pixel distance to count as a vertex hit
     x_const = 0
 
-    def __init__(self, ax, poly, file_name, aspec, fmin, fmax):
+    def __init__(self, ax, poly, file_name, fmin, fmax): #, aspec
         if poly.figure is None:
             raise RuntimeError('You must first add the polygon to a figure or canvas before defining the interactor')
         self.ax = ax
@@ -60,13 +65,13 @@ class PolygonInteractor(object):
         self.file_name = file_name
         self.fmin = fmin
         self.fmax = fmax
-        self.aspec = aspec[fmin:fmax]
-        self.maxY = float(max(self.aspec))
-        self.xstep = get_xstep(len(aspec), len(poly.xy) - 2)
+        # self.aspec = aspec[fmin:fmax]
+        self.maxY = 150 # float(max(self.aspec))
+        self.xstep = get_xstep(fmax - fmin, len(poly.xy) - 2)
 
         x, y = zip(*self.poly.xy)
         
-        self.line = Line2D(x, y, marker='o', markerfacecolor='r', markersize=10, animated=True, drawstyle='steps-mid', color='red', lw=2)
+        self.line = Line2D(x, y, marker='s', markerfacecolor='r', markersize=10, animated=True, drawstyle='steps-mid', color='black', lw=0)
         self.ax.add_line(self.line)
         
         #self._update_line(poly)
@@ -161,7 +166,7 @@ class PolygonInteractor(object):
             f.write(struct.pack(HEADER_STRUCT, FILE_DESIGNATION, FILE_VER, len(x) - 2, self.fmin, self.fmax)) 
 
             for i in range(1, len(x) - 1, 1):
-                f.write(struct.pack('d', float(y[i]) / self.maxY))
+                f.write(struct.pack('d', float(y[i])))
 
             
             f.close()
@@ -178,7 +183,7 @@ class PolygonInteractor(object):
             self.poly.xy[0][0] = self.fmin #0
             self.poly.xy[-1][0] = self.fmax # fpcnt
 
-            maxY = max(self.aspec)
+            maxY = 100 # max(self.aspec)
             for i in range(1, controls_count - 1):
                 self.poly.xy[i][0] = self.fmin + (i - 1) * step
                 self.poly.xy[i][1] = maxY
@@ -222,7 +227,7 @@ class PolygonInteractor(object):
 
         if self._ind is None:
             ind = self.get_ind_under_point(event)
-            if not ind is None:
+            if not (ind is None or event.ydata is None):
                 self.text.set_text('%i Гц' % int(self.poly.xy[ind][0]))
                 self.text.set_position([self.poly.xy[ind][0], event.ydata + 1])
                 self.update()
@@ -348,15 +353,15 @@ def read_spectrum_form_file(**kwargs):
     try:
         # print('start read_spectrum_file')
 
-        if not 'sffn' in kwargs:
-            raise Exception('spectrum form file name is not specified')
-
         spectrum_form_file_name = kwargs['sffn']
         ver = None
         controls_count = None
         controls = None
         minX = None
         maxX = None
+
+        if not 'sffn' in kwargs:
+            raise Exception('spectrum form file name is not specified')
 
 
         header = duty.read_header(spectrum_form_file_name, HEADER_STRUCT)
@@ -416,80 +421,60 @@ def get_xs_ys(fmin, fmax, controls_count):
 def edit_spectrum(**kwargs):
 
     try:
-        # print('Start spectrum editing')
-
-        # if not 'sffn' in kwargs: raise Exception('spectrum form file name is not specified')
         if not 's' in kwargs: raise Exception('sampling is not specified')
         if not 'd' in kwargs: raise Exception('duration is not specified')
 
         sampling = kwargs['s'] # дискретизация
         duration = kwargs['d']
-        # point_count = int(sampling * duration / 1000)
 
-
-        spectrum, aspec, araw = signal2spectrum(**kwargs)
-        
-        if spectrum is None or aspec is None:
-            raise Exception('no spectrum got')
-
-
-        # задаем границы массива. если нужно применить полосовой фильтр, то отсекаем все, что не входит в [fmin:fmax]
+        # задаем границы массива диапазон частот [fmin:fmax]
         fmin = 1
-        fmax = len(aspec)
-        if 'fmin' in kwargs and kwargs['fmin'] in range(fmin, fmax) : fmin = kwargs['fmin']
+        fmax = int(sampling / 2)
+        if 'fmin' in kwargs and kwargs['fmin'] in range(fmin, fmax): fmin = kwargs['fmin']
         if 'fmax' in kwargs and kwargs['fmax'] in range(fmin, fmax): fmax = kwargs['fmax']
 
-        spectrumMax = max(aspec[fmin:fmax])
+        spectrumMax = 100 # в процентах %
 
         spectrum_form_file_name = ''
         if 'sffn' in kwargs:
             spectrum_form_file_name = kwargs['sffn']
 
     ###############################################
-        # print('max(spectrum)=%d  len(aspec)=%i' % (spectrumMax, len(aspec)))
-
-        fig, ax = plt.subplots()
-        plt.vlines(range(fmin, fmax, 1), 0, aspec[fmin:fmax], label=' ', color='b')
-        # plt.plot(aspec[fmin:fmax], drawstyle='steps', label=' ')
-        plt.legend(title='Редактор формы спектра\nctrl + r - сброс\nctrl + w - сохранить и выйти\n0..9 - установить уровень регулятора', loc='upper left', shadow=True, frameon=True, fontsize='small')
-        plt.axis([fmin, fmax, 0, spectrumMax * 1.5])
 
         ver, controls_count, controls, minX, maxX = read_spectrum_form_file(**kwargs)
 
         # если не удалось прочитать сохраненную форму спектра, то создаем новую
-        if controls_count is None or controls is None:
+        if controls_count is None:
+            controls_count = CONTROL_COUNT
+            minX = fmin
+            maxX = fmax
         
-            xs, ys = get_xs_ys(fmin, fmax, CONTROL_COUNT)
-
-            ys[1:-1] = spectrumMax
+        # получаем два массива с координатами регуляторов
+        xs, ys = get_xs_ys(minX, maxX, controls_count)
             
-            plt.xticks(arange(fmin, fmax, int(get_xstep(fmax - fmin, CONTROL_COUNT)) * 3)) #, arange(0, len(aspec), get_xstep(len(aspec), CONTROL_COUNT)))
+        # если создаем новую форму спектра, то значения у всех регуляторов равно 100%
+        if controls is None:
+            ys[1:-1] = spectrumMax
 
         else:
-
-            # если диапазон частот форма спектра не соответствует заданным параметрам fmin и fmax, то выходим с ошибкой
-            if not (fmin == minX and fmax == maxX):
-                raise Exception('frequency band of spectrum form (%i - %i) does not match to given params (%i - %i)' % (minX, maxX, fmin, fmax))
-
-            xs, ys = get_xs_ys(fmin, fmax, controls_count)
-            
             for i in range(1, controls_count + 1, 1):
-                ys[i] = controls[i - 1] * spectrumMax
-
-            plt.xticks(arange(fmin, fmax, int(get_xstep(fmax - fmin, controls_count)) * 2)) #, arange(0, len(aspec), get_xstep(len(aspec), controls_count) * 4))
+                ys[i] = controls[i - 1]
 
 
-        from matplotlib.colors import colorConverter
-        from matplotlib.patches import Polygon
-        poly = Polygon(list(zip(xs, ys)), animated=True, closed=False, color=colorConverter.to_rgba('r', 0.500), visible=True)
+        # создаем графические элементы
+        fig, ax = plt.subplots()
+        plt.vlines(xs, 0, ys, label=' ', color='b', lw=3)
+        plt.legend(title='Редактор формы спектра\nctrl + r - сброс\nctrl + w - сохранить и выйти\n0..9 - установить уровень регулятора', loc='upper left', shadow=True, frameon=True, fontsize='small')
+        plt.axis([fmin, fmax, 0, spectrumMax * 1.5])
+        plt.xticks(arange(fmin, fmax, int(get_xstep(fmax - fmin, controls_count)) * 2)) #, arange(0, len(aspec), get_xstep(len(aspec), controls_count) * 4))
+        
+        poly = Polygon(list(zip(xs, ys)), animated=True, closed=False, color=colorConverter.to_rgba('b', 0.250), visible=True)
         ax.add_patch(poly)
-        p = PolygonInteractor(ax, poly, spectrum_form_file_name, aspec, fmin, fmax)
+        p = PolygonInteractor(ax, poly, spectrum_form_file_name, minX, maxX) # , aspec
         
         plt.autumn()
         plt.grid()
         plt.show()
-
-        # print('Spectrum editing finished')
 
     except Exception as E:
         print('error in function edit_spectrum(): ', file=sys.stderr, end='')

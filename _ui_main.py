@@ -299,9 +299,9 @@ class mainFrame(Frame):
 		self.bnStart = tk.Button(self.frameButtons, text='Старт', width=80, command = self.start)
 		self.bnStart.grid(row=1, column=0, sticky=tk.E, columnspan=2)
 
-		# отмена
-		self.bnCancel = tk.Button(self.frameButtons, text='Отмена', width=80)
-		self.bnCancel.grid(row=3, column=0, sticky=tk.E, columnspan=2)
+		# сохранить
+		self.bnSave = tk.Button(self.frameButtons, text='Сохранить', width=80, command = self.save)
+		self.bnSave.grid(row=3, column=0, sticky=tk.E, columnspan=2)
 
 	## <- кнопки ##
 
@@ -331,13 +331,24 @@ class mainFrame(Frame):
 			if fn[-1] != '/': fn += '/'
 			fn += self.config['filename_template']
 
-			spectrum.edit_spectrum(sff=fn + '.spectrum', raw=fn+'.raw', s=self.config['sampling'], d=self.config['duration'], fmin=self.config['freq_min'], fmax=self.config['freq_max'])
+			spectrum.edit_spectrum(sffn=fn + '.spectrum', raw=fn+'.raw', s=self.config['sampling'], d=self.config['duration'], fmin=self.config['freq_min'], fmax=self.config['freq_max'])
 
 		except Exception as E:
 			print(E, file=sys.stderr)			
 
 	def start(self):
+		try:
 
+			self.save()
+			do(self.config)
+	  
+		except Exception as E:
+			print('error in func _ui.start(): ', file=sys.stderr, end='')
+			print(E, file=sys.stderr)  
+
+
+	def save(self):
+		
 		self.checkout_config()
 
 		cfg = self.config.copy()
@@ -366,11 +377,9 @@ class mainFrame(Frame):
 				while len(cfg):
 					p = cfg.popitem()
 					configfile.write(str(p[0]) + '=' + str(p[1]) + '\n')
-
-			do(self.config)
 	  
 		except Exception as E:
-			print('error in func _ui.start(): ', file=sys.stderr, end='')
+			print('error in func _ui.save(): ', file=sys.stderr, end='')
 			print(E, file=sys.stderr)  
 
 

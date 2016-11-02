@@ -14,8 +14,11 @@ import _shim_main as shim
 import _duty as duty
 from _spectrum_main import signal2spectrum
 
-from matplotlib import rc
-rc('font', family='Verdana') # для отображения русского шрифта
+from matplotlib import rc # для отображения русского шрифта
+if 'win' in sys.platform: 
+    rc('font', family='Verdana')
+else:
+    rc('font', family='Verdana')
 
 from scipy.fftpack import rfft
 # from scipy.fftpack import fft
