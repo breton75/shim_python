@@ -66,7 +66,7 @@ class PolygonInteractor(object):
         self.fmin = fmin
         self.fmax = fmax
         # self.aspec = aspec[fmin:fmax]
-        self.maxY = 150 # float(max(self.aspec))
+        self.maxY = 100 # float(max(self.aspec))
         self.xstep = get_xstep(fmax - fmin, len(poly.xy) - 2)
 
         x, y = zip(*self.poly.xy)
@@ -144,8 +144,9 @@ class PolygonInteractor(object):
             if event.key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']:
                 ind = self.get_ind_under_point(event)
                 if not (ind is None or ind == 0 or ind == len(self.poly.xy) - 1):
-                    # val = int(event.key) / 10
-                    self.poly.xy[ind][1] = self.maxY * int(event.key) / 10
+                    if event.key == '-': val = 1
+                    else: val = int(event.key) / 10
+                    self.poly.xy[ind][1] = self.maxY * val
                     self.line.set_data(zip(*self.poly.xy))
 
         if event.key == 'ctrl+w':
@@ -476,9 +477,12 @@ def edit_spectrum(**kwargs):
         plt.grid()
         plt.show()
 
+        return True
+
     except Exception as E:
         print('error in function edit_spectrum(): ', file=sys.stderr, end='')
         print(E, file=sys.stderr)
+        return False
 
 
 def apply_spectrum(**kwargs):
@@ -500,7 +504,7 @@ def apply_spectrum(**kwargs):
         if spectrum is None or araw is None:
             raise Exception('converting to spectrum error')
 
-        # границы частот спктра определяют диапазон наложения формы спектра
+        # границы частот спектра определяют диапазон наложения формы спектра
         # для применения полосового фильтра, отсекаем все, что не входит в [fmin:fmax]
         fmin = 1
         fmax = len(aspec)
@@ -522,10 +526,10 @@ def apply_spectrum(**kwargs):
         # * начало 1 *
         if 'apply_spectrum_form' in kwargs and kwargs['apply_spectrum_form'] == True: 
             
-            print('applying spectrum form ...', end='')
+            print('imposing spectrum form ...', end='')
 
             if not 'sffn' in kwargs:
-                raise Exception('Spectrum form file name is not specified')
+                raise Exception('Spectrum form file is not specified')
 
             spectrum_form_file_name = kwargs['sffn']
 
@@ -533,22 +537,24 @@ def apply_spectrum(**kwargs):
             ver, controls_count, controls, minX, maxX = read_spectrum_form_file(**kwargs)
 
             # если диапазон частот форма спектра не соответствует заданным параметрам fmin и fmax, то выходим с ошибкой
-            if not (fmin == minX and fmax == maxX):
-                raise Exception('полоса частот формы спектра (%i - %i) не соответствует заданным параметрам (%i - %i)' % (minX, maxX, fmin, fmax))
+            # if not (fmin == minX and fmax == maxX):
+            #     raise Exception('полоса частот формы спектра (%i - %i) не соответствует заданным параметрам (%i - %i)' % (minX, maxX, fmin, fmax))
                 # raise Exception('frequency band of spectrum form (%i - %i) does not match to given params (%i - %i)' % (minX, maxX, fmin, fmax))
     
             # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
             if controls_count is None or controls is None:
                 raise Exception('error on reading spectrum form')
 
+            minX_n = int(minX * fsdpcnt / fpcnt) # реальные границы формы спектра 
+            maxX_n = int(maxX * fsdpcnt / fpcnt)
 
-            xstep = get_xstep(fmax_n - fmin_n, controls_count)
-            x = fmin_n
-            x1 = fmin_n
+            xstep = get_xstep(maxX_n - minX_n, controls_count)
+            x = minX_n
+            x1 = minX_n
             y1 = controls[0]
         
             for i in range(1, controls_count, 1):
-                x2 = fmin_n + i * xstep
+                x2 = minX_n + i * xstep
                 y2 = controls[i]
     
                 # проходим по всем точкам между x1 и x2
@@ -558,7 +564,7 @@ def apply_spectrum(**kwargs):
                     # уравнение прямой (х1,у1)-(х2,у2):  (x - x1)/(x2 - x1) = (y - y1)/(y2 - y1), отсюда
                     # y = (x - x1)/(x2 - x1) * (y2 - y1) + y1. получим:
     
-                    y = (x - x1) / (x2 - x1) * (y2 - y1) + y1
+                    y = ((x - x1) / (x2 - x1) * (y2 - y1) + y1) / 100
                     # print('i=%i  x1=%d y1=%0.2f  x2=%d y2=%0.2f  x=%i  y=%0.2f  araw[x]=%0.2f' % (i, x1, y1, x2, y2, x, y, araw[x]) )
                     # print('y={}'.format(y))
 

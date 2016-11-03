@@ -348,7 +348,7 @@ class mainFrame(Frame):
 
 
 	def save(self):
-		
+
 		self.checkout_config()
 
 		cfg = self.config.copy()
@@ -569,14 +569,15 @@ def do(config):
 	 
 	 
 	if edit_spectrum_form:
-		spectrum.edit_spectrum(s=sampling, d=duration,
+		if spectrum.edit_spectrum(s=sampling, d=duration,
 						   signal_data=araw,
 						   sffn=filename_spectrum,
 						   band_pass=filtrate,
-						   fmin=freq_min, fmax=freq_max)
+						   fmin=freq_min, fmax=freq_max):
+			sys.exit(1)
 	 
 	# sys.exit(0)
-
+	print('here')
 	arawf = spectrum.apply_spectrum(s=sampling, d=duration,
 								   signal_data=araw,
 								   rawf=filename_flt,
