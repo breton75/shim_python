@@ -569,11 +569,13 @@ def do(config):
 	 
 	 
 	if edit_spectrum_form:
-		if spectrum.edit_spectrum(s=sampling, d=duration,
+		y = spectrum.edit_spectrum(s=sampling, d=duration,
 						   signal_data=araw,
 						   sffn=filename_spectrum,
 						   band_pass=filtrate,
-						   fmin=freq_min, fmax=freq_max):
+						   fmin=freq_min, fmax=freq_max)
+		print (y)
+		if not y:
 			sys.exit(1)
 	 
 	# sys.exit(0)

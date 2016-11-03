@@ -22,8 +22,8 @@ if namespace.noui == None:
 else:
   try:
 
-    with open('_main.config', 'r') as inifile:
-      lines = inifile.readlines()
+    with open('_main.config', 'r') as configfile:
+      lines = configfile.readlines()
     
       # разбираем параметры записанные в файле ini
       lst = []

@@ -149,7 +149,7 @@ class PolygonInteractor(object):
                     self.poly.xy[ind][1] = self.maxY * val
                     self.line.set_data(zip(*self.poly.xy))
 
-        if event.key == 'ctrl+w':
+        if event.key == 'ctrl+u':
             print('saving specrtum form... ', end='')
 
             x, y = zip(*self.poly.xy)
@@ -163,13 +163,11 @@ class PolygonInteractor(object):
             # print('%d  %d' % (max(x), float(max(y))))
 
             # при сохранении отбрасываем две точки - первую и последнюю, тк они имеют только декоративную функцию
-
             f.write(struct.pack(HEADER_STRUCT, FILE_DESIGNATION, FILE_VER, len(x) - 2, self.fmin, self.fmax)) 
 
             for i in range(1, len(x) - 1, 1):
                 f.write(struct.pack('d', float(y[i])))
 
-            
             f.close()
             print('ok')
 
@@ -260,8 +258,6 @@ class PolygonInteractor(object):
         self.ax.draw_artist(self.text)
         self.canvas.blit(self.ax.bbox)
         
-
-
 def createParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-raw', '--raw_file_name', type=str, required=False)
@@ -279,7 +275,6 @@ def createParser():
 
     else:
         return namespace
-
 
 def signal2spectrum(**kwargs):
     try:
@@ -348,7 +343,6 @@ def signal2spectrum(**kwargs):
         # spectrum содержит результат преобразования фурье без изменений, без учета длительности и дискретизации сигнала.
         # aspec содержит уровни частот, пересчитанных с учетом длительности и дискретизации сигнала. для отображения на графике и редактирования формы спектра
         return spectrum, aspec, araw
-
 
 def read_spectrum_form_file(**kwargs):
     try:
@@ -476,7 +470,8 @@ def edit_spectrum(**kwargs):
         plt.autumn()
         plt.grid()
         plt.show()
-
+        plt.close()
+        print('ywuwuye')
         return True
 
     except Exception as E:
