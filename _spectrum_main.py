@@ -149,7 +149,7 @@ class PolygonInteractor(object):
                     self.poly.xy[ind][1] = self.maxY * val
                     self.line.set_data(zip(*self.poly.xy))
 
-        if event.key == 'ctrl+u':
+        if event.key == 'ctrl+w':
             print('saving specrtum form... ', end='')
 
             x, y = zip(*self.poly.xy)
@@ -470,14 +470,13 @@ def edit_spectrum(**kwargs):
         plt.autumn()
         plt.grid()
         plt.show()
-        plt.close()
-        print('ywuwuye')
+        
         return True
 
     except Exception as E:
         print('error in function edit_spectrum(): ', file=sys.stderr, end='')
         print(E, file=sys.stderr)
-        return False
+        return None
 
 
 def apply_spectrum(**kwargs):
@@ -578,8 +577,7 @@ def apply_spectrum(**kwargs):
 
         # * конец 1 *
 
-        # ПРИМЕНЯЕМ ПОЛОСОВОЙ ФИЛЬТР
-        # * начало 2 *
+        # >> ПРИМЕНЯЕМ ПОЛОСОВОЙ ФИЛЬТР
         if 'band_pass_filter' in kwargs and kwargs['band_pass_filter'] == True:
             # обнуляем все значения, которые не входят в диапазон частот
             spectrum[:fmin_n] = 0.0   # в основной части спектра
@@ -588,7 +586,7 @@ def apply_spectrum(**kwargs):
             spectrum[fmax_n:fsdpcnt] = 0.0   # в основной части спектра
             spectrum[fsdpcnt:-fmax_n] = 0.0  # в зеркальной части спектра
 
-        # * конец 2 *
+        # << #####
 
 
         # преобразуем спектр обратно в сигнал
@@ -632,10 +630,10 @@ if __name__ == "__main__":
         RAW_FILE_NAME = "D:/c++/AME/Generators/test_main.raw"
 
         # путь к файлу с отфильтрованным сигналом
-        RAWF_FILE_NAME = "D:/c++/AME/Generators/test_main.rawf"
+        RAWF_FILE_NAME = "D:/c++/AME/Generators/www.rawf"
 
         # путь к файлу с формой спектра        
-        SPECTRUM_FORM_FILE_NAME = "D:/c++/AME/Generators/test_main.spectrum"
+        SPECTRUM_FORM_FILE_NAME = "D:/c++/AME/Generators/www.spectrum"
 
         SIGNAL_SAMPLING = 100000 # дискретизация
         SIGNAL_DURATION = 1000
@@ -661,5 +659,5 @@ if __name__ == "__main__":
                   s=SIGNAL_SAMPLING,
                   d=SIGNAL_DURATION,
                   band_pass=True,
-                  fmin=1500,
-                  fmax=3000)
+                  fmin=2000,
+                  fmax=4000)

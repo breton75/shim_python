@@ -12,6 +12,9 @@ import _spectrum_main as spectrum
 # from _exec_main import execute
 # from _exec_main import get_cfg_param
 
+import matplotlib.pyplot as plt
+
+
 class mainFrame(Frame):
 	def __init__(self, master):
 		super(mainFrame, self).__init__(master)
@@ -136,10 +139,10 @@ class mainFrame(Frame):
 		self.editFreqMax.insert(0, get_cfg_param(self.config, 'freq_max', '4000'))
 		
 		# редактировать форму спектра
-		self.edit_spectrum_form = BooleanVar()
-		self.checkEditSpectrumForm = tk.Checkbutton(self.frameFilter, text='Редактировать форму спектра', variable=self.edit_spectrum_form)
-		self.checkEditSpectrumForm.grid(row=3, column=0, sticky=tk.W, columnspan=2)
-		self.edit_spectrum_form.set(get_cfg_param(self.config, 'edit_spectrum_form', False, 'b'))
+		# self.edit_spectrum_form = BooleanVar()
+		# self.checkEditSpectrumForm = tk.Checkbutton(self.frameFilter, text='Редактировать форму спектра', variable=self.edit_spectrum_form)
+		# self.checkEditSpectrumForm.grid(row=3, column=0, sticky=tk.W, columnspan=2)
+		# self.edit_spectrum_form.set(get_cfg_param(self.config, 'edit_spectrum_form', False, 'b'))
 
 
 		# # применить форму спектра
@@ -148,9 +151,13 @@ class mainFrame(Frame):
 		self.checkApplySpectrumForm.grid(row=4, column=0, sticky=tk.W, columnspan=2)
 		self.apply_spectrum_form.set(get_cfg_param(self.config, 'apply_spectrum_form', False, 'b'))
 
+		# новая форма спектра
+		self.bnCreateSpectrumForm = tk.Button(self.frameFilter, text='Новая форма спектра', command=self.create_spectrum)
+		self.bnCreateSpectrumForm.grid(row=6, column=0, sticky=tk.W, columnspan=2)
+
 		# редактор
 		self.bnEditSpectrumForm = tk.Button(self.frameFilter, text='Редактор формы спектра', command=self.edit_spectrum)
-		self.bnEditSpectrumForm.grid(row=5, column=0, sticky=tk.E)
+		self.bnEditSpectrumForm.grid(row=7, column=0, sticky=tk.W, columnspan=2)
 
 	## <- фильтрация ##
 
@@ -320,6 +327,26 @@ class mainFrame(Frame):
 			sys.stderror.write(E)
 
 
+	def create_spectrum(self):
+		try:
+			if self.checkout_config() is None: return
+
+			fn = self.config['workdir']
+			if len(fn) == 0:
+				raise Exception('Path not found')
+
+			if fn[-1] != '/': fn += '/'
+			fn += self.config['filename_template']
+
+			with open(fn + '.spectrum', 'w') as f:
+				pass
+
+			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config['sampling'], d=self.config['duration'], fmin=self.config['freq_min'], fmax=self.config['freq_max'])
+
+		except Exception as E:
+			print(E, file=sys.stderr)			
+
+
 	def edit_spectrum(self):
 		try:
 			if self.checkout_config() is None: return
@@ -331,10 +358,11 @@ class mainFrame(Frame):
 			if fn[-1] != '/': fn += '/'
 			fn += self.config['filename_template']
 
-			spectrum.edit_spectrum(sffn=fn + '.spectrum', raw=fn+'.raw', s=self.config['sampling'], d=self.config['duration'], fmin=self.config['freq_min'], fmax=self.config['freq_max'])
+			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config['sampling'], d=self.config['duration'], fmin=self.config['freq_min'], fmax=self.config['freq_max'])
 
 		except Exception as E:
-			print(E, file=sys.stderr)			
+			print(E, file=sys.stderr)	
+
 
 	def start(self):
 		try:
@@ -397,7 +425,7 @@ class mainFrame(Frame):
 				'freq_min':   int(self.editFreqMin.get()),
 				'freq_max':   int(self.editFreqMax.get()),
 				'filtrate':            bool(self.filtrate.get()),
-				'edit_spectrum_form':  bool(self.edit_spectrum_form.get()),
+				# 'edit_spectrum_form':  bool(self.edit_spectrum_form.get()),
 				'apply_spectrum_form': bool(self.apply_spectrum_form.get()),
 				'channel_count':    int(self.editChannelCount.get()),
 				'saw_count_per_point':      int(self.editSawpp.get()),
@@ -422,39 +450,8 @@ class mainFrame(Frame):
 
 		except Exception as E:
 			print('error in func _ui.checkout_config(): ', file=sys.stderr, end='')
-			sys.stderror.write(E, file=sys.stderr)
+			print(E, file=sys.stderr)
 			return None
-
-
-
-def showWindow():
-	window = tk.Tk()
-	# window.geometry("200x200")
-	
-	frame = mainFrame(window)
-	window.grid()
-	window.mainloop()
-	# print(frame.config)
-	# window.close()
-
-
-def get_cfg_param(config, param_name, default, type='s'):
-	try:
-		if type == 'i':
-			if param_name in config: return int(config[param_name])
-			else: return default
-		elif type == 'b':
-			# if param_name == 'send': print(str(config[param_name]).lower())
-			if param_name in config:
-				return str(config[param_name]).lower() in ['1', 'yes', 'y', 'true', 't']
-			else: return default
-		else:
-			if param_name in config: return config[param_name]
-			else: return default
-	except Exception as E:
-		print('error in func _exec_main.get_cfg_param(): ', file=sys.stderr, end='')
-		print(E)
-		return None
 
 
 
@@ -566,20 +563,17 @@ def do(config):
 	if araw is None:
 		print('araw is None')
 		sys.exit(1)
-	 
-	 
+
+
 	if edit_spectrum_form:
-		y = spectrum.edit_spectrum(s=sampling, d=duration,
+		spectrum.edit_spectrum(s=sampling, d=duration,
 						   signal_data=araw,
 						   sffn=filename_spectrum,
 						   band_pass=filtrate,
 						   fmin=freq_min, fmax=freq_max)
-		print (y)
-		if not y:
-			sys.exit(1)
 	 
 	# sys.exit(0)
-	print('here')
+
 	arawf = spectrum.apply_spectrum(s=sampling, d=duration,
 								   signal_data=araw,
 								   rawf=filename_flt,
@@ -630,5 +624,31 @@ def do(config):
 				flags=FLAGS)
 
 
+def showWindow():
+	window = tk.Tk()
+	# window.geometry("200x200")
+	
+	frame = mainFrame(window)
+	window.grid()
+	window.mainloop()
+	# print(frame.config)
+	# window.close()
 
-# showWindow()
+
+def get_cfg_param(config, param_name, default, type='s'):
+	try:
+		if type == 'i':
+			if param_name in config: return int(config[param_name])
+			else: return default
+		elif type == 'b':
+			# if param_name == 'send': print(str(config[param_name]).lower())
+			if param_name in config:
+				return str(config[param_name]).lower() in ['1', 'yes', 'y', 'true', 't']
+			else: return default
+		else:
+			if param_name in config: return config[param_name]
+			else: return default
+	except Exception as E:
+		print('error in func _exec_main.get_cfg_param(): ', file=sys.stderr, end='')
+		print(E)
+		return None

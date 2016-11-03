@@ -5,6 +5,8 @@ import sys
 import argparse
 from _ui_main import showWindow
 from _ui_main import do
+import tkinter as tk
+# from _ui_main import *
 # from _ui import get_cfg_param
 
 
@@ -18,6 +20,11 @@ namespace = parser.parse_args(sys.argv[1:])
 
 if namespace.noui == None:
   showWindow()
+
+  # window = tk.Tk()
+  # frame = mainFrame(window)
+  # window.grid()
+  # window.mainloop()
 
 else:
   try:
