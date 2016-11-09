@@ -70,7 +70,8 @@ def plot(**kwargs):
         flag_signal_spectrum = (FLAGS >> 2) & 1
         flag_filtered_spectrum = (FLAGS >> 3) & 1
         flag_shim = (FLAGS >> 4) & 1
-        pcnt = flag_signal + flag_filtered + flag_signal_spectrum + flag_filtered_spectrum + flag_shim
+        flag_signal_saw = (FLAGS >> 5) & 1
+        pcnt = flag_signal + flag_filtered + flag_signal_spectrum + flag_filtered_spectrum + flag_shim + flag_signal_saw
     
         if not pcnt:
             return False
@@ -90,10 +91,27 @@ def plot(**kwargs):
                 if araw is None:
                     raise Exception('raw signal data not specified')
     
+
                 plt.subplot(pcnt, 1, num)
-                plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал')
+
+                if flag_signal_saw == 0:
+
+                    ts = 1 / kwargs['s'] * 1000
+                    
+                    plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал', drawstyle='steps-post') #, color='black', lw=0)
+                    # print((POINT_2 - POINT_1) * ts // 10)
+                    plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1 * ts, POINT_2 * ts, ts))
+                    plt.xlabel('миллисекунды')
+                
+                else:
+                    plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал', drawstyle='default') #, color='black', lw=0)
+                    plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10))
+                    plt.xlabel('точки')
+
+                if 'a' in kwargs:
+                    plt.yticks(arange(-kwargs['a'], kwargs['a'] + 1, kwargs['a'] * 2 / 10), arange(-kwargs['a'], kwargs['a'] + 1, kwargs['a'] * 2 / 10))                    
+
                 plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small')
-                plt.xticks(arange(0, (POINT_2 - POINT_1), 50), arange(POINT_1, POINT_2, 50))
                 plt.grid()
                 num += 1
     
@@ -101,6 +119,52 @@ def plot(**kwargs):
                 print('error on plotting raw signal: ', file=sys.stderr, end='')
                 print(E, file=sys.stderr)
     
+
+        # рисуем сигнал (с пересчитанными под пилу уровнями) + пилу
+        if flag_signal_saw:
+            try:
+                if araw is None:
+                    if 'raw' in kwargs:
+                        araw = duty.read_file(kwargs['raw'], 'd', 0, POINT_COUNT)
+
+                if araw is None:
+                    raise Exception('raw signal data not specified')
+
+                # вычисляем параметры для отрисовки
+                if not 'd' in kwargs: raise Exception('не задана дискретизация')
+                if not 'a' in kwargs: raise Exception('не задана амплитуда')
+                
+                # кол-во 10 нс интервалов, которые приходятся на одну точку сигнала
+                N = shim.SAW_FREQ / kwargs['s']
+
+                # новая амплитуда
+                r = N / 2 / 2
+
+                # коэффициент для пересчета уровней сигнала
+                k = r / kwargs['a']
+
+                # рисуем сигнал
+                plt.subplot(pcnt, 1, num)
+                plt.plot([yc * k for yc in araw[POINT_1:POINT_2]], label='Исходный сигнал с пересчитанными уровнями + Пила', drawstyle='steps-post', color='black', lw=2)
+                plt.xticks(arange(0, (POINT_2 - POINT_1), (POINT_2 - POINT_1) // 10), arange(int(POINT_1 * r), int(POINT_2 * r), int((POINT_2 - POINT_1) * r) // 10))
+                plt.yticks([int(araw[yc] * k) for yc in range(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10)], [int(araw[yc] * k) for yc in range(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10)])
+                plt.xlabel('количество 100 нс интервалов')
+
+                # рисуем пилу
+                st = 0.25 #25/4/25
+                xx = [st*c + st*(c%2) - st for c in arange(0, (POINT_2 - POINT_1) * 4, 1)]
+                yy = [r * pow(-1, c) for c in arange(1, (POINT_2 - POINT_1) * 4 + 1, 1)]
+                plt.plot(xx, yy)
+
+                
+                plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small')
+                plt.grid()
+                num += 1
+    
+            except Exception as E:
+                print('error on plotting raw signal + saw: ', file=sys.stderr, end='')
+                print(E, file=sys.stderr)
+
         # рисуем спектр исходного сигнала
         if flag_signal_spectrum:
             try:
@@ -205,8 +269,8 @@ def plot(**kwargs):
                 if ashim is None:
                     raise Exception('error on reading shim file')
     
-                SHIM_HEIGHT = 20 * pcnt
-                SHIM_WIDTH = 10
+                SHIM_HEIGHT = R //2 # 200 * pcnt
+                SHIM_WIDTH = 1 #R // 2 * 10
     
                 if (POINT_1 == None) or (POINT_1 not in range(len(ashim) // 4)): POINT_1 = 0
                 if (POINT_2 == None) or (POINT_2 not in range(POINT_1, len(ashim) // 4)): POINT_2 = len(ashim) // 4
@@ -273,6 +337,51 @@ def plot(**kwargs):
             except Exception as E:
                 print('error on plotting shim: ', file=sys.stderr, end='')
                 print(E, file=sys.stderr)
+
+        # # рисуем сигнал (с пересчитанными под пилу уровнями) + пилу
+        # if flag_signal_saw:
+        #     try:
+        #         if araw is None:
+        #             if 'raw' in kwargs:
+        #                 araw = duty.read_file(kwargs['raw'], 'd', 0, POINT_COUNT)
+
+        #         if araw is None:
+        #             raise Exception('raw signal data not specified')
+
+        #         # вычисляем параметры для отрисовки
+        #         if not 'd' in kwargs: raise Exception('не задана дискретизация')
+        #         if not 'a' in kwargs: raise Exception('не задана амплитуда')
+                
+        #         # кол-во 10 нс интервалов, которые приходятся на одну точку сигнала
+        #         N = shim.SAW_FREQ / kwargs['s']
+
+        #         # новая амплитуда
+        #         r = N / 2 / 2
+
+        #         # коэффициент для пересчета уровней сигнала
+        #         k = r / kwargs['a']
+
+        #         # рисуем сигнал
+        #         plt.subplot(pcnt, 1, num)
+        #         plt.plot([yc * k for yc in araw[POINT_1:POINT_2]], label='Исходный сигнал с пересчитанными уровнями + Пила', drawstyle='steps-post', color='black', lw=2)
+        #         plt.xticks(arange(POINT_1, POINT_2, 10), arange(POINT_1 * r, POINT_2 * r, r * 10))
+        #         plt.yticks([araw[yc] * k for yc in range(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10)], [int(araw[yc] * k) for yc in range(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10)])
+        #         plt.xlabel('количество 100 нс интервалов')
+
+        #         # рисуем пилу
+        #         st = 0.25 #25/4/25
+        #         xx = [st*c + st*(c%2) - st for c in arange(0, (POINT_2 - POINT_1) * 4, 1)]
+        #         yy = [r * pow(-1, c) for c in arange(1, (POINT_2 - POINT_1) * 4 + 1, 1)]
+        #         plt.plot(xx, yy)
+
+                
+        #         plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small')
+        #         plt.grid()
+        #         # num += 1
+    
+        #     except Exception as E:
+        #         print('error on plotting raw signal + saw: ', file=sys.stderr, end='')
+        #         print(E, file=sys.stderr)
         
     
         plt.show()

@@ -241,17 +241,17 @@ class mainFrame(Frame):
 		self.checkPlotSignal.grid(row=0, column=0, sticky=tk.W, columnspan=4)
 		self.plot_signal.set(get_cfg_param(self.config, 'plot_signal', True, 'b'))
 
-		# отобразить отфильтрованный сигнал
-		self.plot_filtered_signal = BooleanVar()
-		self.checkPlotFiltered = tk.Checkbutton(self.framePlot, text='Отфильтрованный сигнал', variable=self.plot_filtered_signal)
-		self.checkPlotFiltered.grid(row=1, column=0, sticky=tk.W, columnspan=4)
-		self.plot_filtered_signal.set(get_cfg_param(self.config, 'plot_filtered_signal', True, 'b'))
-
 		# отобразить спектр сигнала
 		self.plot_signal_spectrum = BooleanVar()
 		self.checkSignalSpectrum = tk.Checkbutton(self.framePlot, text='Спектр сигнала', variable=self.plot_signal_spectrum)
 		self.checkSignalSpectrum.grid(row=0, column=1, sticky=tk.W, columnspan=4)
 		self.plot_signal_spectrum.set(get_cfg_param(self.config, 'plot_signal_spectrum', True, 'b'))
+		
+		# отобразить отфильтрованный сигнал
+		self.plot_filtered_signal = BooleanVar()
+		self.checkPlotFiltered = tk.Checkbutton(self.framePlot, text='Отфильтрованный сигнал', variable=self.plot_filtered_signal)
+		self.checkPlotFiltered.grid(row=1, column=0, sticky=tk.W, columnspan=4)
+		self.plot_filtered_signal.set(get_cfg_param(self.config, 'plot_filtered_signal', True, 'b'))
 	
 		# отобразить спектр отфильтрованного сигнала
 		self.plot_filtered_spectrum = BooleanVar()
@@ -264,6 +264,12 @@ class mainFrame(Frame):
 		self.checkPlotShim = tk.Checkbutton(self.framePlot, text='ШИМ', variable=self.plot_shim)
 		self.checkPlotShim.grid(row=2, column=0, sticky=tk.W, columnspan=4)
 		self.plot_shim.set(get_cfg_param(self.config, 'plot_shim', True, 'b'))
+		
+		# отобразить сигнал + пила
+		self.plot_signal_saw = BooleanVar()
+		self.checkSignalSaw = tk.Checkbutton(self.framePlot, text='Сигнал + Пила', variable=self.plot_signal_saw)
+		self.checkSignalSaw.grid(row=2, column=1, sticky=tk.W, columnspan=4)
+		self.plot_signal_saw.set(get_cfg_param(self.config, 'plot_signal_saw', False, 'b'))
 
 		# сигнал с точки .. по ..
 		lblPlotFromPoint = tk.Label(self.framePlot, text='Показать точки с', width=25).grid(row=3, column=0, sticky=tk.E)
@@ -440,6 +446,7 @@ class mainFrame(Frame):
 				'plot_signal_spectrum':   bool(self.plot_signal_spectrum.get()),
 				'plot_filtered_spectrum': bool(self.plot_filtered_spectrum.get()),
 				'plot_shim':              bool(self.plot_shim.get()),
+				'plot_signal_saw':        bool(self.plot_signal_saw.get()),
 				'plot_from_point':          int(self.editPlotFromPoint.get()),
 				'plot_to_point':            int(self.editPlotToPoint.get()),
 				'workdir':                self.editWorkDir.get(),
@@ -517,6 +524,7 @@ def do(config):
 	plot_filtered_signal = get_cfg_param(config, 'plot_filtered_signal', True, 'b')
 	plot_filtered_spectrum = get_cfg_param(config, 'plot_filtered_spectrum', True, 'b')
 	plot_shim = get_cfg_param(config, 'plot_shim', True, 'b')
+	plot_signal_saw = get_cfg_param(config, 'plot_signal_saw', False, 'b')
 	 
 	#####################################################
 	#####################################################
@@ -530,8 +538,9 @@ def do(config):
 	PLOT_SIGNAL_SPECTRUM = int(plot_signal_spectrum)
 	PLOT_FILTERED_SPECTRUM = int(plot_filtered_spectrum) & (int(filtrate) | int(apply_spectrum_form))
 	PLOT_SHIM = int(plot_shim) and MAKE_SHIM
+	PLOT_SIGNAL_SAW = int(plot_signal_saw)
 	
-	FLAGS = PLOT_SIGNAL | (PLOT_FILTERED << 1) | (PLOT_SIGNAL_SPECTRUM << 2) | (PLOT_FILTERED_SPECTRUM << 3) | (PLOT_SHIM << 4)
+	FLAGS = PLOT_SIGNAL | (PLOT_FILTERED << 1) | (PLOT_SIGNAL_SPECTRUM << 2) | (PLOT_FILTERED_SPECTRUM << 3) | (PLOT_SHIM << 4) | (PLOT_SIGNAL_SAW << 5)
 	
 	# hellooo
 	READ_WAV = 0
@@ -619,6 +628,7 @@ def do(config):
 				shim=filename_shim,
 				s=sampling,
 				d=duration,
+				a=amplitude,
 				p1=plot_from_point,
 				p2=plot_to_point,
 				flags=FLAGS)
