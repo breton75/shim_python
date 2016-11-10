@@ -19,7 +19,7 @@ from matplotlib import rc # для отображения русского шр�
 if 'win' in sys.platform: 
     rc('font', family='Verdana')
 else:
-    rc('font', family='Verdana')
+    rc('font', family='Ubuntu')
 
 from scipy.fftpack import rfft
 # from scipy.fftpack import fft
