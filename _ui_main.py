@@ -634,8 +634,9 @@ def do(config):
 				flags=FLAGS)
 
 
-def showWindow():
+def showWindow(version):
 	window = tk.Tk()
+	window.title("Генератор ШИМ v.{}".format(version))
 	# window.geometry("200x200")
 	
 	frame = mainFrame(window)

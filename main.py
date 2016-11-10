@@ -9,6 +9,7 @@ import tkinter as tk
 # from _ui_main import *
 # from _ui import get_cfg_param
 
+version = '1.0'
 
 # ******** Script starts here ************* #
 
@@ -19,7 +20,7 @@ parser.add_argument('-noui', '--noui', required=False, action='count')
 namespace = parser.parse_args(sys.argv[1:])
 
 if namespace.noui == None:
-  showWindow()
+  showWindow(version)
 
   # window = tk.Tk()
   # frame = mainFrame(window)
