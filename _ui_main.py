@@ -151,13 +151,24 @@ class mainFrame(Frame):
 		self.checkApplySpectrumForm.grid(row=4, column=0, sticky=tk.W, columnspan=2)
 		self.apply_spectrum_form.set(get_cfg_param(self.config, 'apply_spectrum_form', False, 'b'))
 
+		# подгонять значения точно заданной форме
+		self.apply_accurately_to_form = BooleanVar()
+		self.checkApplyFccuratelyToForm = tk.Checkbutton(self.frameFilter, text='Точно по форме', variable=self.apply_accurately_to_form)
+		self.checkApplyFccuratelyToForm.grid(row=5, column=0, sticky=tk.W, columnspan=2)
+		self.apply_accurately_to_form.set(get_cfg_param(self.config, 'apply_accurately_to_form', False, 'b'))
+
+
+		# редактор формы спектра
+		self.frameSpectrumFormEditor = tk.LabelFrame(self.frameFilter, text='Редактор формы спектра')
+		self.frameSpectrumFormEditor.grid(row=6, column=0, sticky=tk.W, columnspan=4 )
+
 		# новая форма спектра
-		self.bnCreateSpectrumForm = tk.Button(self.frameFilter, text='Новая форма спектра', command=self.create_spectrum)
-		self.bnCreateSpectrumForm.grid(row=6, column=0, sticky=tk.W, columnspan=2)
+		self.bnCreateSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Новая форма', command=self.create_spectrum)
+		self.bnCreateSpectrumForm.grid(row=0, column=0, sticky=tk.W) #, columnspan=2)
 
 		# редактор
-		self.bnEditSpectrumForm = tk.Button(self.frameFilter, text='Редактор формы спектра', command=self.edit_spectrum)
-		self.bnEditSpectrumForm.grid(row=7, column=0, sticky=tk.W, columnspan=2)
+		self.bnEditSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Редактировать', command=self.edit_spectrum)
+		self.bnEditSpectrumForm.grid(row=0, column=1, sticky=tk.E) #, columnspan=2)
 
 	## <- фильтрация ##
 
@@ -433,6 +444,7 @@ class mainFrame(Frame):
 				'filtrate':            bool(self.filtrate.get()),
 				# 'edit_spectrum_form':  bool(self.edit_spectrum_form.get()),
 				'apply_spectrum_form': bool(self.apply_spectrum_form.get()),
+				'apply_accurately_to_form': bool(self.apply_accurately_to_form.get()),
 				'channel_count':    int(self.editChannelCount.get()),
 				'saw_count_per_point':      int(self.editSawpp.get()),
 				'zero_smooth':  int(self.editZeroSmooth.get()),
@@ -502,7 +514,7 @@ def do(config):
 	freq_max = get_cfg_param(config, 'freq_max', 4000, 'i')
 	edit_spectrum_form = get_cfg_param(config, 'edit_spectrum_form', False, 'b') and (signal_type != gen.s_type_sinus)
 	apply_spectrum_form = get_cfg_param(config, 'apply_spectrum_form', False, 'b') and (signal_type != gen.s_type_sinus)
-	 
+	apply_accurately_to_form = get_cfg_param(config, 'apply_accurately_to_form', False, 'b') and apply_spectrum_form
 	 
 	# преобразование ШИМ
 	channel_count = get_cfg_param(config, 'channel_count', 2, 'i')
@@ -574,12 +586,12 @@ def do(config):
 		sys.exit(1)
 
 
-	if edit_spectrum_form:
-		spectrum.edit_spectrum(s=sampling, d=duration,
-						   signal_data=araw,
-						   sffn=filename_spectrum,
-						   band_pass=filtrate,
-						   fmin=freq_min, fmax=freq_max)
+	# if edit_spectrum_form:
+	# 	spectrum.edit_spectrum(s=sampling, d=duration,
+	# 					   signal_data=araw,
+	# 					   sffn=filename_spectrum,
+	# 					   band_pass=filtrate,
+	# 					   fmin=freq_min, fmax=freq_max)
 	 
 	# sys.exit(0)
 
@@ -587,6 +599,7 @@ def do(config):
 								   signal_data=araw,
 								   rawf=filename_flt,
 								   apply_spectrum_form=apply_spectrum_form,
+								   apply_accurately=apply_accurately_to_form,
 								   sffn=filename_spectrum,
 								   band_pass_filter=filtrate,
 								   fmin=freq_min, fmax=freq_max)

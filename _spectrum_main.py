@@ -520,7 +520,7 @@ def apply_spectrum(**kwargs):
         # * начало 1 *
         if 'apply_spectrum_form' in kwargs and kwargs['apply_spectrum_form'] == True: 
             
-            print('imposing spectrum form ...', end='')
+            print('appling spectrum form ...', end='')
 
             if not 'sffn' in kwargs:
                 raise Exception('Spectrum form file is not specified')
@@ -541,12 +541,20 @@ def apply_spectrum(**kwargs):
 
             minX_n = int(minX * fsdpcnt / fpcnt) # реальные границы формы спектра 
             maxX_n = int(maxX * fsdpcnt / fpcnt)
+            # print('minX_n={}  maxX_n={}'.format(minX_n,maxX_n))
 
             xstep = get_xstep(maxX_n - minX_n, controls_count)
             x = minX_n
             x1 = minX_n
             y1 = controls[0]
-        
+            
+            maxY_pos = max(spectrum[minX_n:maxX_n].real) # макс. положительное значение спектра в заданной полосе
+            minY_neg = min(spectrum[minX_n:maxX_n].real) # мин.  отрицательное значение спектра в заданной полосе
+            
+            if maxY_pos > abs(minY_neg): maxYreal = maxY_pos
+            else: maxYreal = abs(minY_neg)
+            # print('maxY_pos = {}  maxY_neg={}'.format(maxY_pos, minY_neg))
+
             for i in range(1, controls_count, 1):
                 x2 = minX_n + i * xstep
                 y2 = controls[i]
@@ -558,16 +566,21 @@ def apply_spectrum(**kwargs):
                     # уравнение прямой (х1,у1)-(х2,у2):  (x - x1)/(x2 - x1) = (y - y1)/(y2 - y1), отсюда
                     # y = (x - x1)/(x2 - x1) * (y2 - y1) + y1. получим:
     
-                    y = ((x - x1) / (x2 - x1) * (y2 - y1) + y1) / 100
-                    # print('i=%i  x1=%d y1=%0.2f  x2=%d y2=%0.2f  x=%i  y=%0.2f  araw[x]=%0.2f' % (i, x1, y1, x2, y2, x, y, araw[x]) )
-                    # print('y={}'.format(y))
+                    y = ((x - x1) / (x2 - x1) * (y2 - y1) + y1) / 100.0
 
-                    # если уровень спектра в данной точке выше линии (x1,y1)-(x2,y2), то опускаем его пропорционально spectrumMax
-                    if abs(spectrum[x]) > y * spectrumMax:
-                        # print('complex={}'.format(complex(y * spectrumMax, spectrum[x].imag)))
-                        spectrum[x] =  complex(y * spectrum[x].real, spectrum[x].imag)  
-                        spectrum[-x] =  complex(y * spectrum[x].real, spectrum[x].imag) # в зеркальной части спектра такое же значение
-        
+                    # если необходимо привести спектр, точно к заданной форме, то
+                    # в зависимости от уровня сигнала >0 или <0, задаем уровень спектра в данной точке равным y * макс. или мин. значение
+                    if 'apply_accurately' in kwargs and kwargs['apply_accurately'] == True:
+                        if spectrum[x].real > 0: newYreal =  y * maxYreal
+                        else:                    newYreal =  -y * maxYreal
+                        # newYreal =  y * maxYreal
+                    # иначе, изменяем уровень спектра в данной точке пропорционально y
+                    else: # abs(spectrum[x]) > y * spectrumMax:
+                        newYreal = y * spectrum[x].real        
+                    
+                    spectrum[x]  = complex(newYreal, spectrum[x].imag)  
+                    spectrum[-x] = complex(newYreal, spectrum[x].imag) # в зеркальной части спектра такое же значение
+
                     x+=1
     
                 x1 = x2
