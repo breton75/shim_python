@@ -45,6 +45,7 @@ class mainFrame(Frame):
 						lst[i][j] = lst[i][j].strip()
 
 				self.config = dict(lst)
+				# print(self.config.keys())
 
 		except Exception as E:
 			print('error on reading self.config file: ', file=sys.stderr, end='')
@@ -61,7 +62,7 @@ class mainFrame(Frame):
 		self.lblSignalType = tk.Label(self.frameSignal, text='Тип сигнала', width=25)
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
 	
-		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Синус+Шум', 'Синус+Синус+Шум'])
+		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Меандр перем. частоты', 'Синус+Шум', 'Синус+Синус+Шум'])
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
 		self.cbSignalType.current(newindex=get_cfg_param(self.config, 'signal_type', 0, 'i'))
 	
@@ -83,32 +84,37 @@ class mainFrame(Frame):
 
 
 		# длительность (мс.)
-		self.lblDuration = tk.Label(self.frameSignal, text='Длительность (мс)', width=25)
+		self.lblDuration = tk.Label(self.frameSignal, text='Общая длительность (мс)', width=25)
 		self.lblDuration.grid(row=3, column=0, sticky=tk.E)
 		self.editDuration = tk.Entry(self.frameSignal, width=16)
 		self.editDuration.grid(row=3, column=1, sticky=tk.W)
 		self.editDuration.insert(0, get_cfg_param(self.config, 'duration', '1000'))
 
+		# длительность тишины (мс.)
+		self.lblHush = tk.Label(self.frameSignal, text='Длительность тишины (мс)', width=25)
+		self.lblHush.grid(row=4, column=0, sticky=tk.E)
+		self.editHush = tk.Entry(self.frameSignal, width=16)
+		self.editHush.grid(row=4, column=1, sticky=tk.W)
+		self.editHush.insert(0, get_cfg_param(self.config, 'hush', '0'))
+
 		# амплитуда
 		self.lblAmplitude = tk.Label(self.frameSignal, text='Амплитуда', width=25)
-		self.lblAmplitude.grid(row=4, column=0, sticky=tk.E)
-
+		self.lblAmplitude.grid(row=5, column=0, sticky=tk.E)
 		self.editAmplitude = tk.Entry(self.frameSignal, width=16)
-		self.editAmplitude.grid(row=4, column=1, sticky=tk.W)
+		self.editAmplitude.grid(row=5, column=1, sticky=tk.W)
 		self.editAmplitude.insert(0, get_cfg_param(self.config, 'amplitude', '1024'))
 
 		# раскачка сигнала
 		self.lblFadeIn = tk.Label(self.frameSignal, text='Раскачка (%)', width=25)
-		self.lblFadeIn.grid(row=5, column=0, sticky=tk.E)
-
+		self.lblFadeIn.grid(row=6, column=0, sticky=tk.E)
 		self.editFadeIn = tk.Entry(self.frameSignal, width=16)
-		self.editFadeIn.grid(row=5, column=1, sticky=tk.W)
+		self.editFadeIn.grid(row=6, column=1, sticky=tk.W)
 		self.editFadeIn.insert(0, get_cfg_param(self.config, 'fadein', '0'))
 
 		# затухание сигнала
-		lblFadeOut = tk.Label(self.frameSignal, text='Затухание (%)', width=25).grid(row=6, column=0, sticky=tk.E)
+		lblFadeOut = tk.Label(self.frameSignal, text='Затухание (%)', width=25).grid(row=7, column=0, sticky=tk.E)
 		self.editFadeOut = tk.Entry(self.frameSignal, width=16)
-		self.editFadeOut.grid(row=6, column=1, sticky=tk.W)
+		self.editFadeOut.grid(row=7, column=1, sticky=tk.W)
 		self.editFadeOut.insert(0, get_cfg_param(self.config, 'fadeout', '0'))
 	
 	### <- параметры сигнала ###	
@@ -116,7 +122,7 @@ class mainFrame(Frame):
 	## -> фильтрация ##
 
 		self.frameFilter = tk.LabelFrame(self, text='Фильтрация')
-		self.frameFilter.grid(row=1, column=0, sticky=tk.W)
+		self.frameFilter.grid(row=0, column=1, sticky=tk.W)
 
 		self.filtrate = BooleanVar()
 		self.checkFilter = tk.Checkbutton(self.frameFilter, text='Применить полосовой фильтр', variable=self.filtrate)
@@ -175,7 +181,7 @@ class mainFrame(Frame):
 	## -> преобразование шим ##
 
 		self.frameShim = tk.LabelFrame(self, text='Преобразование ШИМ')
-		self.frameShim.grid(row=0, column=1, sticky=tk.N, rowspan=1)
+		self.frameShim.grid(row=1, column=0, sticky=tk.N, rowspan=1)
 
 		# кол-во каналов
 		lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
@@ -327,6 +333,10 @@ class mainFrame(Frame):
 		self.bnSave = tk.Button(self.frameButtons, text='Сохранить', width=80, command = self.save)
 		self.bnSave.grid(row=3, column=0, sticky=tk.E, columnspan=2)
 
+		# редактор параметров
+		self.bnEditSignalParams = tk.Button(self.frameButtons, text='Редактировать параметры', width=80, command=self.edit_signal_params)
+		self.bnEditSignalParams.grid(row=4, column=0, sticky=tk.E, columnspan=2)
+
 	## <- кнопки ##
 
 	# def get_cfg(self, param_name, default):
@@ -379,6 +389,53 @@ class mainFrame(Frame):
 
 		except Exception as E:
 			print(E, file=sys.stderr)	
+
+
+	def edit_signal_params(self):
+		try:
+			with open('_main.config', 'r') as configfile:
+				lines = configfile.readlines()
+
+				# разбираем параметры записанные в файле _main.config
+				lst=[]
+				for line in lines: # если строка начинается не с буквы, то эту строку пропускаем
+					if line[0] in ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
+						lst.append(line.split('='))
+	  
+				for i in range(len(lst)):
+					for j in range(len(lst[i])):
+						lst[i][j] = lst[i][j].strip()
+
+			param_window = tk.Tk()
+			param_window.title('Параметры')
+			param_window.geometry("575x400")
+
+			
+			frame = Frame(param_window)
+			frame.grid()
+
+			frameParams = tk.LabelFrame(frame, text='Параметры')
+			frameParams.grid(row=0, column=0, sticky=tk.N, columnspan=2)
+
+			text1 = Text(frameParams, height=22, width=70)
+			text1.grid(row=0, column=0, columnspan=2)
+			# text1.pack()
+
+			bnCancelParams = tk.Button(frame, text='Отмена', width=20, command=self.edit_signal_params)
+			bnCancelParams.grid(row=1, column=0, sticky=tk.W)
+
+			bnSaveParams = tk.Button(frame, text='Сохранить', width=20, command=self.edit_signal_params)
+			bnSaveParams.grid(row=1, column=1, sticky=tk.E)
+
+			param_window.grid()
+			param_window.mainloop()
+
+			text1.insert('0.0', 'lst')
+			# self.config = dict(lst)
+
+		except Exception as E:
+			print('error on edit config file: ', file=sys.stderr, end='')
+			print(E, file=sys.stderr)  
 
 
 	def start(self):
@@ -437,6 +494,7 @@ class mainFrame(Frame):
 				'sampling':  int(self.editSampling.get()),
 				'amplitude': int(self.editAmplitude.get()),
 				'duration':  int(self.editDuration.get()),
+				'hush':      int(self.editHush.get()),
 				'fadein':    int(self.editFadeIn.get()),
 				'fadeout':   int(self.editFadeOut.get()),
 				'freq_min':   int(self.editFreqMin.get()),
@@ -500,10 +558,16 @@ def do(config):
 	filename_spectrum = filename_template + '.spectrum'
 
 	# генератор  s_type_noise | s_type_sinus | s_type_sinus_noise | s_type_sinus_sinus_noise
+	# print(config.keys())
+	meandr_pulse_width = get_cfg_param(config, 'meandr_pulse_width', 0, 'i')
+	meandr_pulse_interval = get_cfg_param(config, 'meandr_pulse_interval', 0, 'i')
+
+
 	signal_type = get_cfg_param(config, 'signal_type', gen.s_type_noise, 'i')
 	freq = get_cfg_param(config, 'freq', 1000, 'i')
 	sampling = get_cfg_param(config, 'sampling', 100000, 'i')
 	duration = get_cfg_param(config, 'duration', 1000, 'i')
+	hush = get_cfg_param(config, 'hush', 0, 'i')
 	amplitude = get_cfg_param(config, 'amplitude', 1024, 'i')
 	fadein = get_cfg_param(config, 'fadein', 0, 'i')
 	fadeout = get_cfg_param(config, 'fadeout', 0, 'i')
@@ -576,10 +640,13 @@ def do(config):
 			   f=freq,
 			   s=sampling,
 			   d=duration,
+			   h=hush,
 			   a=amplitude,
 			   fi=fadein,
 			   fo=fadeout,
-			   fn=filename_raw)
+			   fn=filename_raw,
+			   mpw=meandr_pulse_width,
+			   mpi=meandr_pulse_interval)
 	 
 	if araw is None:
 		print('araw is None')
@@ -662,7 +729,10 @@ def showWindow(version):
 def get_cfg_param(config, param_name, default, type='s'):
 	try:
 		if type == 'i':
-			if param_name in config: return int(config[param_name])
+			# print(config, param_name)
+			
+			if param_name in config:
+				return int(config[param_name])
 			else: return default
 		elif type == 'b':
 			# if param_name == 'send': print(str(config[param_name]).lower())

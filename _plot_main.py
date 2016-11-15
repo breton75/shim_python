@@ -98,7 +98,7 @@ def plot(**kwargs):
 
                 ts = 1 / kwargs['s'] * 1000
                 
-                plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал', drawstyle='default') #, color='black', lw=0)
+                plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал', drawstyle='default') #, marker='s', markerfacecolor='r') #, markersize=10) #, color='black', lw=0)
                 plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1 * ts, POINT_2 * ts, ts))
                 plt.xlabel('миллисекунды')
 
@@ -375,7 +375,8 @@ def plot(**kwargs):
                 plt.plot(xx, yy, color=colorConverter.to_rgba('b', 0.250))
 
 
-                plt.xticks(arange(0, (POINT_2 - POINT_1), (POINT_2 - POINT_1) // 10), arange(int(POINT_1 * r), int(POINT_2 * r), int((POINT_2 - POINT_1) * r) // 10))
+                # plt.xticks(arange(0, (POINT_2 - POINT_1), (POINT_2 - POINT_1) // 10), arange(int(POINT_1 * r), int(POINT_2 * r), int((POINT_2 - POINT_1) * r) // 10))
+                plt.xticks(arange(0, (POINT_2 - POINT_1), 1), arange(int(POINT_1 * r), int(POINT_2 * r), 1)) # int((POINT_2 - POINT_1) * r) // 10
                 plt.yticks([int(araw[yc] * k) for yc in range(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10)], [int(araw[yc] * k) for yc in range(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10)])
                 plt.xlabel('количество 100 нс интервалов')
                 plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small')

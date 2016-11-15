@@ -141,7 +141,7 @@ class PolygonInteractor(object):
         #     return
 
         if event.inaxes:
-            if event.key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']:
+            if event.key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-']:
                 ind = self.get_ind_under_point(event)
                 if not (ind is None or ind == 0 or ind == len(self.poly.xy) - 1):
                     if event.key == '-': val = 1
@@ -187,6 +187,29 @@ class PolygonInteractor(object):
                 self.poly.xy[i][0] = self.fmin + (i - 1) * step
                 self.poly.xy[i][1] = maxY
                 # print('x=%i  y=%f' % (self.poly.xy[i][0], self.poly.xy[i][1]))
+            
+            self.line.set_data(zip(*self.poly.xy))
+
+
+        if event.key in ['ctrl+u', 'ctrl+d']:
+            x, y = zip(*self.poly.xy)
+
+            controls_count = len(x)
+            step = get_xstep(self.fmax - self.fmin, controls_count - 2) #  fpcnt / (controls_count - 3)
+
+            # print('fpcnt=%i  controls_count=%i  step=%d' % (fpcnt,controls_count,step))
+            self.poly.xy[0][0] = self.fmin #0
+            self.poly.xy[-1][0] = self.fmax # fpcnt
+
+            maxY = 100 # max(self.aspec)
+            stepY = maxY / (controls_count - 3)
+            for i in range(1, controls_count - 1):
+                self.poly.xy[i][0] = self.fmin + (i - 1) * step
+                
+                if event.key == 'ctrl+u':
+                    self.poly.xy[i][1] = i * stepY
+                elif event.key == 'ctrl+d':
+                    self.poly.xy[i][1] = maxY - i * stepY
             
             self.line.set_data(zip(*self.poly.xy))
 
