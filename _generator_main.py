@@ -13,6 +13,8 @@ s_type_meandr = 2
 s_type_meandr_random = 3
 s_type_sinus_noise = 4
 s_type_sinus_sinus_noise = 5
+# s_type_lfm = 6
+
 
 def createParser ():
     parser = argparse.ArgumentParser()
