@@ -3,6 +3,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import *
 
+from _defs import *
+
 import _generator_main as gen
 import _plot_main as plot
 import _shim_main as shim
@@ -61,18 +63,16 @@ class mainFrame(Frame):
 		# тип сигнала
 		self.lblSignalType = tk.Label(self.frameSignal, text='Тип сигнала', width=25)
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
-	
-		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Меандр перем. частоты', 'Синус+Шум', 'Синус+Синус+Шум'])
+		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Меандр перем. частоты', 'Синус+Шум', 'Синус+Синус+Шум', 'ЛЧМ'])
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
-		self.cbSignalType.current(newindex=get_cfg_param(self.config, 'signal_type', 0, 'i'))
+		self.cbSignalType.current(newindex=get_cfg_param(self.config, c_signal_type, 0, 'i'))
 	
 		# частота
 		self.lblFrequency = tk.Label(self.frameSignal, text='Частота', width=25)
 		self.lblFrequency.grid(row=1, column=0, sticky=tk.E)
-
 		self.editFrequency = tk.Entry(self.frameSignal, width=16)
 		self.editFrequency.grid(row=1, column=1, sticky=tk.W)
-		self.editFrequency.insert(0, get_cfg_param(self.config, 'freq', '8000'))
+		self.editFrequency.insert(0, get_cfg_param(self.config, c_freq, '8000'))
 
 
 		# дискретизация
@@ -80,7 +80,7 @@ class mainFrame(Frame):
 		self.lblSampling.grid(row=2, column=0, sticky=tk.E)
 		self.editSampling = tk.Entry(self.frameSignal, width=16)
 		self.editSampling.grid(row=2, column=1, sticky=tk.W)
-		self.editSampling.insert(0, get_cfg_param(self.config, 'sampling', '100000'))
+		self.editSampling.insert(0, get_cfg_param(self.config, c_sampling, '100000'))
 
 
 		# длительность (мс.)
@@ -88,34 +88,34 @@ class mainFrame(Frame):
 		self.lblDuration.grid(row=3, column=0, sticky=tk.E)
 		self.editDuration = tk.Entry(self.frameSignal, width=16)
 		self.editDuration.grid(row=3, column=1, sticky=tk.W)
-		self.editDuration.insert(0, get_cfg_param(self.config, 'duration', '1000'))
+		self.editDuration.insert(0, get_cfg_param(self.config, c_duration, '1000'))
 
 		# длительность тишины (мс.)
 		self.lblHush = tk.Label(self.frameSignal, text='Длительность тишины (мс)', width=25)
 		self.lblHush.grid(row=4, column=0, sticky=tk.E)
 		self.editHush = tk.Entry(self.frameSignal, width=16)
 		self.editHush.grid(row=4, column=1, sticky=tk.W)
-		self.editHush.insert(0, get_cfg_param(self.config, 'hush', '0'))
+		self.editHush.insert(0, get_cfg_param(self.config, c_hush, '0'))
 
 		# амплитуда
 		self.lblAmplitude = tk.Label(self.frameSignal, text='Амплитуда', width=25)
 		self.lblAmplitude.grid(row=5, column=0, sticky=tk.E)
 		self.editAmplitude = tk.Entry(self.frameSignal, width=16)
 		self.editAmplitude.grid(row=5, column=1, sticky=tk.W)
-		self.editAmplitude.insert(0, get_cfg_param(self.config, 'amplitude', '1024'))
+		self.editAmplitude.insert(0, get_cfg_param(self.config, c_amplitude, '1024'))
 
 		# раскачка сигнала
 		self.lblFadeIn = tk.Label(self.frameSignal, text='Раскачка (%)', width=25)
 		self.lblFadeIn.grid(row=6, column=0, sticky=tk.E)
 		self.editFadeIn = tk.Entry(self.frameSignal, width=16)
 		self.editFadeIn.grid(row=6, column=1, sticky=tk.W)
-		self.editFadeIn.insert(0, get_cfg_param(self.config, 'fadein', '0'))
+		self.editFadeIn.insert(0, get_cfg_param(self.config, c_fadein, '0'))
 
 		# затухание сигнала
 		lblFadeOut = tk.Label(self.frameSignal, text='Затухание (%)', width=25).grid(row=7, column=0, sticky=tk.E)
 		self.editFadeOut = tk.Entry(self.frameSignal, width=16)
 		self.editFadeOut.grid(row=7, column=1, sticky=tk.W)
-		self.editFadeOut.insert(0, get_cfg_param(self.config, 'fadeout', '0'))
+		self.editFadeOut.insert(0, get_cfg_param(self.config, c_fadeout, '0'))
 	
 	### <- параметры сигнала ###	
 
@@ -127,7 +127,7 @@ class mainFrame(Frame):
 		self.filtrate = BooleanVar()
 		self.checkFilter = tk.Checkbutton(self.frameFilter, text='Применить полосовой фильтр', variable=self.filtrate)
 		self.checkFilter.grid(row=0, column=0, sticky=tk.W, columnspan=2)
-		self.filtrate.set(get_cfg_param(self.config, 'filtrate', True, 'b'))
+		self.filtrate.set(get_cfg_param(self.config, c_filtrate, True, 'b'))
 		# else: self.filtrate.set(False)
 
 		# минимальная частота
@@ -135,14 +135,14 @@ class mainFrame(Frame):
 		self.lblFreqMin.grid(row=1, column=0, sticky=tk.E)
 		self.editFreqMin = tk.Entry(self.frameFilter, width=16)
 		self.editFreqMin.grid(row=1, column=1, sticky=tk.W)
-		self.editFreqMin.insert(0, get_cfg_param(self.config, 'freq_min', '1000'))
+		self.editFreqMin.insert(0, get_cfg_param(self.config, c_freq_min, '1000'))
 
 		# максимальная частота
 		self.lblFreqMax = tk.Label(self.frameFilter, text='Макс. частота', width=25)
 		self.lblFreqMax.grid(row=2, column=0, sticky=tk.E)
 		self.editFreqMax = tk.Entry(self.frameFilter, width=16)
 		self.editFreqMax.grid(row=2, column=1, sticky=tk.W)
-		self.editFreqMax.insert(0, get_cfg_param(self.config, 'freq_max', '4000'))
+		self.editFreqMax.insert(0, get_cfg_param(self.config, c_freq_max, '4000'))
 		
 		# редактировать форму спектра
 		# self.edit_spectrum_form = BooleanVar()
@@ -155,13 +155,13 @@ class mainFrame(Frame):
 		self.apply_spectrum_form = BooleanVar()
 		self.checkApplySpectrumForm = tk.Checkbutton(self.frameFilter, text='Применить заданную форму спектра', variable=self.apply_spectrum_form)
 		self.checkApplySpectrumForm.grid(row=4, column=0, sticky=tk.W, columnspan=2)
-		self.apply_spectrum_form.set(get_cfg_param(self.config, 'apply_spectrum_form', False, 'b'))
+		self.apply_spectrum_form.set(get_cfg_param(self.config, c_apply_spectrum_form, False, 'b'))
 
 		# подгонять значения точно заданной форме
 		self.apply_accurately_to_form = BooleanVar()
 		self.checkApplyFccuratelyToForm = tk.Checkbutton(self.frameFilter, text='Точно по форме', variable=self.apply_accurately_to_form)
 		self.checkApplyFccuratelyToForm.grid(row=5, column=0, sticky=tk.W, columnspan=2)
-		self.apply_accurately_to_form.set(get_cfg_param(self.config, 'apply_accurately_to_form', False, 'b'))
+		self.apply_accurately_to_form.set(get_cfg_param(self.config, c_apply_accurately_to_form, False, 'b'))
 
 
 		# редактор формы спектра
@@ -184,28 +184,28 @@ class mainFrame(Frame):
 		self.frameShim.grid(row=1, column=0, sticky=tk.N, rowspan=1)
 
 		# кол-во каналов
-		lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
+		self.lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
 		self.editChannelCount = tk.Entry(self.frameShim, width=16)
 		self.editChannelCount.grid(row=0, column=1, sticky=tk.W)
-		self.editChannelCount.insert(0, get_cfg_param(self.config, 'channel_count', '2'))
+		self.editChannelCount.insert(0, get_cfg_param(self.config, c_channel_count, '2'))
 		
 		# пил на точку
-		lblSawpp = tk.Label(self.frameShim, text='Пил на точку', width=25).grid(row=1, column=0, sticky=tk.E)
+		self.lblSawpp = tk.Label(self.frameShim, text='Пил на точку', width=25).grid(row=1, column=0, sticky=tk.E)
 		self.editSawpp = tk.Entry(self.frameShim, width=16)
 		self.editSawpp.grid(row=1, column=1, sticky=tk.W)
-		self.editSawpp.insert(0, get_cfg_param(self.config, 'saw_count_per_point', '1'))
+		self.editSawpp.insert(0, get_cfg_param(self.config, c_saw_count_per_point, '1'))
 		
 		# размытие нуля
-		lblZeroSmooth = tk.Label(self.frameShim, text='Размытие нуля (%)', width=25).grid(row=2, column=0, sticky=tk.E)
+		self.lblZeroSmooth = tk.Label(self.frameShim, text='Размытие нуля (%)', width=25).grid(row=2, column=0, sticky=tk.E)
 		self.editZeroSmooth = tk.Entry(self.frameShim, width=16)
 		self.editZeroSmooth.grid(row=2, column=1, sticky=tk.W)
-		self.editZeroSmooth.insert(0, get_cfg_param(self.config, 'zero_smooth', '0'))
+		self.editZeroSmooth.insert(0, get_cfg_param(self.config, c_zero_smooth, '0'))
 
 		# разрыв между каналами
-		lblChannelGap = tk.Label(self.frameShim, text='Разрыв между каналами (%)', width=25).grid(row=3, column=0, sticky=tk.E)
+		self.lblChannelGap = tk.Label(self.frameShim, text='Разрыв между каналами (%)', width=25).grid(row=3, column=0, sticky=tk.E)
 		self.editChannelGap = tk.Entry(self.frameShim, width=16)
 		self.editChannelGap.grid(row=3, column=1, sticky=tk.W)
-		self.editChannelGap.insert(0, get_cfg_param(self.config, 'channel_gap', '0'))
+		self.editChannelGap.insert(0, get_cfg_param(self.config, c_channel_gap, '0'))
 
 	## <- преобразование шим ##
 
@@ -217,28 +217,25 @@ class mainFrame(Frame):
 		self.send = BooleanVar()
 		self.checkSend = tk.Checkbutton(self.frameSend, text='Выгрузить сигнал на устройство', variable=self.send)
 		self.checkSend.grid(row=0, column=0, sticky=tk.E, columnspan=2)
-		# print(self.config['send'])
-		self.send.set(get_cfg_param(self.config, 'send', True, 'b'))
+		self.send.set(get_cfg_param(self.config, c_send, True, 'b'))
 
 		# host
-		lblHost = tk.Label(self.frameSend, text='IP', width=25).grid(row=1, column=0, sticky=tk.E)
+		self.lblHost = tk.Label(self.frameSend, text='IP', width=25).grid(row=1, column=0, sticky=tk.E)
 		self.editHost = tk.Entry(self.frameSend, width=16)
 		self.editHost.grid(row=1, column=1, sticky=tk.W)
-		self.editHost.insert(0, get_cfg_param(self.config, 'host', '172.16.4.55'))
+		self.editHost.insert(0, get_cfg_param(self.config, c_host, '172.16.4.55'))
 		
 		# port
-		lblPort = tk.Label(self.frameSend, text='Порт', width=25).grid(row=2, column=0, sticky=tk.E)
+		self.lblPort = tk.Label(self.frameSend, text='Порт', width=25).grid(row=2, column=0, sticky=tk.E)
 		self.editPort = tk.Entry(self.frameSend, width=16)
 		self.editPort.grid(row=2, column=1, sticky=tk.W)
-		self.editPort.insert(0, get_cfg_param(self.config, 'port', '35580'))
+		self.editPort.insert(0, get_cfg_param(self.config, c_port, '35580'))
 		
 		# режим работы: ONE или LOOP
-		self.lblMode = tk.Label(self.frameSend, text='Режим работы', width=25)
-		self.lblMode.grid(row=3, column=0, sticky=tk.E)
-	
+		self.lblMode = tk.Label(self.frameSend, text='Режим работы', width=25).grid(row=3, column=0, sticky=tk.E)
 		self.cbMode = ttk.Combobox(self.frameSend, width=13, values=['ONE', 'LOOP'])
 		self.cbMode.grid(row=3, column=1, sticky=tk.W)
-		self.cbMode.current(newindex=get_cfg_param(self.config, 'mode', 1))
+		self.cbMode.current(newindex=get_cfg_param(self.config, c_mode, 1))
 
 		# send STOP
 		self.bnSendStop = tk.Button(self.frameSend, text='Отправить STOP', command=self.send_stop)
@@ -256,48 +253,48 @@ class mainFrame(Frame):
 		self.plot_signal = BooleanVar()
 		self.checkPlotSignal = tk.Checkbutton(self.framePlot, text='Сигнал', variable=self.plot_signal)
 		self.checkPlotSignal.grid(row=0, column=0, sticky=tk.W, columnspan=4)
-		self.plot_signal.set(get_cfg_param(self.config, 'plot_signal', True, 'b'))
+		self.plot_signal.set(get_cfg_param(self.config, c_plot_signal, True, 'b'))
 
 		# отобразить спектр сигнала
 		self.plot_signal_spectrum = BooleanVar()
 		self.checkSignalSpectrum = tk.Checkbutton(self.framePlot, text='Спектр сигнала', variable=self.plot_signal_spectrum)
 		self.checkSignalSpectrum.grid(row=0, column=1, sticky=tk.W, columnspan=4)
-		self.plot_signal_spectrum.set(get_cfg_param(self.config, 'plot_signal_spectrum', True, 'b'))
+		self.plot_signal_spectrum.set(get_cfg_param(self.config, c_plot_signal_spectrum, True, 'b'))
 		
 		# отобразить отфильтрованный сигнал
 		self.plot_filtered_signal = BooleanVar()
 		self.checkPlotFiltered = tk.Checkbutton(self.framePlot, text='Отфильтрованный сигнал', variable=self.plot_filtered_signal)
 		self.checkPlotFiltered.grid(row=1, column=0, sticky=tk.W, columnspan=4)
-		self.plot_filtered_signal.set(get_cfg_param(self.config, 'plot_filtered_signal', True, 'b'))
+		self.plot_filtered_signal.set(get_cfg_param(self.config, c_plot_filtered_signal, True, 'b'))
 	
 		# отобразить спектр отфильтрованного сигнала
 		self.plot_filtered_spectrum = BooleanVar()
 		self.checkPlotFilteredSignalSpectrum = tk.Checkbutton(self.framePlot, text='Спектр отфильтрованного сигнала', variable=self.plot_filtered_spectrum)
 		self.checkPlotFilteredSignalSpectrum.grid(row=1, column=1, sticky=tk.W, columnspan=4)
-		self.plot_filtered_spectrum.set(get_cfg_param(self.config, 'plot_filtered_spectrum', True, 'b'))
+		self.plot_filtered_spectrum.set(get_cfg_param(self.config, c_plot_filtered_spectrum, True, 'b'))
 
 		# отобразить ШИМ
 		self.plot_shim = BooleanVar()
 		self.checkPlotShim = tk.Checkbutton(self.framePlot, text='ШИМ', variable=self.plot_shim)
 		self.checkPlotShim.grid(row=2, column=0, sticky=tk.W, columnspan=4)
-		self.plot_shim.set(get_cfg_param(self.config, 'plot_shim', True, 'b'))
+		self.plot_shim.set(get_cfg_param(self.config, c_plot_shim, True, 'b'))
 		
 		# отобразить сигнал + пила
 		self.plot_signal_saw = BooleanVar()
 		self.checkSignalSaw = tk.Checkbutton(self.framePlot, text='Сигнал + Пила', variable=self.plot_signal_saw)
 		self.checkSignalSaw.grid(row=2, column=1, sticky=tk.W, columnspan=4)
-		self.plot_signal_saw.set(get_cfg_param(self.config, 'plot_signal_saw', False, 'b'))
+		self.plot_signal_saw.set(get_cfg_param(self.config, c_plot_signal_saw, False, 'b'))
 
 		# сигнал с точки .. по ..
 		lblPlotFromPoint = tk.Label(self.framePlot, text='Показать точки с', width=25).grid(row=3, column=0, sticky=tk.E)
 		self.editPlotFromPoint = tk.Entry(self.framePlot, width=5)
 		self.editPlotFromPoint.grid(row=3, column=1, sticky=tk.W)
-		self.editPlotFromPoint.insert(0, get_cfg_param(self.config, 'plot_from_point', '1'))
+		self.editPlotFromPoint.insert(0, get_cfg_param(self.config, c_plot_from_point, '1'))
 		
 		lblPlotToPoint = tk.Label(self.framePlot, text=' по ', width=4).grid(row=3, column=2, sticky=tk.E)
 		self.editPlotToPoint = tk.Entry(self.framePlot, width=53)
 		self.editPlotToPoint.grid(row=3, column=3, sticky=tk.W)
-		self.editPlotToPoint.insert(0, get_cfg_param(self.config, 'plot_to_point', '1000'))
+		self.editPlotToPoint.insert(0, get_cfg_param(self.config, c_plot_to_point, '1000'))
 
 	## <- отрисовка ##
 
@@ -310,13 +307,13 @@ class mainFrame(Frame):
 		lblWorkDir = tk.Label(self.frameGen, text='Рабочий каталог', width=25).grid(row=0, column=0, sticky=tk.E)
 		self.editWorkDir = tk.Entry(self.frameGen, width=65)
 		self.editWorkDir.grid(row=0, column=1, sticky=tk.W)
-		self.editWorkDir.insert(0, get_cfg_param(self.config, 'workdir', ''))
+		self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, ''))
 		
 		# шаблон имен файлов
 		lblFilenameTemplate = tk.Label(self.frameGen, text='Шаблон имен файлов', width=25).grid(row=1, column=0, sticky=tk.E)
 		self.editFilenameTemplate = tk.Entry(self.frameGen, width=65)
 		self.editFilenameTemplate.grid(row=1, column=1, sticky=tk.W)
-		self.editFilenameTemplate.insert(0, get_cfg_param(self.config, 'filename_template', ''))
+		self.editFilenameTemplate.insert(0, get_cfg_param(self.config, c_filename_template, ''))
 		
 	## <- общее ##
 
@@ -368,7 +365,7 @@ class mainFrame(Frame):
 			with open(fn + '.spectrum', 'w') as f:
 				pass
 
-			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config['sampling'], d=self.config['duration'], fmin=self.config['freq_min'], fmax=self.config['freq_max'])
+			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config[c_sampling], d=self.config[c_duration], fmin=self.config[c_freq_min], fmax=self.config[c_freq_max])
 
 		except Exception as E:
 			print(E, file=sys.stderr)			
@@ -385,7 +382,7 @@ class mainFrame(Frame):
 			if fn[-1] != '/': fn += '/'
 			fn += self.config['filename_template']
 
-			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config['sampling'], d=self.config['duration'], fmin=self.config['freq_min'], fmax=self.config['freq_max'])
+			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config[c_sampling], d=self.config[c_duration], fmin=self.config[c_freq_min], fmax=self.config[c_freq_max])
 
 		except Exception as E:
 			print(E, file=sys.stderr)	
@@ -489,38 +486,38 @@ class mainFrame(Frame):
 		try:
 			# собираем параметры
 			self.config = {
-				'signal_type': int(self.cbSignalType.current()),
-				'freq':      int(self.editFrequency.get()),	
-				'sampling':  int(self.editSampling.get()),
-				'amplitude': int(self.editAmplitude.get()),
-				'duration':  int(self.editDuration.get()),
-				'hush':      int(self.editHush.get()),
-				'fadein':    int(self.editFadeIn.get()),
-				'fadeout':   int(self.editFadeOut.get()),
-				'freq_min':   int(self.editFreqMin.get()),
-				'freq_max':   int(self.editFreqMax.get()),
-				'filtrate':            bool(self.filtrate.get()),
-				# 'edit_spectrum_form':  bool(self.edit_spectrum_form.get()),
-				'apply_spectrum_form': bool(self.apply_spectrum_form.get()),
-				'apply_accurately_to_form': bool(self.apply_accurately_to_form.get()),
-				'channel_count':    int(self.editChannelCount.get()),
-				'saw_count_per_point':      int(self.editSawpp.get()),
-				'zero_smooth':  int(self.editZeroSmooth.get()),
-				'channel_gap': int(self.editChannelGap.get()),
-				'send':       bool(self.send.get()),
-				'host':       self.editHost.get(),
-				'port':       int(self.editPort.get()),
-				'mode': 	  int(self.cbMode.current()),
-				'plot_signal':            bool(self.plot_signal.get()),
-				'plot_filtered_signal':   bool(self.plot_filtered_signal.get()),
-				'plot_signal_spectrum':   bool(self.plot_signal_spectrum.get()),
-				'plot_filtered_spectrum': bool(self.plot_filtered_spectrum.get()),
-				'plot_shim':              bool(self.plot_shim.get()),
-				'plot_signal_saw':        bool(self.plot_signal_saw.get()),
-				'plot_from_point':          int(self.editPlotFromPoint.get()),
-				'plot_to_point':            int(self.editPlotToPoint.get()),
-				'workdir':                self.editWorkDir.get(),
-				'filename_template':      self.editFilenameTemplate.get()
+				c_signal_type: int(self.cbSignalType.current()),
+				c_freq:      int(self.editFrequency.get()),	
+				c_sampling:  int(self.editSampling.get()),
+				c_amplitude: int(self.editAmplitude.get()),
+				c_duration:  int(self.editDuration.get()),
+				c_hush:      int(self.editHush.get()),
+				c_fadein:    int(self.editFadeIn.get()),
+				c_fadeout:   int(self.editFadeOut.get()),
+				c_freq_min:   int(self.editFreqMin.get()),
+				c_freq_max:   int(self.editFreqMax.get()),
+				c_filtrate:            bool(self.filtrate.get()),
+				# c_edit_spectrum_form:  bool(self.edit_spectrum_form.get()),
+				c_apply_spectrum_form: bool(self.apply_spectrum_form.get()),
+				c_apply_accurately_to_form: bool(self.apply_accurately_to_form.get()),
+				c_channel_count:    int(self.editChannelCount.get()),
+				c_saw_count_per_point:      int(self.editSawpp.get()),
+				c_zero_smooth:  int(self.editZeroSmooth.get()),
+				c_channel_gap: int(self.editChannelGap.get()),
+				c_send:       bool(self.send.get()),
+				c_host:       self.editHost.get(),
+				c_port:       int(self.editPort.get()),
+				c_mode: 	  int(self.cbMode.current()),
+				c_plot_signal:            bool(self.plot_signal.get()),
+				c_plot_filtered_signal:   bool(self.plot_filtered_signal.get()),
+				c_plot_signal_spectrum:   bool(self.plot_signal_spectrum.get()),
+				c_plot_filtered_spectrum: bool(self.plot_filtered_spectrum.get()),
+				c_plot_shim:              bool(self.plot_shim.get()),
+				c_plot_signal_saw:        bool(self.plot_signal_saw.get()),
+				c_plot_from_point:          int(self.editPlotFromPoint.get()),
+				c_plot_to_point:            int(self.editPlotToPoint.get()),
+				c_workdir:                self.editWorkDir.get(),
+				c_filename_template:      self.editFilenameTemplate.get()
 			}
 
 			return self.config
@@ -534,73 +531,60 @@ class mainFrame(Frame):
 
 def do(config):
 	# >> проверяем, что заданы путь и шаблон имен файлов 
-	try:
-		if not ('workdir' in config or 'filename_template' in config):
-			raise Exception('_main.config must contains params "filename_template" and "workdir" specifing path and names of created files\nexample: filename_template = home/user/  workdir=test_main')
-	  
-		filename_template = config['workdir']
-		if len(filename_template) == 0:
-			raise Exception("Path not found")
 
-		if filename_template[-1] != '/': filename_template += '/'
-		filename_template += config['filename_template']  # "d:/c++/AME/Generators/test_main" # добавляем разные расширения
-
-	except Exception as E:
-		print(E, file=sys.stderr)
-		sys.exit(1)
 
 	# << #
 
 	# имена файлов
-	filename_raw = filename_template + '.raw'
-	filename_flt = filename_template + '.rawf'
-	filename_shim = filename_template + '.shim'
-	filename_spectrum = filename_template + '.spectrum'
+	filename_raw = get_path(config, 'raw')
+	filename_flt = get_path(config, 'rawf')
+	filename_shim = get_path(config, 'shim')
+	filename_spectrum = get_path(config, 'spectrum')
 
 	# генератор  s_type_noise | s_type_sinus | s_type_sinus_noise | s_type_sinus_sinus_noise
 	# print(config.keys())
-	meandr_pulse_width = get_cfg_param(config, 'meandr_pulse_width', 0, 'i')
-	meandr_pulse_interval = get_cfg_param(config, 'meandr_pulse_interval', 0, 'i')
+	meandr_pulse_width = get_cfg_param(config, c_meandr_pulse_width, 0, 'i')
+	meandr_pulse_interval = get_cfg_param(config, c_meandr_pulse_interval, 0, 'i')
 
 
-	signal_type = get_cfg_param(config, 'signal_type', gen.s_type_noise, 'i')
-	freq = get_cfg_param(config, 'freq', 1000, 'i')
-	sampling = get_cfg_param(config, 'sampling', 100000, 'i')
-	duration = get_cfg_param(config, 'duration', 1000, 'i')
-	hush = get_cfg_param(config, 'hush', 0, 'i')
-	amplitude = get_cfg_param(config, 'amplitude', 1024, 'i')
-	fadein = get_cfg_param(config, 'fadein', 0, 'i')
-	fadeout = get_cfg_param(config, 'fadeout', 0, 'i')
+	signal_type = get_cfg_param(config, c_signal_type, gen.s_type_noise, 'i')
+	freq = get_cfg_param(config, c_freq, 1000, 'i')
+	sampling = get_cfg_param(config, c_sampling, 100000, 'i')
+	duration = get_cfg_param(config, c_duration, 1000, 'i')
+	hush = get_cfg_param(config, c_hush, 0, 'i')
+	amplitude = get_cfg_param(config, c_amplitude, 1024, 'i')
+	fadein = get_cfg_param(config, c_fadein, 0, 'i')
+	fadeout = get_cfg_param(config, c_fadeout, 0, 'i')
 	  
 	# фильтр
-	filtrate = get_cfg_param(config, 'filtrate', True, 'b') and (signal_type != gen.s_type_sinus)
-	freq_min = get_cfg_param(config, 'freq_min', 1000, 'i')
-	freq_max = get_cfg_param(config, 'freq_max', 4000, 'i')
-	edit_spectrum_form = get_cfg_param(config, 'edit_spectrum_form', False, 'b') and (signal_type != gen.s_type_sinus)
-	apply_spectrum_form = get_cfg_param(config, 'apply_spectrum_form', False, 'b') and (signal_type != gen.s_type_sinus)
-	apply_accurately_to_form = get_cfg_param(config, 'apply_accurately_to_form', False, 'b') and apply_spectrum_form
+	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (signal_type != gen.s_type_sinus)
+	freq_min = get_cfg_param(config, c_freq_min, 1000, 'i')
+	freq_max = get_cfg_param(config, c_freq_max, 4000, 'i')
+	# edit_spectrum_form = get_cfg_param(config, c_edit_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus)
+	apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus)
+	apply_accurately_to_form = get_cfg_param(config, c_apply_accurately_to_form, False, 'b') and apply_spectrum_form
 	 
 	# преобразование ШИМ
-	channel_count = get_cfg_param(config, 'channel_count', 2, 'i')
-	saw_count_per_point = get_cfg_param(config, 'saw_count_per_point', 1, 'i')
-	zero_smooth = get_cfg_param(config, 'zero_smooth', 0, 'i')
-	channel_gap = get_cfg_param(config, 'channel_gap', 0, 'i')
+	channel_count = get_cfg_param(config, c_channel_count, 2, 'i')
+	saw_count_per_point = get_cfg_param(config, c_saw_count_per_point, 1, 'i')
+	zero_smooth = get_cfg_param(config, c_zero_smooth, 0, 'i')
+	channel_gap = get_cfg_param(config, c_channel_gap, 0, 'i')
 	 
 	# загрузка по сети
-	send = get_cfg_param(config, 'send', True, 'b')
-	host = get_cfg_param(config, 'host', '172.16.4.55')
-	port = get_cfg_param(config, 'port', 35580, 'i')
-	mode = get_cfg_param(config, 'mode', sock.e_mode_loop, 'i')
+	send = get_cfg_param(config, c_send, True, 'b')
+	host = get_cfg_param(config, c_host, '172.16.4.55')
+	port = get_cfg_param(config, c_port, 35580, 'i')
+	mode = get_cfg_param(config, c_mode, sock.e_mode_loop, 'i')
 	
 	# отрисовка
-	plot_from_point = get_cfg_param(config, 'plot_from_point', 1, 'i')
-	plot_to_point = get_cfg_param(config, 'plot_to_point', 1000, 'i')
-	plot_signal = get_cfg_param(config, 'plot_signal', True, 'b')
-	plot_signal_spectrum = get_cfg_param(config, 'plot_signal_spectrum', True, 'b')
-	plot_filtered_signal = get_cfg_param(config, 'plot_filtered_signal', True, 'b')
-	plot_filtered_spectrum = get_cfg_param(config, 'plot_filtered_spectrum', True, 'b')
-	plot_shim = get_cfg_param(config, 'plot_shim', True, 'b')
-	plot_signal_saw = get_cfg_param(config, 'plot_signal_saw', False, 'b')
+	plot_from_point = get_cfg_param(config, c_plot_from_point, 1, 'i')
+	plot_to_point = get_cfg_param(config, c_plot_to_point, 1000, 'i')
+	plot_signal = get_cfg_param(config, c_plot_signal, True, 'b')
+	plot_signal_spectrum = get_cfg_param(config, c_plot_signal_spectrum, True, 'b')
+	plot_filtered_signal = get_cfg_param(config, c_plot_filtered_signal, True, 'b')
+	plot_filtered_spectrum = get_cfg_param(config, c_plot_filtered_spectrum, True, 'b')
+	plot_shim = get_cfg_param(config, c_plot_shim, True, 'b')
+	plot_signal_saw = get_cfg_param(config, c_plot_signal_saw, False, 'b')
 	 
 	#####################################################
 	#####################################################
@@ -636,17 +620,19 @@ def do(config):
 		araw = wav.wav(file_name="D:/c++/AME/imperia march r.wav",
 				   to_file=filename_raw)
 	else:
-		araw = gen.generate(t=signal_type,
-			   f=freq,
-			   s=sampling,
-			   d=duration,
-			   h=hush,
-			   a=amplitude,
-			   fi=fadein,
-			   fo=fadeout,
-			   fn=filename_raw,
-			   mpw=meandr_pulse_width,
-			   mpi=meandr_pulse_interval)
+		araw = gen.generate(config)
+
+		# araw = gen.generate(t=signal_type,
+		# 	   f=freq,
+		# 	   s=sampling,
+		# 	   d=duration,
+		# 	   h=hush,
+		# 	   a=amplitude,
+		# 	   fi=fadein,
+		# 	   fo=fadeout,
+		# 	   fn=filename_raw,
+		# 	   mpw=meandr_pulse_width,
+		# 	   mpi=meandr_pulse_interval)
 	 
 	if araw is None:
 		print('araw is None')
@@ -726,23 +712,4 @@ def showWindow(version):
 	# window.close()
 
 
-def get_cfg_param(config, param_name, default, type='s'):
-	try:
-		if type == 'i':
-			# print(config, param_name)
-			
-			if param_name in config:
-				return int(config[param_name])
-			else: return default
-		elif type == 'b':
-			# if param_name == 'send': print(str(config[param_name]).lower())
-			if param_name in config:
-				return str(config[param_name]).lower() in ['1', 'yes', 'y', 'true', 't']
-			else: return default
-		else:
-			if param_name in config: return config[param_name]
-			else: return default
-	except Exception as E:
-		print('error in func _exec_main.get_cfg_param(): ', file=sys.stderr, end='')
-		print(E)
-		return None
+

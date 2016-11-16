@@ -7,13 +7,15 @@ import array
 import random
 import numpy as np
 
+from _defs import *
+
 s_type_noise = 0
 s_type_sinus = 1
 s_type_meandr = 2
 s_type_meandr_random = 3
 s_type_sinus_noise = 4
 s_type_sinus_sinus_noise = 5
-# s_type_lfm = 6
+s_type_lfm = 6
 
 
 def createParser ():
@@ -39,70 +41,101 @@ def createParser ():
     else:
         return namespace
     
-def generate(**kwargs):
+def generate(config=None, **kwargs):
     try:
 
         print('generating signal ... ', end='')
         
-        SIGNAL_TYPE = kwargs['t']
-        SIGNAL_FREQUENCY = kwargs['f']
-        SIGNAL_SAMPLING = kwargs['s']
-        SIGNAL_DURATION = kwargs['d']
-        SIGNAL_AMPLITUDE = kwargs['a']
-        FADE_IN = kwargs['fi']
-        FADE_OUT = kwargs['fo']
-        FILE_NAME = kwargs['fn']
+        if config:
+            signal_type = config[c_signal_type]
+            signal_frequency = config[c_freq]
+            signal_sampling = config[c_sampling]
+            signal_duration = config[c_duration]
+            signal_amplitude = config[c_amplitude]
+            fade_in = config[c_fadein]
+            fade_out = config[c_fadeout]
+            file_name = get_path(config, 'raw')
+            hush_duration = config[c_hush]
+            # meandr_pulse_width = config[c_meandr_pulse_width]
+            # meandr_pulse_interval = config[c_meandr_pulse_interval]
 
-        hush_duration = kwargs['h']
-        meandr_pulse_width = kwargs['mpw']
-        meandr_pulse_interval = kwargs['mpi']
+        elif kwargs:
+            signal_type = kwargs['t']
+            signal_frequency = kwargs['f']
+            signal_sampling = kwargs['s']
+            signal_duration = kwargs['d']
+            signal_amplitude = kwargs['a']
+            fade_in = kwargs['fi']
+            fade_out = kwargs['fo']
+            file_name = kwargs['fn']
+            hush_duration = kwargs['h']
+            # meandr_pulse_width = kwargs['mpw']
+            # meandr_pulse_interval = kwargs['mpi']
+
+        else:
+            raise Exception('Params are not specified')
+
             
         #общее количество точек, которое будет обсчитано
-        POINT_COUNT = int(SIGNAL_SAMPLING * (SIGNAL_DURATION - hush_duration) / 1000)
-        hush_count = int(SIGNAL_SAMPLING * hush_duration / 1000)
+        point_count = int(signal_sampling * (signal_duration - hush_duration) / 1000)
+        hush_count = int(signal_sampling * hush_duration / 1000)
     
         # количество точек на раскачку сигнала
-        FADE_IN_POINT_COUNT = int(POINT_COUNT / 100 * FADE_IN) if FADE_IN > 0 else 0
-        fade_in_step = 1 / FADE_IN_POINT_COUNT if FADE_IN > 0 else 0.0
+        fade_in_point_count = int(point_count / 100 * fade_in) if fade_in > 0 else 0
+        fade_in_step = 1 / fade_in_point_count if fade_in > 0 else 0.0
     
         # количество точек на затухание сигнала    
-        FADE_OUT_POINT_COUNT = int(POINT_COUNT / 100 * FADE_OUT) if FADE_OUT > 0 else 0
-        fade_out_step = 1 / FADE_OUT_POINT_COUNT if FADE_OUT > 0 else 0.0
+        fade_out_point_count = int(point_count / 100 * fade_out) if fade_out > 0 else 0
+        fade_out_step = 1 / fade_out_point_count if fade_out > 0 else 0.0
     
         # шаг приращения по оси x
-        x_step = SIGNAL_FREQUENCY /  SIGNAL_SAMPLING
+        x_step = signal_frequency / signal_sampling
         
         # формируем сырой сигнал
-        if SIGNAL_TYPE == s_type_noise:
-            y_raw = [random.uniform(-SIGNAL_AMPLITUDE, SIGNAL_AMPLITUDE) for _counter in range(POINT_COUNT)]
-            # y_raw = [random.uniform(0, SIGNAL_AMPLITUDE * 2) for _counter in range(POINT_COUNT)]
+        if signal_type == s_type_noise:
+            y_raw = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(point_count)]
+            # y_raw = [random.uniform(0, signal_amplitude * 2) for _counter in range(point_count)]
         
-        elif SIGNAL_TYPE == s_type_sinus:
-            # y_raw = [SIGNAL_AMPLITUDE * math.sin( x_step * _counter * math.pi * 2 + 0.5) for _counter in range(POINT_COUNT)]
-            y_raw = [SIGNAL_AMPLITUDE * math.sin( x_step * _counter * math.pi * 2) for _counter in range(POINT_COUNT)]
+        elif signal_type == s_type_sinus:
+            # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2 + 0.5) for _counter in range(point_count)]
+            y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]
 
-        elif SIGNAL_TYPE == s_type_meandr:
+        elif signal_type == s_type_meandr:
             ms = 0.000001 # 1 микросекунда
             n = ms * float(meandr_pulse_width)
 
             print(meandr_pulse_width, n)
-            mpc = 1 / SIGNAL_SAMPLING / n 
+            mpc = 1 / signal_sampling / n 
 
             raise Exception('error')
-            # y_raw = [SIGNAL_AMPLITUDE * math.sin( x_step * _counter * math.pi * 2) for _counter in range(POINT_COUNT)]            
+            # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]            
     
-        elif SIGNAL_TYPE == s_type_sinus_noise:
-            y_raw = [SIGNAL_AMPLITUDE * math.sin( x_step * _counter * math.pi * 2) * random.random()  for _counter in range(POINT_COUNT)]
+        elif signal_type == s_type_sinus_noise:
+            y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) * random.random()  for _counter in range(point_count)]
     
-        elif SIGNAL_TYPE == s_type_sinus_sinus_noise:  #
+        elif signal_type == s_type_sinus_sinus_noise:  #
             k = 0.5
-            y_raw = [(SIGNAL_AMPLITUDE * math.sin( x_step * _counter * math.pi * 2) + (SIGNAL_AMPLITUDE * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(POINT_COUNT)]
+            y_raw = [(signal_amplitude * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(point_count)]
     
+        elif signal_type == s_type_lfm:
+            # fmin = config[c_freq_min]
+            # x_step_0 = config[c_freq_min] / config[c_sampling]
+            # x_step_1 = config[c_freq_max] / config[c_sampling]
+            # x_freq_step = (x_step_1 - x_step_0) / point_count
+            # print(b, x_step_0, x_step_1, x_freq_step)
+
+            p = signal_sampling * signal_duration / 1000
+            f0 = (config[c_freq_max] + config[c_freq_min]) / 2
+            b = (config[c_freq_max] - config[c_freq_min]) / (signal_sampling * signal_duration / 1000)
+            print(p, f0, b)
+
+            y_raw = [signal_amplitude * math.sin((f0 * t/p + b/2  * (t/p)**2) * math.pi * 2) for t in range(signal_sampling * signal_duration // 1000)]
+
         # применяем параметры раскачки и затухания и сохраняем конечный сигнал
         y = []
-        y.extend([y_raw[_counter] * (_counter * fade_in_step) for _counter in range(FADE_IN_POINT_COUNT)])
-        y.extend(y_raw[FADE_IN_POINT_COUNT : POINT_COUNT - FADE_OUT_POINT_COUNT])
-        y.extend([y_raw[POINT_COUNT - _counter] * (_counter * fade_out_step) for _counter in range(FADE_OUT_POINT_COUNT, 0, -1)])
+        y.extend([y_raw[_counter] * (_counter * fade_in_step) for _counter in range(fade_in_point_count)])
+        y.extend(y_raw[fade_in_point_count : point_count - fade_out_point_count])
+        y.extend([y_raw[point_count - _counter] * (_counter * fade_out_step) for _counter in range(fade_out_point_count, 0, -1)])
 
         # добавляем тишину в конце, если необходимо
         # print(np.zeros(hush_count))
@@ -114,7 +147,7 @@ def generate(**kwargs):
         # пишем в файл
         print('saving signal ...', end='')
         try:
-            f = open(FILE_NAME, 'wb')
+            f = open(file_name, 'wb')
             arr = array.array('d')
             arr.fromlist(y)
             arr.tofile(f)
@@ -145,46 +178,46 @@ if __name__ == "__main__":
     if parser == None:
 
         # параметры сигнала
-        SIGNAL_TYPE = s_type_sinus_noise
-        SIGNAL_FREQUENCY = 3000
-        SIGNAL_SAMPLING = 16000 # должна быть минимум в 2 раза больше макс. частоты
-        SIGNAL_DURATION = 100 # в миллисекундах
-        SIGNAL_AMPLITUDE = 512 # величина отклонения от нуля
+        signal_type = s_type_sinus_noise
+        signal_frequency = 3000
+        signal_sampling = 16000 # должна быть минимум в 2 раза больше макс. частоты
+        signal_duration = 100 # в миллисекундах
+        signal_amplitude = 512 # величина отклонения от нуля
         HUSH = 0
 
         # раскачка и затухание сигнала в процентах от общей длины сигнала
-        FADE_IN = 0
-        FADE_OUT = 0
+        fade_in = 0
+        fade_out = 0
         
         # путь к файлу в который будет записан сигнал
-        FILE_NAME = "d:/c++/AME/Generators/test_random.raw"
+        file_name = "d:/c++/AME/Generators/test_random.raw"
         
     else:
 
         # параметры сигнала
-        SIGNAL_TYPE = parser.type
-        SIGNAL_FREQUENCY = parser.frequency
-        SIGNAL_SAMPLING = parser.sampling
-        SIGNAL_DURATION = parser.duration # в миллисекундах
-        SIGNAL_AMPLITUDE = parser.amplitude
+        signal_type = parser.type
+        signal_frequency = parser.frequency
+        signal_sampling = parser.sampling
+        signal_duration = parser.duration # в миллисекундах
+        signal_amplitude = parser.amplitude
         HUSH = parser.hash # тишина после сигнала мс.
 
         # раскачка и затухание сигнала в процентах от общей длины сигнала
-        FADE_IN = parser.fade_in
-        FADE_OUT = parser.fade_out
+        fade_in = parser.fade_in
+        fade_out = parser.fade_out
 
         # путь к файлу в который будет записан сигнал
-        FILE_NAME = parser.file_name
+        file_name = parser.file_name
 
 
-    generate(t=SIGNAL_TYPE,
-             s=SIGNAL_SAMPLING,
-             f=SIGNAL_FREQUENCY,
-             d=SIGNAL_DURATION,
+    generate(t=signal_type,
+             s=signal_sampling,
+             f=signal_frequency,
+             d=signal_duration,
              h=HUSH,
-             a=SIGNAL_AMPLITUDE,
-             fi=FADE_IN,
-             fo=FADE_OUT,
-             fn=FILE_NAME)
+             a=signal_amplitude,
+             fi=fade_in,
+             fo=fade_out,
+             fn=file_name)
 
     
