@@ -484,6 +484,8 @@ class mainFrame(Frame):
 
 	def checkout_config(self):
 		try:
+			cfg = self.config.copy()
+
 			# собираем параметры
 			self.config = {
 				c_signal_type: int(self.cbSignalType.current()),
@@ -494,6 +496,8 @@ class mainFrame(Frame):
 				c_hush:      int(self.editHush.get()),
 				c_fadein:    int(self.editFadeIn.get()),
 				c_fadeout:   int(self.editFadeOut.get()),
+				c_meandr_pulse_width:	 get_cfg_param(cfg, c_meandr_pulse_width, 0, 'i'),
+				c_meandr_pulse_interval: get_cfg_param(cfg, c_meandr_pulse_interval, 0, 'i'),
 				c_freq_min:   int(self.editFreqMin.get()),
 				c_freq_max:   int(self.editFreqMax.get()),
 				c_filtrate:            bool(self.filtrate.get()),
@@ -557,11 +561,11 @@ def do(config):
 	fadeout = get_cfg_param(config, c_fadeout, 0, 'i')
 	  
 	# фильтр
-	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (signal_type != gen.s_type_sinus)
+	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
 	freq_min = get_cfg_param(config, c_freq_min, 1000, 'i')
 	freq_max = get_cfg_param(config, c_freq_max, 4000, 'i')
 	# edit_spectrum_form = get_cfg_param(config, c_edit_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus)
-	apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus)
+	apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
 	apply_accurately_to_form = get_cfg_param(config, c_apply_accurately_to_form, False, 'b') and apply_spectrum_form
 	 
 	# преобразование ШИМ

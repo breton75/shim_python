@@ -47,6 +47,7 @@ c_fadein = 'fadein'
 c_fadeout = 'fadeout'		
 c_meandr_pulse_width = 'meandr_pulse_width'
 c_meandr_pulse_interval = 'meandr_pulse_interval'
+c_lfm_koeff = 'lfm_koeff'
 
 c_filtrate = 'filtrate'
 c_freq_min = 'freq_min'

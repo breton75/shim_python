@@ -98,6 +98,7 @@ def plot(**kwargs):
 
                 ts = 1 / kwargs['s'] * 1000
                 
+                print(len(araw))
                 plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал', drawstyle='default') #, marker='s', markerfacecolor='r') #, markersize=10) #, color='black', lw=0)
                 plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1 * ts, POINT_2 * ts, ts))
                 plt.xlabel('миллисекунды')
@@ -185,6 +186,7 @@ def plot(**kwargs):
                     raise Exception('no raw signal spectrum for plotting')
 
                 # plt.plot(aspec, label='Signal spectrum', color='g')
+
                 plt.vlines(range(len(aspec)), 0, aspec, label='Спектр исходного сигнала', color='g')
                 plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small')
                 plt.grid()
@@ -332,7 +334,7 @@ def plot(**kwargs):
                 plt.bar(left=lefts_b, width=widths_b, height=heights_b, bottom=bottoms_b, color='r', edgecolor='r', label='Отрицательные значения')
                 plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small', title='Шим')
                 plt.ylim(ymin=-100, ymax=100)   # SHIM_WIDTH * 1 * POINT_COUNT // 200
-                plt.xticks(arange(0, (POINT_2 - POINT_1) * SHIM_WIDTH, 2), arange(POINT_1, POINT_2, 2)) # * POINT_COUNT // 200))
+                plt.xticks(arange(0, (POINT_2 - POINT_1) * SHIM_WIDTH, 200), arange(POINT_1, POINT_2, 200)) # * POINT_COUNT // 200))
                 plt.xlabel('отсчеты сигнала')
                 plt.grid()
     

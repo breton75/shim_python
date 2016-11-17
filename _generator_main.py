@@ -56,8 +56,6 @@ def generate(config=None, **kwargs):
             fade_out = config[c_fadeout]
             file_name = get_path(config, 'raw')
             hush_duration = config[c_hush]
-            # meandr_pulse_width = config[c_meandr_pulse_width]
-            # meandr_pulse_interval = config[c_meandr_pulse_interval]
 
         elif kwargs:
             signal_type = kwargs['t']
@@ -101,10 +99,13 @@ def generate(config=None, **kwargs):
             y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]
 
         elif signal_type == s_type_meandr:
+            meandr_pulse_width = config[c_meandr_pulse_width]
+            meandr_pulse_interval = config[c_meandr_pulse_interval]
+
             ms = 0.000001 # 1 микросекунда
             n = ms * float(meandr_pulse_width)
 
-            print(meandr_pulse_width, n)
+            print(meandr_pulse_width, meandr_pulse_interval)
             mpc = 1 / signal_sampling / n 
 
             raise Exception('error')
@@ -118,18 +119,14 @@ def generate(config=None, **kwargs):
             y_raw = [(signal_amplitude * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(point_count)]
     
         elif signal_type == s_type_lfm:
-            # fmin = config[c_freq_min]
-            # x_step_0 = config[c_freq_min] / config[c_sampling]
-            # x_step_1 = config[c_freq_max] / config[c_sampling]
-            # x_freq_step = (x_step_1 - x_step_0) / point_count
-            # print(b, x_step_0, x_step_1, x_freq_step)
+            f0 = config[c_freq_min] # начальная частота
+            f1 = config[c_freq_max] # конечная частота
+            fd = signal_sampling   # частота дискретизации
+            T = signal_duration/1000 # время в секундах
+            d = 1 / fd * T # шаг приращения
 
-            p = signal_sampling * signal_duration / 1000
-            f0 = (config[c_freq_max] + config[c_freq_min]) / 2
-            b = (config[c_freq_max] - config[c_freq_min]) / (signal_sampling * signal_duration / 1000)
-            print(p, f0, b)
-
-            y_raw = [signal_amplitude * math.sin((f0 * t/p + b/2  * (t/p)**2) * math.pi * 2) for t in range(signal_sampling * signal_duration // 1000)]
+            y_raw = [signal_amplitude * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(point_count)]
+            #  
 
         # применяем параметры раскачки и затухания и сохраняем конечный сигнал
         y = []
