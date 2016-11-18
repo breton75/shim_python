@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 def get_cfg_param(config, param_name, default, type='s'):
 	try:
@@ -47,6 +48,7 @@ c_fadein = 'fadein'
 c_fadeout = 'fadeout'		
 c_meandr_pulse_width = 'meandr_pulse_width'
 c_meandr_pulse_interval = 'meandr_pulse_interval'
+c_meandr_channel_count = 'meandr_channel_count'
 c_lfm_koeff = 'lfm_koeff'
 
 c_filtrate = 'filtrate'

@@ -31,7 +31,7 @@ if namespace.noui == None:
 else:
   try:
 
-    with open('_main.config', 'r') as configfile:
+    with open('_main.config', 'r', encoding="utf8") as configfile:
       lines = configfile.readlines()
     
       # разбираем параметры записанные в файле ini
@@ -49,8 +49,7 @@ else:
       do(config)
     
   except Exception as E:
-    print('error on reading config file: ', file=sys.stderr, end='')
-    print(E, file=sys.stderr)  
+    print('error on reading config file: %s' % E, file=sys.stderr, end='')
     sys.exit(1)
 
 

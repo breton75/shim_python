@@ -33,7 +33,7 @@ class mainFrame(Frame):
 		# читаем файл _main.config
 		try:
 
-			with open('_main.config', 'r') as configfile:
+			with open('_main.config', 'r', encoding="utf8") as configfile:
 				lines = configfile.readlines()
 
 				# разбираем параметры записанные в файле _main.config
@@ -355,12 +355,12 @@ class mainFrame(Frame):
 		try:
 			if self.checkout_config() is None: return
 
-			fn = self.config['workdir']
+			fn = self.config[c_workdir]
 			if len(fn) == 0:
 				raise Exception('Path not found')
 
 			if fn[-1] != '/': fn += '/'
-			fn += self.config['filename_template']
+			fn += self.config[c_filename_template]
 
 			with open(fn + '.spectrum', 'w') as f:
 				pass
@@ -375,12 +375,12 @@ class mainFrame(Frame):
 		try:
 			if self.checkout_config() is None: return
 
-			fn = self.config['workdir']
+			fn = self.config[c_workdir]
 			if len(fn) == 0:
 				raise Exception('Path not found')
 
 			if fn[-1] != '/': fn += '/'
-			fn += self.config['filename_template']
+			fn += self.config[c_filename_template]
 
 			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config[c_sampling], d=self.config[c_duration], fmin=self.config[c_freq_min], fmax=self.config[c_freq_max])
 
@@ -390,7 +390,7 @@ class mainFrame(Frame):
 
 	def edit_signal_params(self):
 		try:
-			with open('_main.config', 'r') as configfile:
+			with open('_main.config', 'r', encoding="utf8") as configfile:
 				lines = configfile.readlines()
 
 				# разбираем параметры записанные в файле _main.config
@@ -442,8 +442,7 @@ class mainFrame(Frame):
 			do(self.config)
 	  
 		except Exception as E:
-			print('error in func _ui.start(): ', file=sys.stderr, end='')
-			print(E, file=sys.stderr)  
+			print('error in func _ui.start(): %s' % E, file=sys.stderr, end='')
 
 
 	def save(self):
@@ -455,10 +454,10 @@ class mainFrame(Frame):
 		# читаем файл _main.config
 		try:
 
-			with open('_main.config', 'r') as configfile:
+			with open('_main.config', 'r', encoding="utf8") as configfile:
 				lines = configfile.readlines()
 	  
-			with open('_main.config', 'w') as configfile:
+			with open('_main.config', 'w', encoding="utf8") as configfile:
 				# проходим по параметрам, записанным в файле _main.config
 				# если параметр есть в словаре self.config, то записываем этот параметр с его значением в файл
 				for line in lines:
@@ -478,8 +477,7 @@ class mainFrame(Frame):
 					configfile.write(str(p[0]) + '=' + str(p[1]) + '\n')
 	  
 		except Exception as E:
-			print('error in func _ui.save(): ', file=sys.stderr, end='')
-			print(E, file=sys.stderr)  
+			print('error in func _ui.save(): %s' % E, file=sys.stderr, end='')
 
 
 	def checkout_config(self):
@@ -498,6 +496,7 @@ class mainFrame(Frame):
 				c_fadeout:   int(self.editFadeOut.get()),
 				c_meandr_pulse_width:	 get_cfg_param(cfg, c_meandr_pulse_width, 0, 'i'),
 				c_meandr_pulse_interval: get_cfg_param(cfg, c_meandr_pulse_interval, 0, 'i'),
+				c_meandr_channel_count:  get_cfg_param(cfg, c_meandr_channel_count, 2, 'i'),
 				c_freq_min:   int(self.editFreqMin.get()),
 				c_freq_max:   int(self.editFreqMax.get()),
 				c_filtrate:            bool(self.filtrate.get()),
@@ -640,7 +639,7 @@ def do(config):
 	 
 	if araw is None:
 		print('araw is None')
-		sys.exit(1)
+		return
 
 
 	# if edit_spectrum_form:

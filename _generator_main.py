@@ -47,15 +47,16 @@ def generate(config=None, **kwargs):
         print('generating signal ... ', end='')
         
         if config:
-            signal_type = config[c_signal_type]
-            signal_frequency = config[c_freq]
-            signal_sampling = config[c_sampling]
-            signal_duration = config[c_duration]
-            signal_amplitude = config[c_amplitude]
-            fade_in = config[c_fadein]
-            fade_out = config[c_fadeout]
+            signal_type = get_cfg_param(config, c_signal_type, 0, 'i') # config[c_signal_type]
+            signal_frequency = get_cfg_param(config, c_freq, 0, 'i') # config[c_freq]
+            signal_sampling = get_cfg_param(config, c_sampling, 0, 'i') # config[c_sampling]
+            signal_duration = get_cfg_param(config, c_duration, 0, 'i') #config[c_duration]
+            signal_amplitude = get_cfg_param(config, c_amplitude, 0, 'i') # config[c_amplitude]
+            fade_in = get_cfg_param(config, c_fadein, 0, 'i') # config[c_fadein]
+            fade_out = get_cfg_param(config, c_fadeout, 0, 'i') # config[c_fadeout]
             file_name = get_path(config, 'raw')
-            hush_duration = config[c_hush]
+            # hush_duration = config[c_hush]
+            hush_duration = get_cfg_param(config, c_hush, 0, 'i')
 
         elif kwargs:
             signal_type = kwargs['t']
@@ -85,7 +86,6 @@ def generate(config=None, **kwargs):
         # количество точек на затухание сигнала    
         fade_out_point_count = int(point_count / 100 * fade_out) if fade_out > 0 else 0
         fade_out_step = 1 / fade_out_point_count if fade_out > 0 else 0.0
-    
         # шаг приращения по оси x
         x_step = signal_frequency / signal_sampling
         
@@ -99,17 +99,71 @@ def generate(config=None, **kwargs):
             y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]
 
         elif signal_type == s_type_meandr:
-            meandr_pulse_width = config[c_meandr_pulse_width]
-            meandr_pulse_interval = config[c_meandr_pulse_interval]
+            meandr_pulse_width = get_cfg_param(config, c_meandr_pulse_width, 0, 'i') # config[]
+            meandr_pulse_interval = get_cfg_param(config, c_meandr_pulse_interval, 0, 'i') # config[]
+            meandr_channel_count = get_cfg_param(config, c_meandr_channel_count, 2, 'i') # config[]
 
             ms = 0.000001 # 1 микросекунда
-            n = ms * float(meandr_pulse_width)
 
-            print(meandr_pulse_width, meandr_pulse_interval)
-            mpc = 1 / signal_sampling / n 
+            # длительность одного отсчета (сэмпла)
+            sample_time = round(1.0 / signal_sampling, 9)
 
-            raise Exception('error')
-            # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]            
+            # длительность одного импульса
+            pulse_time = round(ms * meandr_pulse_width, 9)
+
+            # длительность одного интервала
+            interval_time = round(ms * meandr_pulse_interval, 9)
+
+            # количество отсчетов (сэмплов) на один импульс
+            n_imp = int(meandr_pulse_width * meandr_channel_count * signal_sampling / 1000000)
+            if meandr_pulse_width % (1000000 // signal_sampling) != 0:
+                raise Exception('При заданной дискретизации длина импульса меандра должна быть кратна %i' % (1000000 // signal_sampling))
+                                
+            # количество отсчетов (сэмплов) на один интервал
+            n_int = int(meandr_pulse_interval * signal_sampling / 1000000)
+            if meandr_pulse_interval % (1000000 // signal_sampling) != 0:
+                raise Exception('При заданной дискретизации длина интервала между импульсами меандра должна быть кратна %i' % (1000000 // signal_sampling))
+
+
+            # длина одного периода
+            n = n_imp + n_int
+
+            # выводим пердупреждение, если если в заданное количество точек не укладывается ровное количество периодов
+            if point_count % n != 0:
+                print('Предпреждение: количество периодов меандра не кратно длине сигнала')
+
+            print('sample_time=%f  pulse_time=%f  interval_time=%f  n_imp=%i  n_int=%i  n=%i  meandr_pulse_width=%i  meandr_pulse_interval=%i' % (sample_time, pulse_time, interval_time, n_imp, n_int, n, meandr_pulse_width, meandr_pulse_interval))
+
+            # пустой массив
+            y_raw = np.empty(point_count, dtype=float)
+
+            # если два канала, то периодически меняем знак сигнала
+            # ik = (-1)**(meandr_channel_count - 1)
+            # k = 1
+
+            # расставляем импульсы
+            for i in range(point_count):
+                # k *= ik
+                # period_num = i // n
+                o = i % n #- period_num * n
+
+                if meandr_channel_count == 1:
+                    y_raw[i] = signal_amplitude * int(o // n_imp == 0)
+                    
+
+                else:
+                    if o < n_imp/2: k = 1
+                    else: k = -1
+
+                    y_raw[i] = signal_amplitude * int(o // n_imp == 0) * k
+
+
+
+                # signal_amplitude * val
+
+                print('i=%i  period_num = %i  val=%0.2f' % (i, i//n, y_raw[i]))
+                
+                # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]            
     
         elif signal_type == s_type_sinus_noise:
             y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) * random.random()  for _counter in range(point_count)]
