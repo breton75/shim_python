@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import array as arr
 import random
 
+from _defs import *
+
 MIN_10NS_PSAW = 5
 SAW_FREQ = 100000000
 
@@ -129,19 +131,21 @@ def createParser ():
     else:
         return namespace
     
-def shim(**kwargs):
+def shim(config, **kwargs):
+    
+    
     try:
         print('shim conversion ... ', end='')
-    
-        SIGNAL_FREQUENCY = kwargs['f']
-        SIGNAL_SAMPLING = kwargs['s']
-        SIGNAL_DURATION = kwargs['d']
-        SIGNAL_AMPLITUDE = kwargs['a']
-        SHIM_FILE_NAME = kwargs['shimfn']
-        SHIM_ZERO_SMOOTH = kwargs['zero']
-        SHIM_CHANNEL_GAP = kwargs['chgap']
-        SHIM_CHANNEL_COUNT = kwargs['chcnt']
-        SAW_COUNT_PER_POINT = kwargs['sawpp']
+
+        SIGNAL_FREQUENCY = int(config[c_freq])
+        SIGNAL_SAMPLING = int(config[c_sampling])
+        SIGNAL_DURATION = int(config[c_duration])
+        SIGNAL_AMPLITUDE = int(config[c_amplitude])
+        SHIM_FILE_NAME = get_path(config, 'shim')
+        SHIM_ZERO_SMOOTH = int(config[c_zero_smooth])
+        SHIM_CHANNEL_GAP = int(config[c_channel_gap])
+        SHIM_CHANNEL_COUNT = int(config[c_channel_count])
+        SAW_COUNT_PER_POINT = int(config[c_saw_count_per_point])
     
         # эти параметры не учавствуют в вычисленияях, они только записываются в заголовок файла
         # FILTER_FREQUENCY_MIN = kwargs['fmin']
@@ -155,26 +159,27 @@ def shim(**kwargs):
         
         signal_len = int(SIGNAL_SAMPLING * SIGNAL_DURATION / 1000)  
     
+        araw = None
         # если сигнал передан как массив, то используем его
         if 'data' in kwargs:
             araw = kwargs['data']
     
-        elif 'rawfn' in kwargs:
-            # иначе читаем исходный файл
+        else: # иначе читаем исходный файл
             try:
-    
-                fraw = open(kwargs['rawfn'], 'rb')
-                araw = arr.array('d')
-                araw.fromstring(fraw.read())
-                fraw.close()
+                
+                araw = get_path(config, 'rawf')
+
+                with open(raw, 'rb') as f:
+                        araw = arr.array('d')
+                        araw.fromfile(f, point_count)
             
             except:
                 print("Ошибка чтения файла исходного сигнала", file=sys.stderr)
                 return None
     
-        else:
-            print('Не указан источник исходного сигнала', file=sys.stderr)
-            return None
+        if araw is None:
+            raise Exception('Не указан источник исходного сигнала')
+
         
         # вычисляем количество 10 нс интервалов по оси Х, которые приходятся на одну точку сигнала 
         N = int(SAW_FREQ / SIGNAL_SAMPLING)
@@ -332,8 +337,7 @@ def shim(**kwargs):
         fshim.close()
 
     except Exception as E:
-        print('error in function _shim_main.shim(): ', file=sys.stderr, end='')
-        print(E, file=sys.stderr)
+        print('error in function _shim_main.shim(): %s' % E, file=sys.stderr)
         return False
     
     

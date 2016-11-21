@@ -15,6 +15,8 @@ import _duty as duty
 from _spectrum_main import signal2spectrum
 from matplotlib.colors import colorConverter
 
+from _defs import *
+
 from matplotlib import rc # для отображения русского шрифта
 if 'win' in sys.platform: 
     rc('font', family='Verdana')
@@ -48,14 +50,14 @@ def createParser():
         return namespace
 
 
-def plot(**kwargs):
+def plot(config, **kwargs):
 
-    # print('Start signal plotting')
     try:
-        SIGNAL_SAMPLING = kwargs['s'] # дискретизация
-        SIGNAL_DURATION = kwargs['d']
-        POINT_1 = kwargs['p1'] # начальная точка
-        POINT_2 = kwargs['p2'] # конечная точка
+        SIGNAL_SAMPLING = config[c_sampling] # дискретизация
+        SIGNAL_DURATION = config[c_duration]
+        POINT_1 = config[c_plot_from_point] # начальная точка
+        POINT_2 = config[c_plot_to_point] # конечная точка
+        amplitude = config[c_amplitude]
         FLAGS = kwargs['flags'] # флаги, указывающие что рисовать
 
         POINT_COUNT = int(SIGNAL_SAMPLING * SIGNAL_DURATION / 1000)
@@ -86,9 +88,7 @@ def plot(**kwargs):
         # рисуем исходный сигнал
         if flag_signal:
             try:
-                if araw is None:
-                    if 'raw' in kwargs:
-                        araw = duty.read_file(kwargs['raw'], 'd', 0, POINT_COUNT)
+                araw = duty.read_file(get_path(config, 'raw'), 'd', 0, POINT_COUNT)
 
                 if araw is None:
                     raise Exception('raw signal data not specified')
@@ -96,11 +96,11 @@ def plot(**kwargs):
 
                 plt.subplot(pcnt, 1, num)
 
-                ts = 1 / kwargs['s'] * 1000
+                ts = 1 / SIGNAL_SAMPLING * 1000
                 
                 print(len(araw))
                 plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал', drawstyle='default') #, marker='s', markerfacecolor='r') #, markersize=10) #, color='black', lw=0)
-                plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1 * ts, POINT_2 * ts, ts))
+                plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1 * ts, POINT_2 * ts, (POINT_2 - POINT_1) * ts //10))
                 plt.xlabel('миллисекунды')
 
                 # if flag_signal_saw == 0:
@@ -111,16 +111,14 @@ def plot(**kwargs):
                 #     plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10))
                 #     plt.xlabel('точки')
 
-                if 'a' in kwargs:
-                    plt.yticks(arange(-kwargs['a'], kwargs['a'] + 1, kwargs['a'] * 2 / 10), arange(-kwargs['a'], kwargs['a'] + 1, kwargs['a'] * 2 / 10))                    
+                plt.yticks(arange(-amplitude, amplitude + 1, amplitude * 2 / 10), arange(-amplitude, amplitude + 1, amplitude * 2 / 10))                    
 
                 plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small')
                 plt.grid()
                 num += 1
     
             except Exception as E:
-                print('error on plotting raw signal: ', file=sys.stderr, end='')
-                print(E, file=sys.stderr)
+                print('error on plotting raw signal: %s' % E, file=sys.stderr)
     
 
         # рисуем сигнал (с пересчитанными под пилу уровнями) + пилу
@@ -171,16 +169,14 @@ def plot(**kwargs):
         # рисуем спектр исходного сигнала
         if flag_signal_spectrum:
             try:
-                if araw is None:
-                    if 'raw' in kwargs:
-                        araw = duty.read_file(kwargs['raw'], 'd', 0, POINT_COUNT)
+                araw = duty.read_file(get_path(config, 'raw'), 'd', 0, POINT_COUNT)
     
                 if araw is None:
                     raise Exception('raw signal data not specified')
     
                 plt.subplot(pcnt, 1, num)
                 
-                spectrum, aspec, araw = signal2spectrum(s=SIGNAL_SAMPLING, d=SIGNAL_DURATION, signal_data=araw)
+                spectrum, aspec, araw = signal2spectrum(config, signal_data=araw)
     
                 if aspec is None:
                     raise Exception('no raw signal spectrum for plotting')
@@ -193,15 +189,13 @@ def plot(**kwargs):
                 num += 1
     
             except Exception as E:
-                print('error on plotting raw signal spectrum: ', file=sys.stderr, end='')
-                print(E, file=sys.stderr)
+                print('error on plotting raw signal spectrum: %s' % E, file=sys.stderr)
     
     
         # рисуем отфильтрованный сигнал
         if flag_filtered:
             try:
-                if 'rawf' in kwargs:
-                    arawf = duty.read_file(kwargs['rawf'], 'd', 0, POINT_COUNT)
+                arawf = duty.read_file(get_path(config, 'rawf'), 'd', 0, POINT_COUNT)                    
     
                 if arawf is None:
                     raise Exception('filtered signal data not specified')
@@ -214,15 +208,12 @@ def plot(**kwargs):
                 num += 1
 
             except Exception as E:
-                print('error on plotting filtered signal: ', file=sys.stderr, end='')
-                print(E, file=sys.stderr)
+                print('error on plotting filtered signal: %s' % E, file=sys.stderr)
     
         # рисуем спектр отфильтрованного сигнала
         if flag_filtered_spectrum:
             try:
-                if arawf is None:
-                    if 'rawf' in kwargs:
-                        arawf = duty.read_file(kwargs['rawf'], 'd', 0, POINT_COUNT)
+                arawf = duty.read_file(get_path(config, 'rawf'), 'd', 0, POINT_COUNT)
     
                 if arawf is None:
                     raise Exception('filtered signal data not specified')
@@ -231,7 +222,7 @@ def plot(**kwargs):
                 # f, Pwelch_spec = signal.welch(arawf, SIGNAL_SAMPLING, scaling='spectrum')
                 # plt.semilogy(f, Pwelch_spec)
     
-                spectrum, aspec, araw = signal2spectrum(s=SIGNAL_SAMPLING, d=SIGNAL_DURATION, signal_data=arawf)
+                spectrum, aspec, araw = signal2spectrum(config, signal_data=arawf)
     
                 if aspec is None:
                     raise Exception('no spectrum for plotting')
@@ -243,17 +234,15 @@ def plot(**kwargs):
                 num += 1
     
             except Exception as E:
-                print('error on plotting filtered signal spectrum: ', file=sys.stderr, end='')
-                print(E, file=sys.stderr)
+                print('error on plotting filtered signal spectrum: %s' % E, file=sys.stderr)
     
         # рисуем шим
         if flag_shim:
             try:
-                if not 'shim' in kwargs:
-                    raise Exception('shim file is not specified')
+                shim_file_name = get_path(config, 'shim')
     
                 # читаем заголовок файла
-                header = duty.read_header(kwargs['shim'], shim.HEADER_PACK)
+                header = duty.read_header(shim_file_name, shim.HEADER_PACK)
         
                 if header is None:
                     raise Exception('wrong header of shim file')
@@ -264,11 +253,12 @@ def plot(**kwargs):
                 ch_count = int(header[shim.HEADER_PACK_KEYS.index('shim_channel_count')])
                 R = float(header[shim.HEADER_PACK_KEYS.index('shim_R')])
         
+            вот тутЁ!!!!
                 point_count = int(sampling * duration / 1000)
                 shim_count = point_count * sawpp * 4
                 
                 # читаем значения
-                ashim = duty.read_file(kwargs['shim'], 'H', struct.calcsize(shim.HEADER_PACK), shim_count)
+                ashim = duty.read_file(shim_file_name, 'H', struct.calcsize(shim.HEADER_PACK), shim_count)
     
                 if ashim is None:
                     raise Exception('error on reading shim file')
@@ -340,31 +330,26 @@ def plot(**kwargs):
     
     
             except Exception as E:
-                print('error on plotting shim: ', file=sys.stderr, end='')
-                print(E, file=sys.stderr)
+                print('error on plotting shim: %s' % E, file=sys.stderr)
 
         # # рисуем сигнал (с пересчитанными под пилу уровнями) + пилу
         if flag_signal_saw:
             try:
-                if araw is None:
-                    if 'raw' in kwargs:
-                        araw = duty.read_file(kwargs['raw'], 'd', 0, POINT_COUNT)
+                araw = duty.read_file(get_path(config, 'raw'), 'd', 0, POINT_COUNT)
 
                 if araw is None:
                     raise Exception('raw signal data not specified')
 
                 # вычисляем параметры для отрисовки
-                if not 'd' in kwargs: raise Exception('не задана дискретизация')
-                if not 'a' in kwargs: raise Exception('не задана амплитуда')
                 
                 # кол-во 10 нс интервалов, которые приходятся на одну точку сигнала
-                N = shim.SAW_FREQ / kwargs['s']
+                N = shim.SAW_FREQ / config[c_sampling]
 
                 # новая амплитуда
                 r = N / 2 / 2
 
                 # коэффициент для пересчета уровней сигнала
-                k = r / kwargs['a']
+                k = r / config[c_amplitude]
 
                 # рисуем сигнал
                 plt.subplot(pcnt, 1, num)
@@ -386,15 +371,13 @@ def plot(**kwargs):
                 # num += 1
     
             except Exception as E:
-                print('error on plotting raw signal + saw: ', file=sys.stderr, end='')
-                print(E, file=sys.stderr)
-        
+                print('error on plotting raw signal + saw: %s' % E, file=sys.stderr)
+       
     
         plt.show()
 
     except Exception as E:
-        print('error in func plot: {}', file=sys.stderr, end='')
-        print(E, file=sys.stderr)
+        print('error in func plot: %s' % E, file=sys.stderr)
     
     # print('Signal plotting finished')
 

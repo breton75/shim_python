@@ -46,38 +46,28 @@ def generate(config=None, **kwargs):
 
         print('generating signal ... ', end='')
         
-        if config:
-            signal_type = get_cfg_param(config, c_signal_type, 0, 'i') # config[c_signal_type]
-            signal_frequency = get_cfg_param(config, c_freq, 0, 'i') # config[c_freq]
-            signal_sampling = get_cfg_param(config, c_sampling, 0, 'i') # config[c_sampling]
-            signal_duration = get_cfg_param(config, c_duration, 0, 'i') #config[c_duration]
-            signal_amplitude = get_cfg_param(config, c_amplitude, 0, 'i') # config[c_amplitude]
-            fade_in = get_cfg_param(config, c_fadein, 0, 'i') # config[c_fadein]
-            fade_out = get_cfg_param(config, c_fadeout, 0, 'i') # config[c_fadeout]
-            file_name = get_path(config, 'raw')
-            # hush_duration = config[c_hush]
-            hush_duration = get_cfg_param(config, c_hush, 0, 'i')
 
-        elif kwargs:
-            signal_type = kwargs['t']
-            signal_frequency = kwargs['f']
-            signal_sampling = kwargs['s']
-            signal_duration = kwargs['d']
-            signal_amplitude = kwargs['a']
-            fade_in = kwargs['fi']
-            fade_out = kwargs['fo']
-            file_name = kwargs['fn']
-            hush_duration = kwargs['h']
+        signal_type = int(config[c_signal_type])
+        signal_frequency = int(config[c_freq])
+        signal_sampling = int(config[c_sampling])
+        signal_duration = int(config[c_duration])
+        signal_amplitude = int(config[c_amplitude])
+        fade_in = int(config[c_fadein])
+        fade_out = int(config[c_fadeout])
+        file_name = get_path(config, 'raw')
+        hush_duration = int(config[c_hush])
+        repeat_count = int(config[c_repeat_count])
+        pause = int(config[c_pause])
+
+        config[c_duration] = signal_duration * repeat_count + pause
+
             # meandr_pulse_width = kwargs['mpw']
             # meandr_pulse_interval = kwargs['mpi']
-
-        else:
-            raise Exception('Params are not specified')
-
             
         #общее количество точек, которое будет обсчитано
         point_count = int(signal_sampling * (signal_duration - hush_duration) / 1000)
         hush_count = int(signal_sampling * hush_duration / 1000)
+        pause_count = int(signal_sampling * pause / 1000)
     
         # количество точек на раскачку сигнала
         fade_in_point_count = int(point_count / 100 * fade_in) if fade_in > 0 else 0
@@ -99,9 +89,10 @@ def generate(config=None, **kwargs):
             y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]
 
         elif signal_type == s_type_meandr:
-            meandr_pulse_width = get_cfg_param(config, c_meandr_pulse_width, 0, 'i') # config[]
+            meandr_pulse_width = get_cfg_param(config, c_meandr_pulse_width, 250, 'i') # config[]
             meandr_pulse_interval = get_cfg_param(config, c_meandr_pulse_interval, 0, 'i') # config[]
-            meandr_channel_count = get_cfg_param(config, c_meandr_channel_count, 2, 'i') # config[]
+            meandr_type = get_cfg_param(config, c_meandr_type, m_one_channel, 'i') # config[]
+            meandr_random_interval = get_cfg_param(config, c_meandr_random_interval, 0, 'i')
 
             ms = 0.000001 # 1 микросекунда
 
@@ -118,7 +109,7 @@ def generate(config=None, **kwargs):
             n_imp = int(meandr_pulse_width * meandr_channel_count * signal_sampling / 1000000)
             if meandr_pulse_width % (1000000 // signal_sampling) != 0:
                 raise Exception('При заданной дискретизации длина импульса меандра должна быть кратна %i' % (1000000 // signal_sampling))
-                                
+                                 
             # количество отсчетов (сэмплов) на один интервал
             n_int = int(meandr_pulse_interval * signal_sampling / 1000000)
             if meandr_pulse_interval % (1000000 // signal_sampling) != 0:
@@ -183,14 +174,21 @@ def generate(config=None, **kwargs):
             #  
 
         # применяем параметры раскачки и затухания и сохраняем конечный сигнал
-        y = []
-        y.extend([y_raw[_counter] * (_counter * fade_in_step) for _counter in range(fade_in_point_count)])
-        y.extend(y_raw[fade_in_point_count : point_count - fade_out_point_count])
-        y.extend([y_raw[point_count - _counter] * (_counter * fade_out_step) for _counter in range(fade_out_point_count, 0, -1)])
+        _y = []
+        _y.extend([y_raw[_counter] * (_counter * fade_in_step) for _counter in range(fade_in_point_count)])
+        _y.extend(y_raw[fade_in_point_count : point_count - fade_out_point_count])
+        _y.extend([y_raw[point_count - _counter] * (_counter * fade_out_step) for _counter in range(fade_out_point_count, 0, -1)])
 
         # добавляем тишину в конце, если необходимо
-        # print(np.zeros(hush_count))
-        y.extend(np.zeros(hush_count))
+        _y.extend(np.zeros(hush_count))
+
+        # повторяем полученный сигнал заданное количество раз
+        y = []
+        for i in range(repeat_count):
+            y.extend(_y)
+
+        # добавляем паузу, если необходимо
+        y.extend(np.zeros(pause_count))
     
         print('ok')
     
@@ -211,8 +209,7 @@ def generate(config=None, **kwargs):
     
 
     except Exception as E:
-        print('error in function generate(): ', file=sys.stderr, end='')
-        print(E, file=sys.stderr)
+        print('error in function generate(): %s' % E, file=sys.stderr)
         return None
     
     return arr

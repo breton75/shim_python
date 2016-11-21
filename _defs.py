@@ -37,6 +37,11 @@ def get_path(config, extention):
 		return None
 
 
+m_one_channel = 0
+m_channels_iterleaved = 1
+m_channels_alternate = 2
+
+
 ## константы
 c_signal_type = 'signal_type'
 c_freq  = 'freq'
@@ -45,13 +50,18 @@ c_duration = 'duration'
 c_hush = 'hush'
 c_amplitude	= 'amplitude'
 c_fadein = 'fadein'	
-c_fadeout = 'fadeout'		
+c_fadeout = 'fadeout'
+c_repeat_count = 'repeat_count'
+c_pause = 'pause'
+
 c_meandr_pulse_width = 'meandr_pulse_width'
 c_meandr_pulse_interval = 'meandr_pulse_interval'
-c_meandr_channel_count = 'meandr_channel_count'
-c_lfm_koeff = 'lfm_koeff'
+c_meandr_type = 'meandr_type'
+c_meandr_random_interval='meandr_random_interval'
+
 
 c_filtrate = 'filtrate'
+# c_band_pass_filter
 c_freq_min = 'freq_min'
 c_freq_max = 'freq_max'
 c_apply_spectrum_form = 'apply_spectrum_form'

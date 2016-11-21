@@ -5,6 +5,8 @@ import argparse
 import struct
 import _shim_main as shim
 
+from _defs import *
+
 e_mode_one = 0
 e_mode_loop = 1
 
@@ -28,63 +30,73 @@ def createParser ():
 
 
 
-def send(**kwargs):
+def send(config):
 
-    host = kwargs['host']
-    port = kwargs['port']
-    mode = kwargs['mode']
-    file_name = kwargs['fn']
-
-    if not sendSTOP(host, port):
-        return False
-
-    if not sendDATA(host, port, file_name):
-        return False
-
-    if mode == e_mode_loop:
-        if not sendLOOP(host, port, file_name):
+    try:
+        host = config[c_host]
+        port = config[c_port]
+        mode = config[c_mode]
+        file_name = get_path(config, 'shim')
+    
+        if not sendSTOP(host, port):
             return False
-
-    elif mode == e_mode_one:
-        if not sendONE(host, port, file_name):
+    
+        if not sendDATA(host, port, file_name):
             return False
+    
+        if mode == e_mode_loop:
+            if not sendLOOP(host, port, file_name):
+                return False
+    
+        elif mode == e_mode_one:
+            if not sendONE(host, port, file_name):
+                return False
+
+    except Exception as E:
+        print('error in func _socket_main.send(): %s' % E, sys.stderr)
+        return False
 
     return True
 
 
 def connect(host, port):
-
+    
     s = None
 
-    for res in socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
-
-        af, socktype, proto, canonname, sa = res
-
-        try:
-            
-            s = socket.socket(af, socktype, proto)
-            
-        except OSError as msg:
-            s = None
-            continue
-
-        try:
-            s.settimeout(2)
-            s.connect(sa)
-            
-        except OSError as msg:
-            print(msg, file=sys.stderr)
-            s.close()
-            s = None
-            continue
-
-        break
+    try:
     
-    if s is None:
-        print('could not open socket', file=sys.stderr)
-
+        for res in socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
     
-    return s
+            af, socktype, proto, canonname, sa = res
+    
+            try:
+                
+                s = socket.socket(af, socktype, proto)
+                
+            except OSError as msg:
+                s = None
+                continue
+    
+            try:
+                s.settimeout(2)
+                s.connect(sa)
+                
+            except OSError as msg:
+                print(msg, file=sys.stderr)
+                s.close()
+                s = None
+                continue
+    
+            break
+        
+        if s is None:
+            raise Exception('could not open socket')
+
+    except Exception as E:
+        print('error in func _socket_main.connect(): %s' % E, sys.stderr)
+
+    finally:
+        return s
 
 def send_cmd(host, port, cmd):
 

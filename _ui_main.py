@@ -116,7 +116,22 @@ class mainFrame(Frame):
 		self.editFadeOut = tk.Entry(self.frameSignal, width=16)
 		self.editFadeOut.grid(row=7, column=1, sticky=tk.W)
 		self.editFadeOut.insert(0, get_cfg_param(self.config, c_fadeout, '0'))
-	
+
+		self.frameCycleSignal = tk.LabelFrame(self.frameSignal, text='Повтор сигнала')
+		self.frameCycleSignal.grid(row=8, column=0, sticky=tk.W, columnspan=2)
+
+		# количество повторений сгенерированного сигнала
+		lblCyclesCount = tk.Label(self.frameCycleSignal, text='Повторов, раз', width=25).grid(row=0, column=0, sticky=tk.E)
+		self.editRepeatCount = tk.Entry(self.frameCycleSignal, width=16)
+		self.editRepeatCount.grid(row=0, column=1, sticky=tk.W)
+		self.editRepeatCount.insert(0, get_cfg_param(self.config, c_repeat_count, '0'))	
+
+		# пауза после всех повторов
+		lblPause = tk.Label(self.frameCycleSignal, text='Пауза после (мс.)', width=25).grid(row=1, column=0, sticky=tk.E)
+		self.editPause = tk.Entry(self.frameCycleSignal, width=16)
+		self.editPause.grid(row=1, column=1, sticky=tk.W)
+		self.editPause.insert(0, get_cfg_param(self.config, c_pause, '0'))	
+
 	### <- параметры сигнала ###	
 
 	## -> фильтрация ##
@@ -494,9 +509,12 @@ class mainFrame(Frame):
 				c_hush:      int(self.editHush.get()),
 				c_fadein:    int(self.editFadeIn.get()),
 				c_fadeout:   int(self.editFadeOut.get()),
-				c_meandr_pulse_width:	 get_cfg_param(cfg, c_meandr_pulse_width, 0, 'i'),
-				c_meandr_pulse_interval: get_cfg_param(cfg, c_meandr_pulse_interval, 0, 'i'),
-				c_meandr_channel_count:  get_cfg_param(cfg, c_meandr_channel_count, 2, 'i'),
+				c_repeat_count: 		   int(self.editRepeatCount.get()),
+				c_pause: 				   int(self.editPause.get()),
+				c_meandr_pulse_width:	   get_cfg_param(cfg, c_meandr_pulse_width, 250, 'i'),
+				c_meandr_pulse_interval:   get_cfg_param(cfg, c_meandr_pulse_interval, 0, 'i'),
+				c_meandr_type:  		   get_cfg_param(cfg, c_meandr_type, m_one_channel, 'i'),
+				c_meandr_random_interval:  get_cfg_param(cfg, c_meandr_random_interval, 0, 'i'),
 				c_freq_min:   int(self.editFreqMin.get()),
 				c_freq_max:   int(self.editFreqMax.get()),
 				c_filtrate:            bool(self.filtrate.get()),
@@ -554,6 +572,7 @@ def do(config):
 	freq = get_cfg_param(config, c_freq, 1000, 'i')
 	sampling = get_cfg_param(config, c_sampling, 100000, 'i')
 	duration = get_cfg_param(config, c_duration, 1000, 'i')
+	print('duartion=%i' % duration)
 	hush = get_cfg_param(config, c_hush, 0, 'i')
 	amplitude = get_cfg_param(config, c_amplitude, 1024, 'i')
 	fadein = get_cfg_param(config, c_fadein, 0, 'i')
@@ -638,7 +657,6 @@ def do(config):
 		# 	   mpi=meandr_pulse_interval)
 	 
 	if araw is None:
-		print('araw is None')
 		return
 
 
@@ -651,56 +669,64 @@ def do(config):
 	 
 	# sys.exit(0)
 
-	arawf = spectrum.apply_spectrum(s=sampling, d=duration,
-								   signal_data=araw,
-								   rawf=filename_flt,
-								   apply_spectrum_form=apply_spectrum_form,
-								   apply_accurately=apply_accurately_to_form,
-								   sffn=filename_spectrum,
-								   band_pass_filter=filtrate,
-								   fmin=freq_min, fmax=freq_max)
+	arawf = spectrum.apply_spectrum(config, signal_data=araw)
+
+							    #    s=sampling, d=duration,
+								   # signal_data=araw,
+								   # rawf=filename_flt,
+								   # apply_spectrum_form=apply_spectrum_form,
+								   # apply_accurately=apply_accurately_to_form,
+								   # sffn=filename_spectrum,
+								   # band_pass_filter=filtrate,
+								   # fmin=freq_min, fmax=freq_max)
 
 	if arawf is None:
-		sys.exit(1)
+		return
 	 
 	if MAKE_SHIM:
-		if not shim.shim(f=freq,
-					s=sampling,
-					d=duration,
-					a=amplitude,
-					rawfn=filename_raw,
-					shimfn=filename_shim,
-					zero=zero_smooth,
-					chgap=channel_gap,
-					chcnt=channel_count,
-					sawpp=saw_count_per_point,
-					data=arawf):
-					# fmin=freq_min,
-					# fmax=freq_max,
-					# falg=filter_algorithm,
-					# ftype=filter_type,
-					# rp=filter_rp,
-					# rs=filter_rs,
-					# tb=transition_band,
-			sys.exit(1)
+		if not shim.shim(config, data=arawf):
+			return
+
+			# f=freq,
+			# 		s=sampling,
+			# 		d=duration,
+			# 		a=amplitude,
+			# 		rawfn=filename_raw,
+			# 		shimfn=filename_shim,
+			# 		zero=zero_smooth,
+			# 		chgap=channel_gap,
+			# 		chcnt=channel_count,
+			# 		sawpp=saw_count_per_point,
+			# 		data=arawf):
+			# 		# fmin=freq_min,
+			# 		# fmax=freq_max,
+			# 		# falg=filter_algorithm,
+			# 		# ftype=filter_type,
+			# 		# rp=filter_rp,
+			# 		# rs=filter_rs,
+			# 		# tb=transition_band,
 	 
 
 	if SEND:
-		sock.send(host=host,
-				port=port,
-				mode=mode,
-				fn=filename_shim)
+		sock.send(config)
+
+			# host=host,
+			# 	port=port,
+			# 	mode=mode,
+			# 	fn=filename_shim)
 	 
 	if PLOT:
-		plot.plot(raw=filename_raw,
-				rawf=filename_flt,
-				shim=filename_shim,
-				s=sampling,
-				d=duration,
-				a=amplitude,
-				p1=plot_from_point,
-				p2=plot_to_point,
-				flags=FLAGS)
+		plot.plot(config, flags=FLAGS)
+
+			# raw=filename_raw,
+			# 	rawf=filename_flt,
+			# 	shim=filename_shim,
+			# 	s=sampling,
+			# 	d=duration,
+			# 	a=amplitude,
+			# 	p1=plot_from_point,
+			# 	p2=plot_to_point,
+			# 	flags=FLAGS)
 
 
 def showWindow(version):

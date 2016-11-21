@@ -10,6 +10,8 @@ from scipy import signal
 import _duty as duty
 from scipy.fftpack import fft
 
+from _defs import *
+
 from matplotlib import rc # для отображения русского шрифта
 if 'win' in sys.platform: 
     rc('font', family='Verdana')
@@ -299,7 +301,7 @@ def createParser():
     else:
         return namespace
 
-def signal2spectrum(**kwargs):
+def signal2spectrum(config, **kwargs):
     try:
         # print('Start signal to spectrum converting')
 
@@ -307,13 +309,10 @@ def signal2spectrum(**kwargs):
         spectrum = None
         aspec = None
 
-        if not ('s' in kwargs and 'd' in kwargs):
-            raise Exception('incorrect paramters specified')
+        sampling = config[c_sampling]
+        duration = config[c_duration]
 
-        sampling = kwargs['s'] # дискретизация
-        duration = kwargs['d']
         point_count = int(sampling * duration / 1000)
-
         fsdpcnt = int((sampling / 2) * (duration / 1000)) # point_count / 2
         fpcnt = int(sampling / 2)
         
@@ -324,16 +323,18 @@ def signal2spectrum(**kwargs):
         if 'signal_data' in kwargs:
             araw = kwargs['signal_data']
 
-        elif 'raw' in kwargs: # иначе читаем исходный файл
+            print('araw=%i' % len(araw))
+
+        else: # иначе читаем исходный файл
             try:
-    
-                f = open(kwargs['raw'], 'rb')
-                araw = arr.array('d')
-                araw.fromfile(f, point_count)
-                f.close()
+                raw = get_path(config, 'raw')
+
+                with open(raw, 'rb') as f:
+                        araw = arr.array('d')
+                        araw.fromfile(f, point_count)
                 
             except Exception as E:
-                raise Exception(E)
+                print(E, sys.stderr)
 
         if araw is None:
             raise Exception('signal data is not specified')
@@ -357,9 +358,7 @@ def signal2spectrum(**kwargs):
         # print('Signal to spectrum converting finished successfully')
 
     except Exception as E:
-        print('error in func signal2spectrum(): ', file=sys.stderr, end='')
-        print(E, file=sys.stderr)
-
+        print('error in func signal2spectrum(): %s' % E, file=sys.stderr)
 
     finally:
         # ВНИМАНИЕ.
@@ -367,20 +366,17 @@ def signal2spectrum(**kwargs):
         # aspec содержит уровни частот, пересчитанных с учетом длительности и дискретизации сигнала. для отображения на графике и редактирования формы спектра
         return spectrum, aspec, araw
 
-def read_spectrum_form_file(**kwargs):
+def read_spectrum_form_file(config, **kwargs):
+    
+    ver = None
+    controls_count = None
+    controls = None
+    minX = None
+    maxX = None
+
     try:
-        # print('start read_spectrum_file')
 
-        spectrum_form_file_name = kwargs['sffn']
-        ver = None
-        controls_count = None
-        controls = None
-        minX = None
-        maxX = None
-
-        if not 'sffn' in kwargs:
-            raise Exception('spectrum form file name is not specified')
-
+        spectrum_form_file_name = get_path(config, 'spectrum')
 
         header = duty.read_header(spectrum_form_file_name, HEADER_STRUCT)
         
@@ -396,17 +392,14 @@ def read_spectrum_form_file(**kwargs):
         maxX = header[4]
 
         controls = duty.read_file(spectrum_form_file_name, 'd', struct.calcsize(HEADER_STRUCT), controls_count)
-        # print(ver, point_count, dataY)
-
-        # print('end read_spectrum_file')
 
     except Exception as E:
         print('error in function read_spectrum_form_file(): ', file=sys.stderr, end='')
         print(E, file=sys.stderr)
         # return None, No
 
-    
-    return ver, controls_count, controls, minX, maxX
+    finally:
+        return ver, controls_count, controls, minX, maxX
 
 def get_xstep(spectrum_len, controls_count):
 
@@ -436,30 +429,25 @@ def get_xs_ys(fmin, fmax, controls_count):
     return xs, ys
 
 
-def edit_spectrum(**kwargs):
+def edit_spectrum(config, **kwargs):
 
     try:
-        if not 's' in kwargs: raise Exception('sampling is not specified')
-        if not 'd' in kwargs: raise Exception('duration is not specified')
-
-        sampling = kwargs['s'] # дискретизация
-        duration = kwargs['d']
+        sampling = config[c_sampling] # дискретизация
+        duration = config[c_duration]
 
         # задаем границы массива диапазон частот [fmin:fmax]
         fmin = 1
         fmax = int(sampling / 2)
-        if 'fmin' in kwargs and kwargs['fmin'] in range(fmin, fmax): fmin = kwargs['fmin']
-        if 'fmax' in kwargs and kwargs['fmax'] in range(fmin, fmax): fmax = kwargs['fmax']
+        if c_freq_min in config and config[c_freq_min] in range(fmin, fmax): fmin = config[c_freq_min]
+        if c_freq_max in config and config[c_freq_max] in range(fmin, fmax): fmax = config[c_freq_max]
 
         spectrumMax = 100 # в процентах %
 
-        spectrum_form_file_name = ''
-        if 'sffn' in kwargs:
-            spectrum_form_file_name = kwargs['sffn']
+        spectrum_form_file_name = get_path(config, 'spectrum')
 
     ###############################################
 
-        ver, controls_count, controls, minX, maxX = read_spectrum_form_file(**kwargs)
+        ver, controls_count, controls, minX, maxX = read_spectrum_form_file(config, **kwargs)
 
         # если не удалось прочитать сохраненную форму спектра, то создаем новую
         if controls_count is None:
@@ -502,21 +490,17 @@ def edit_spectrum(**kwargs):
         return None
 
 
-def apply_spectrum(**kwargs):
+def apply_spectrum(config, **kwargs):
+    
+    aflt = None
+    
     try:
-        aflt = None
-
-        # обязательные параметры
-        if not 'rawf' in kwargs: raise Exception('File for saving is not specified')
-        if not 's' in kwargs: raise Exception('Sampling is not specified')
-        if not 'd' in kwargs: raise Exception('Signal duration is not specified')
-
-        rawf = kwargs['rawf']  # путь к файлу в который будет записан отфильтрованный сигнал
-        sampling = kwargs['s'] # дискретизация
-        duration = kwargs['d'] # длительность сигнала
-
+        
+        sampling = config[c_sampling] # дискретизация
+        duration = config[c_duration] # длительность сигнала
+        print(sampling, duration)
         # преобразуем заданный сигнал в спектр
-        spectrum, aspec, araw = signal2spectrum(**kwargs)
+        spectrum, aspec, araw = signal2spectrum(config, **kwargs)
 
         if spectrum is None or araw is None:
             raise Exception('converting to spectrum error')
@@ -525,8 +509,8 @@ def apply_spectrum(**kwargs):
         # для применения полосового фильтра, отсекаем все, что не входит в [fmin:fmax]
         fmin = 1
         fmax = len(aspec)
-        if 'fmin' in kwargs and kwargs['fmin'] in range(fmin, fmax) : fmin = kwargs['fmin']
-        if 'fmax' in kwargs and kwargs['fmax'] in range(fmin, fmax): fmax = kwargs['fmax']
+        if c_freq_min in config and config[c_freq_min] in range(fmin, fmax): fmin = config[c_freq_min]
+        if c_freq_max in config and config[c_freq_max] in range(fmin, fmax): fmax = config[c_freq_max]
 
         # значения для вычислений
         # point_count = int(sampling * duration / 1000)
@@ -541,17 +525,14 @@ def apply_spectrum(**kwargs):
 
         # ЕСЛИ ЗАДАНА ФОРМА СПЕКТРА, ТО НАКЛАДЫВАЕМ ЕЕ НА СПЕКТР
         # * начало 1 *
-        if 'apply_spectrum_form' in kwargs and kwargs['apply_spectrum_form'] == True: 
+        if c_apply_spectrum_form in config and config[c_apply_spectrum_form] == True: 
             
             print('appling spectrum form ...', end='')
 
-            if not 'sffn' in kwargs:
-                raise Exception('Spectrum form file is not specified')
-
-            spectrum_form_file_name = kwargs['sffn']
+            spectrum_form_file_name = get_path(config, 'spectrum')
 
             # читаем файл с сохраненной формой спектра
-            ver, controls_count, controls, minX, maxX = read_spectrum_form_file(**kwargs)
+            ver, controls_count, controls, minX, maxX = read_spectrum_form_file(config, **kwargs)
 
             # если диапазон частот форма спектра не соответствует заданным параметрам fmin и fmax, то выходим с ошибкой
             # if not (fmin == minX and fmax == maxX):
@@ -593,7 +574,7 @@ def apply_spectrum(**kwargs):
 
                     # если необходимо привести спектр, точно к заданной форме, то
                     # в зависимости от уровня сигнала >0 или <0, задаем уровень спектра в данной точке равным y * макс. или мин. значение
-                    if 'apply_accurately' in kwargs and kwargs['apply_accurately'] == True:
+                    if c_apply_accurately_to_form in config and config[c_apply_accurately_to_form] == True:
                         if spectrum[x].real > 0: newYreal =  y * maxYreal
                         else:                    newYreal =  -y * maxYreal
                         # newYreal =  y * maxYreal
@@ -614,7 +595,7 @@ def apply_spectrum(**kwargs):
         # * конец 1 *
 
         # >> ПРИМЕНЯЕМ ПОЛОСОВОЙ ФИЛЬТР
-        if 'band_pass_filter' in kwargs and kwargs['band_pass_filter'] == True:
+        if c_filtrate in config and config[c_filtrate] == True:
             # обнуляем все значения, которые не входят в диапазон частот
             spectrum[:fmin_n] = 0.0   # в основной части спектра
             spectrum[-fmin_n:] = 0.0  # в зеркальной части спектра
@@ -630,26 +611,23 @@ def apply_spectrum(**kwargs):
         aflt = arr.array('d', yf.real)
 
         # сохраняем отфильтрованный сигнал в файл
-        print('saving filtered signal ... ', end='')
+        print('сохраняю отфильтрованный сигнал ... ', end='')
         try:
+            rawf = get_path(config, 'rawf')  # путь к файлу в который будет записан отфильтрованный сигнал
             
-            f = open(rawf, 'wb')
-            aflt.tofile(f)
-            f.close()
+            with open(rawf, 'wb') as f:
+                aflt.tofile(f)
 
             print('ok')
 
         except Exception as E:
-            raise Exception(E)
+            print(E, file=sys.stderr)
                                 
 
     except Exception as E:
-        print('error in function apply_spectrum(): ', file=sys.stderr, end='')
-        print(E, file=sys.stderr)
+        print('error in function apply_spectrum(): %s' % E, file=sys.stderr)
         return None
         
-    # print('Spectrum applyed successfully')
-
     return aflt
 
 
