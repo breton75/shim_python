@@ -2,6 +2,7 @@ import sys
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import *
+import time
 
 from _defs import *
 
@@ -47,7 +48,7 @@ class mainFrame(Frame):
 						lst[i][j] = lst[i][j].strip()
 
 				self.config = dict(lst)
-				# print(self.config.keys())
+				# print(self.config)
 
 		except Exception as E:
 			print('error on reading self.config file: ', file=sys.stderr, end='')
@@ -124,7 +125,7 @@ class mainFrame(Frame):
 		lblCyclesCount = tk.Label(self.frameCycleSignal, text='Повторов, раз', width=25).grid(row=0, column=0, sticky=tk.E)
 		self.editRepeatCount = tk.Entry(self.frameCycleSignal, width=16)
 		self.editRepeatCount.grid(row=0, column=1, sticky=tk.W)
-		self.editRepeatCount.insert(0, get_cfg_param(self.config, c_repeat_count, '0'))	
+		self.editRepeatCount.insert(0, get_cfg_param(self.config, c_repeat_count, '1'))	
 
 		# пауза после всех повторов
 		lblPause = tk.Label(self.frameCycleSignal, text='Пауза после (мс.)', width=25).grid(row=1, column=0, sticky=tk.E)
@@ -454,6 +455,9 @@ class mainFrame(Frame):
 		try:
 
 			self.save()
+
+			
+
 			do(self.config)
 	  
 		except Exception as E:
@@ -495,10 +499,38 @@ class mainFrame(Frame):
 			print('error in func _ui.save(): %s' % E, file=sys.stderr, end='')
 
 
+	def re_read_params(self, pnames):
+ 
+		# читаем файл _main.config
+		try:
+
+			with open('_main.config', 'r', encoding="utf8") as configfile:
+				lines = configfile.readlines()
+
+				# разбираем параметры записанные в файле _main.config
+				lst=[]
+				for line in lines: # если строка начинается не с буквы, то эту строку пропускаем
+					if line[0] in ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
+						lst.append(line.split('='))
+				
+				for i in range(len(lst)):
+					for j in range(len(lst[i])):
+						lst[i][j] = lst[i][j].strip()
+
+				_cfg = dict(lst)
+				for param in pnames:
+					self.config[param] = _cfg[param]
+
+				# print(self.config)
+
+		except Exception as E:
+			print('error on reading self.config file: %s' % E, file=sys.stderr)
+
+
 	def checkout_config(self):
 		try:
 			cfg = self.config.copy()
-
+			
 			# собираем параметры
 			self.config = {
 				c_signal_type: int(self.cbSignalType.current()),
@@ -511,10 +543,10 @@ class mainFrame(Frame):
 				c_fadeout:   int(self.editFadeOut.get()),
 				c_repeat_count: 		   int(self.editRepeatCount.get()),
 				c_pause: 				   int(self.editPause.get()),
-				c_meandr_pulse_width:	   get_cfg_param(cfg, c_meandr_pulse_width, 250, 'i'),
-				c_meandr_pulse_interval:   get_cfg_param(cfg, c_meandr_pulse_interval, 0, 'i'),
-				c_meandr_type:  		   get_cfg_param(cfg, c_meandr_type, m_one_channel, 'i'),
-				c_meandr_random_interval:  get_cfg_param(cfg, c_meandr_random_interval, 0, 'i'),
+				# c_meandr_pulse_width:	   get_cfg_param(cfg, c_meandr_pulse_width, 250, 'i'),
+				# c_meandr_interval_width:   get_cfg_param(cfg, c_meandr_interval_width, 100, 'i'),
+				# c_meandr_type:  		   get_cfg_param(cfg, c_meandr_type, m_one_channel, 'i'),
+				# c_meandr_random_interval:  get_cfg_param(cfg, c_meandr_random_interval, 0, 'i'),
 				c_freq_min:   int(self.editFreqMin.get()),
 				c_freq_max:   int(self.editFreqMax.get()),
 				c_filtrate:            bool(self.filtrate.get()),
@@ -541,20 +573,34 @@ class mainFrame(Frame):
 				c_filename_template:      self.editFilenameTemplate.get()
 			}
 
+			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval, c_save_log])
+
+			log_file_name = None
+			
+			if get_cfg_param(self.config, c_save_log, True, 'b') == True:
+				work_dir = self.config[c_workdir]
+				if work_dir[-1] != '/': work_dir += '/'
+				log_file_name = work_dir + time.strftime('%d_%m_%Y %H_%M_%S') + '.log'
+
+			self.config[c_log_file_name] = log_file_name
+
 			return self.config
 
 		except Exception as E:
-			print('error in func _ui.checkout_config(): ', file=sys.stderr, end='')
-			print(E, file=sys.stderr)
+			print('error in func _ui.checkout_config(): %s' % E, file=sys.stderr)
 			return None
 
 
 
 def do(config):
-	# >> проверяем, что заданы путь и шаблон имен файлов 
+	# пишем текущую конфигурацию в лог
+	if not config[c_log_file_name] is None:
+		with open(config[c_log_file_name], 'w') as log_file:
+			for key in config.keys():
+				log_file.write(key + '=' + str(config[key]) + '\n')
 
+			log_file.write('\n')
 
-	# << #
 
 	# имена файлов
 	filename_raw = get_path(config, 'raw')
@@ -564,15 +610,14 @@ def do(config):
 
 	# генератор  s_type_noise | s_type_sinus | s_type_sinus_noise | s_type_sinus_sinus_noise
 	# print(config.keys())
-	meandr_pulse_width = get_cfg_param(config, c_meandr_pulse_width, 0, 'i')
-	meandr_pulse_interval = get_cfg_param(config, c_meandr_pulse_interval, 0, 'i')
+	# meandr_pulse_width = get_cfg_param(config, c_meandr_pulse_width, 0, 'i')
+	# meandr_pulse_interval = get_cfg_param(config, c_meandr_pulse_interval, 0, 'i')
 
 
 	signal_type = get_cfg_param(config, c_signal_type, gen.s_type_noise, 'i')
 	freq = get_cfg_param(config, c_freq, 1000, 'i')
 	sampling = get_cfg_param(config, c_sampling, 100000, 'i')
 	duration = get_cfg_param(config, c_duration, 1000, 'i')
-	print('duartion=%i' % duration)
 	hush = get_cfg_param(config, c_hush, 0, 'i')
 	amplitude = get_cfg_param(config, c_amplitude, 1024, 'i')
 	fadein = get_cfg_param(config, c_fadein, 0, 'i')

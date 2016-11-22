@@ -55,7 +55,7 @@ c_repeat_count = 'repeat_count'
 c_pause = 'pause'
 
 c_meandr_pulse_width = 'meandr_pulse_width'
-c_meandr_pulse_interval = 'meandr_pulse_interval'
+c_meandr_interval_width = 'meandr_interval_width'
 c_meandr_type = 'meandr_type'
 c_meandr_random_interval='meandr_random_interval'
 
@@ -92,3 +92,6 @@ c_plot_to_point = 'plot_to_point'
 
 c_workdir = 'workdir'
 c_filename_template = 'filename_template'
+
+c_save_log='save_log'
+c_log_file_name = 'log_file_name'

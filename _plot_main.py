@@ -248,12 +248,12 @@ def plot(config, **kwargs):
                     raise Exception('wrong header of shim file')
                 
                 sampling = int(header[shim.HEADER_PACK_KEYS.index('signal_sampling')])
-                duration = int(header[shim.HEADER_PACK_KEYS.index('signal_duration')])
+                duration = SIGNAL_DURATION #int(header[shim.HEADER_PACK_KEYS.index('signal_duration')])
                 sawpp = int(header[shim.HEADER_PACK_KEYS.index('saw_count_per_point')])
                 ch_count = int(header[shim.HEADER_PACK_KEYS.index('shim_channel_count')])
                 R = float(header[shim.HEADER_PACK_KEYS.index('shim_R')])
         
-            вот тутЁ!!!!
+            # вот тутЁ!!!!
                 point_count = int(sampling * duration / 1000)
                 shim_count = point_count * sawpp * 4
                 
