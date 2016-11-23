@@ -109,7 +109,7 @@ def generate(config=None, **kwargs):
             f1 = config[c_freq_max] # конечная частота
             fd = signal_sampling   # частота дискретизации
             T = signal_duration/1000 # время в секундах
-            d = 1 / fd * T # шаг приращения
+            d = 1 / (fd * T) # шаг приращения
 
             y_raw = [signal_amplitude * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(point_count)]
             #  
