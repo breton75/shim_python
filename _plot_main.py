@@ -100,7 +100,7 @@ def plot(config, **kwargs):
                 
                 print(len(araw))
                 plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал', drawstyle='default') #, marker='s', markerfacecolor='r') #, markersize=10) #, color='black', lw=0)
-                plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1 * ts, POINT_2 * ts, (POINT_2 - POINT_1) * ts //10))
+                # plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1 * ts, POINT_2 * ts, (POINT_2 - POINT_1) * ts //10))
                 plt.xlabel('миллисекунды')
 
                 # if flag_signal_saw == 0:

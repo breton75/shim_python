@@ -108,7 +108,7 @@ def generate(config=None, **kwargs):
             f0 = config[c_freq_min] # начальная частота
             f1 = config[c_freq_max] # конечная частота
             fd = signal_sampling   # частота дискретизации
-            T = signal_duration/1000 # время в секундах
+            T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
             d = 1 / (fd * T) # шаг приращения
 
             y_raw = [signal_amplitude * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(point_count)]
@@ -249,7 +249,7 @@ def meandr(config, **kwargs):
             # определяем минимальное и максимальное количество отсчетов (сэмплов) на один интервал
             n_int_min = int(meandr_interval_width * signal_sampling / 1000000)
             n_int_max = int(meandr_random_interval * signal_sampling / 1000000)
-            print('n_int_min=%i  n_int_max=%i' % (n_int_min, n_int_max))
+            
             # if meandr_interval_width % (1000000 // signal_sampling) != 0:
                 # raise Exception('При заданной дискретизации длина интервала между импульсами меандра должна быть кратна %i' % (1000000 // signal_sampling))
 
@@ -273,8 +273,8 @@ def meandr(config, **kwargs):
                         # print('n_int_min=%i  rnd=%f  n/2=%f  n_int_random=%i' % (n_int_min, rnd, (n_int_max - n_int_min)/2, n_int_random))
                     
 
-                    n_int_random = random.triangular(n_int_min, n_int_max)
                     # n_int_random = random.randrange(n_int_min, n_int_max)
+                    n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
                     i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
 
                 # print(y)
@@ -287,7 +287,8 @@ def meandr(config, **kwargs):
                     i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude)
                     i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude)
 
-                    n_int_random = random.randrange(n_int_min, n_int_max)
+                    # n_int_random = random.randrange(n_int_min, n_int_max)
+                    n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
                     i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
 
 
@@ -298,15 +299,15 @@ def meandr(config, **kwargs):
                     i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude)
                     
                     # n_int_random = random.randrange(n_int_min, n_int_max)
-                    # n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
-                    n_int_random = get_rnd(n_int_min, n_int_max)
+                    # n_int_random = get_rnd(n_int_min, n_int_max)
+                    n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
                     i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
                     
                     i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude)
 
                     # n_int_random = random.randrange(n_int_min, n_int_max)
-                    # n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
-                    n_int_random = get_rnd(n_int_min, n_int_max)
+                    # n_int_random = get_rnd(n_int_min, n_int_max)
+                    n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
                     i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
 
         # << 2
