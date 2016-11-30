@@ -61,6 +61,7 @@ def plot(config, **kwargs):
         FLAGS = kwargs['flags'] # флаги, указывающие что рисовать
 
         POINT_COUNT = int(SIGNAL_SAMPLING * SIGNAL_DURATION / 1000)
+        # print('plot: config[c_duration]=%i POINT_COUNT=%i' %(config[c_duration], POINT_COUNT))
     
         if POINT_1 < 0: POINT_1 = POINT_COUNT + POINT_1
         if POINT_2 < 0: POINT_2 = POINT_COUNT + POINT_2

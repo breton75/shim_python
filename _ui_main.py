@@ -64,62 +64,69 @@ class mainFrame(Frame):
 		# тип сигнала
 		self.lblSignalType = tk.Label(self.frameSignal, text='Тип сигнала', width=25)
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Меандр перем. частоты', 'Синус+Шум', 'Синус+Синус+Шум', 'ЛЧМ'])
+		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров'])
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
 		self.cbSignalType.current(newindex=get_cfg_param(self.config, c_signal_type, 0, 'i'))
 	
-		# частота
-		self.lblFrequency = tk.Label(self.frameSignal, text='Частота', width=25)
-		self.lblFrequency.grid(row=1, column=0, sticky=tk.E)
-		self.editFrequency = tk.Entry(self.frameSignal, width=16)
-		self.editFrequency.grid(row=1, column=1, sticky=tk.W)
-		self.editFrequency.insert(0, get_cfg_param(self.config, c_freq, '8000'))
+		# частота начальная
+		self.lblFrequency0 = tk.Label(self.frameSignal, text='Частота начальная', width=25)
+		self.lblFrequency0.grid(row=1, column=0, sticky=tk.E)
+		self.editFrequency0 = tk.Entry(self.frameSignal, width=16)
+		self.editFrequency0.grid(row=1, column=1, sticky=tk.W)
+		self.editFrequency0.insert(0, get_cfg_param(self.config, c_freq0, '8000'))
+
+		# частота конечная
+		self.lblFrequency1 = tk.Label(self.frameSignal, text='Частота конечная', width=25)
+		self.lblFrequency1.grid(row=2, column=0, sticky=tk.E)
+		self.editFrequency1 = tk.Entry(self.frameSignal, width=16)
+		self.editFrequency1.grid(row=2, column=1, sticky=tk.W)
+		self.editFrequency1.insert(0, get_cfg_param(self.config, c_freq1, '8000'))
 
 
 		# дискретизация
 		self.lblSampling = tk.Label(self.frameSignal, text='Дискретизация', width=25)
-		self.lblSampling.grid(row=2, column=0, sticky=tk.E)
+		self.lblSampling.grid(row=3, column=0, sticky=tk.E)
 		self.editSampling = tk.Entry(self.frameSignal, width=16)
-		self.editSampling.grid(row=2, column=1, sticky=tk.W)
+		self.editSampling.grid(row=3, column=1, sticky=tk.W)
 		self.editSampling.insert(0, get_cfg_param(self.config, c_sampling, '100000'))
 
 
 		# длительность (мс.)
 		self.lblDuration = tk.Label(self.frameSignal, text='Общая длительность (мс)', width=25)
-		self.lblDuration.grid(row=3, column=0, sticky=tk.E)
+		self.lblDuration.grid(row=4, column=0, sticky=tk.E)
 		self.editDuration = tk.Entry(self.frameSignal, width=16)
-		self.editDuration.grid(row=3, column=1, sticky=tk.W)
+		self.editDuration.grid(row=4, column=1, sticky=tk.W)
 		self.editDuration.insert(0, get_cfg_param(self.config, c_duration, '1000'))
 
 		# длительность тишины (мс.)
 		self.lblHush = tk.Label(self.frameSignal, text='Длительность тишины (мс)', width=25)
-		self.lblHush.grid(row=4, column=0, sticky=tk.E)
+		self.lblHush.grid(row=5, column=0, sticky=tk.E)
 		self.editHush = tk.Entry(self.frameSignal, width=16)
-		self.editHush.grid(row=4, column=1, sticky=tk.W)
+		self.editHush.grid(row=5, column=1, sticky=tk.W)
 		self.editHush.insert(0, get_cfg_param(self.config, c_hush, '0'))
 
 		# амплитуда
 		self.lblAmplitude = tk.Label(self.frameSignal, text='Амплитуда', width=25)
-		self.lblAmplitude.grid(row=5, column=0, sticky=tk.E)
+		self.lblAmplitude.grid(row=6, column=0, sticky=tk.E)
 		self.editAmplitude = tk.Entry(self.frameSignal, width=16)
-		self.editAmplitude.grid(row=5, column=1, sticky=tk.W)
+		self.editAmplitude.grid(row=6, column=1, sticky=tk.W)
 		self.editAmplitude.insert(0, get_cfg_param(self.config, c_amplitude, '1024'))
 
 		# раскачка сигнала
 		self.lblFadeIn = tk.Label(self.frameSignal, text='Раскачка (%)', width=25)
-		self.lblFadeIn.grid(row=6, column=0, sticky=tk.E)
+		self.lblFadeIn.grid(row=7, column=0, sticky=tk.E)
 		self.editFadeIn = tk.Entry(self.frameSignal, width=16)
-		self.editFadeIn.grid(row=6, column=1, sticky=tk.W)
+		self.editFadeIn.grid(row=7, column=1, sticky=tk.W)
 		self.editFadeIn.insert(0, get_cfg_param(self.config, c_fadein, '0'))
 
 		# затухание сигнала
-		lblFadeOut = tk.Label(self.frameSignal, text='Затухание (%)', width=25).grid(row=7, column=0, sticky=tk.E)
+		lblFadeOut = tk.Label(self.frameSignal, text='Затухание (%)', width=25).grid(row=8, column=0, sticky=tk.E)
 		self.editFadeOut = tk.Entry(self.frameSignal, width=16)
-		self.editFadeOut.grid(row=7, column=1, sticky=tk.W)
+		self.editFadeOut.grid(row=8, column=1, sticky=tk.W)
 		self.editFadeOut.insert(0, get_cfg_param(self.config, c_fadeout, '0'))
 
 		self.frameCycleSignal = tk.LabelFrame(self.frameSignal, text='Повтор сигнала')
-		self.frameCycleSignal.grid(row=8, column=0, sticky=tk.W, columnspan=2)
+		self.frameCycleSignal.grid(row=9, column=0, sticky=tk.W, columnspan=2)
 
 		# количество повторений сгенерированного сигнала
 		lblCyclesCount = tk.Label(self.frameCycleSignal, text='Повторов, раз', width=25).grid(row=0, column=0, sticky=tk.E)
@@ -147,18 +154,18 @@ class mainFrame(Frame):
 		# else: self.filtrate.set(False)
 
 		# минимальная частота
-		self.lblFreqMin = tk.Label(self.frameFilter, text='Мин. частота', width=25)
-		self.lblFreqMin.grid(row=1, column=0, sticky=tk.E)
-		self.editFreqMin = tk.Entry(self.frameFilter, width=16)
-		self.editFreqMin.grid(row=1, column=1, sticky=tk.W)
-		self.editFreqMin.insert(0, get_cfg_param(self.config, c_freq_min, '1000'))
+		self.lblFilterFreqMin = tk.Label(self.frameFilter, text='Мин. частота', width=25)
+		self.lblFilterFreqMin.grid(row=1, column=0, sticky=tk.E)
+		self.editFilterFreqMin = tk.Entry(self.frameFilter, width=16)
+		self.editFilterFreqMin.grid(row=1, column=1, sticky=tk.W)
+		self.editFilterFreqMin.insert(0, get_cfg_param(self.config, c_filter_freq_min, '1000'))
 
 		# максимальная частота
-		self.lblFreqMax = tk.Label(self.frameFilter, text='Макс. частота', width=25)
-		self.lblFreqMax.grid(row=2, column=0, sticky=tk.E)
-		self.editFreqMax = tk.Entry(self.frameFilter, width=16)
-		self.editFreqMax.grid(row=2, column=1, sticky=tk.W)
-		self.editFreqMax.insert(0, get_cfg_param(self.config, c_freq_max, '4000'))
+		self.lblFilterFreqMax = tk.Label(self.frameFilter, text='Макс. частота', width=25)
+		self.lblFilterFreqMax.grid(row=2, column=0, sticky=tk.E)
+		self.editFilterFreqMax = tk.Entry(self.frameFilter, width=16)
+		self.editFilterFreqMax.grid(row=2, column=1, sticky=tk.W)
+		self.editFilterFreqMax.insert(0, get_cfg_param(self.config, c_filter_freq_max, '4000'))
 		
 		# редактировать форму спектра
 		# self.edit_spectrum_form = BooleanVar()
@@ -381,7 +388,7 @@ class mainFrame(Frame):
 			with open(fn + '.spectrum', 'w') as f:
 				pass
 
-			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config[c_sampling], d=self.config[c_duration], fmin=self.config[c_freq_min], fmax=self.config[c_freq_max])
+			spectrum.edit_spectrum(self.config)
 
 		except Exception as E:
 			print(E, file=sys.stderr)			
@@ -398,7 +405,7 @@ class mainFrame(Frame):
 			if fn[-1] != '/': fn += '/'
 			fn += self.config[c_filename_template]
 
-			spectrum.edit_spectrum(sffn=fn + '.spectrum', s=self.config[c_sampling], d=self.config[c_duration], fmin=self.config[c_freq_min], fmax=self.config[c_freq_max])
+			spectrum.edit_spectrum(self.config)
 
 		except Exception as E:
 			print(E, file=sys.stderr)	
@@ -534,7 +541,8 @@ class mainFrame(Frame):
 			# собираем параметры
 			self.config = {
 				c_signal_type: int(self.cbSignalType.current()),
-				c_freq:      int(self.editFrequency.get()),	
+				c_freq0:      int(self.editFrequency0.get()),	
+				c_freq1:      int(self.editFrequency1.get()),	
 				c_sampling:  int(self.editSampling.get()),
 				c_amplitude: int(self.editAmplitude.get()),
 				c_duration:  int(self.editDuration.get()),
@@ -547,8 +555,8 @@ class mainFrame(Frame):
 				# c_meandr_interval_width:   get_cfg_param(cfg, c_meandr_interval_width, 100, 'i'),
 				# c_meandr_type:  		   get_cfg_param(cfg, c_meandr_type, m_one_channel, 'i'),
 				# c_meandr_random_interval:  get_cfg_param(cfg, c_meandr_random_interval, 0, 'i'),
-				c_freq_min:   int(self.editFreqMin.get()),
-				c_freq_max:   int(self.editFreqMax.get()),
+				c_filter_freq_min:   int(self.editFilterFreqMin.get()),
+				c_filter_freq_max:   int(self.editFilterFreqMax.get()),
 				c_filtrate:            bool(self.filtrate.get()),
 				# c_edit_spectrum_form:  bool(self.edit_spectrum_form.get()),
 				c_apply_spectrum_form: bool(self.apply_spectrum_form.get()),
@@ -573,7 +581,7 @@ class mainFrame(Frame):
 				c_filename_template:      self.editFilenameTemplate.get()
 			}
 
-			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval, c_save_log])
+			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval, c_save_log, c_sinus_pack_step, c_meandr_pack_step])
 
 			log_file_name = None
 			
@@ -615,7 +623,8 @@ def do(config):
 
 
 	signal_type = get_cfg_param(config, c_signal_type, gen.s_type_noise, 'i')
-	freq = get_cfg_param(config, c_freq, 1000, 'i')
+	freq0 = get_cfg_param(config, c_freq0, 1000, 'i')
+	freq1 = get_cfg_param(config, c_freq1, 2000, 'i')
 	sampling = get_cfg_param(config, c_sampling, 100000, 'i')
 	duration = get_cfg_param(config, c_duration, 1000, 'i')
 	hush = get_cfg_param(config, c_hush, 0, 'i')
@@ -625,8 +634,8 @@ def do(config):
 	  
 	# фильтр
 	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
-	freq_min = get_cfg_param(config, c_freq_min, 1000, 'i')
-	freq_max = get_cfg_param(config, c_freq_max, 4000, 'i')
+	filter_freq_min = get_cfg_param(config, c_filter_freq_min, 1000, 'i')
+	filter_freq_max = get_cfg_param(config, c_filter_freq_max, 4000, 'i')
 	# edit_spectrum_form = get_cfg_param(config, c_edit_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus)
 	apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
 	apply_accurately_to_form = get_cfg_param(config, c_apply_accurately_to_form, False, 'b') and apply_spectrum_form
@@ -713,8 +722,8 @@ def do(config):
 	# 					   fmin=freq_min, fmax=freq_max)
 	 
 	# sys.exit(0)
-
-	arawf = spectrum.apply_spectrum(config, signal_data=araw)
+	if filtrate or apply_spectrum_form:
+		arawf = spectrum.apply_spectrum(config, signal_data=araw)
 
 							    #    s=sampling, d=duration,
 								   # signal_data=araw,
@@ -724,6 +733,8 @@ def do(config):
 								   # sffn=filename_spectrum,
 								   # band_pass_filter=filtrate,
 								   # fmin=freq_min, fmax=freq_max)
+	else:
+		arawf = araw
 
 	if arawf is None:
 		return

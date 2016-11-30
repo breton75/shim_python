@@ -323,7 +323,7 @@ def signal2spectrum(config, **kwargs):
         if 'signal_data' in kwargs:
             araw = kwargs['signal_data']
 
-            print('araw=%i' % len(araw))
+            # print('araw=%i' % len(araw))
 
         else: # иначе читаем исходный файл
             try:
@@ -438,8 +438,8 @@ def edit_spectrum(config, **kwargs):
         # задаем границы массива диапазон частот [fmin:fmax]
         fmin = 1
         fmax = int(sampling / 2)
-        if c_freq_min in config and config[c_freq_min] in range(fmin, fmax): fmin = config[c_freq_min]
-        if c_freq_max in config and config[c_freq_max] in range(fmin, fmax): fmax = config[c_freq_max]
+        if c_filter_freq_min in config and config[c_filter_freq_min] in range(fmin, fmax): fmin = config[c_filter_freq_min]
+        if c_filter_freq_max in config and config[c_filter_freq_max] in range(fmin, fmax): fmax = config[c_filter_freq_max]
 
         spectrumMax = 100 # в процентах %
 
@@ -509,8 +509,8 @@ def apply_spectrum(config, **kwargs):
         # для применения полосового фильтра, отсекаем все, что не входит в [fmin:fmax]
         fmin = 1
         fmax = len(aspec)
-        if c_freq_min in config and config[c_freq_min] in range(fmin, fmax): fmin = config[c_freq_min]
-        if c_freq_max in config and config[c_freq_max] in range(fmin, fmax): fmax = config[c_freq_max]
+        if c_filter_freq_min in config and config[c_filter_freq_min] in range(fmin, fmax): fmin = config[c_filter_freq_min]
+        if c_filter_freq_max in config and config[c_filter_freq_max] in range(fmin, fmax): fmax = config[c_filter_freq_max]
 
         # значения для вычислений
         # point_count = int(sampling * duration / 1000)

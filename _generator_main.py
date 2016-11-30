@@ -12,10 +12,10 @@ from _defs import *
 s_type_noise = 0
 s_type_sinus = 1
 s_type_meandr = 2
-s_type_meandr_random = 3
-s_type_sinus_noise = 4
-s_type_sinus_sinus_noise = 5
-s_type_lfm = 6
+s_type_sinus_pack = 3
+s_type_sinus_sinus_noise = 4
+s_type_lfm = 5
+s_type_meandr_pack = 6
 
 
 def createParser ():
@@ -48,7 +48,8 @@ def generate(config=None, **kwargs):
         
 
         signal_type = int(config[c_signal_type])
-        signal_frequency = int(config[c_freq])
+        signal_frequency0 = int(config[c_freq0])
+        signal_frequency1 = int(config[c_freq1])
         signal_sampling = int(config[c_sampling])
         signal_duration = int(config[c_duration])
         signal_amplitude = int(config[c_amplitude])
@@ -60,8 +61,6 @@ def generate(config=None, **kwargs):
         if repeat_count < 1: repeat_count = 1
         pause = int(config[c_pause])
 
-        config[c_duration] = signal_duration * repeat_count + pause
-
             # meandr_pulse_width = kwargs['mpw']
             # meandr_pulse_interval = kwargs['mpi']
             
@@ -70,24 +69,21 @@ def generate(config=None, **kwargs):
         hush_count = int(signal_sampling * hush_duration / 1000)
         pause_count = int(signal_sampling * pause / 1000)
     
-        # количество точек на раскачку сигнала
-        fade_in_point_count = int(point_count / 100 * fade_in) if fade_in > 0 else 0
-        fade_in_step = 1 / fade_in_point_count if fade_in > 0 else 0.0
-    
-        # количество точек на затухание сигнала    
-        fade_out_point_count = int(point_count / 100 * fade_out) if fade_out > 0 else 0
-        fade_out_step = 1 / fade_out_point_count if fade_out > 0 else 0.0
+
         # шаг приращения по оси x
-        x_step = signal_frequency / signal_sampling
+        x_step = signal_frequency0 / signal_sampling
         
         # формируем сырой сигнал
         if signal_type == s_type_noise:
             y_raw = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(point_count)]
-            # y_raw = [random.uniform(0, signal_amplitude * 2) for _counter in range(point_count)]
+            y_raw = add_fading(config, y_raw)
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
         
         elif signal_type == s_type_sinus:
             # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2 + 0.5) for _counter in range(point_count)]
             y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]
+            y_raw = add_fading(config, y_raw)
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
 
         elif signal_type == s_type_meandr:
 
@@ -96,40 +92,62 @@ def generate(config=None, **kwargs):
             if y_raw is None:
                 raise Exception('не удалось сформировать сигнал')
 
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+
+        elif signal_type == s_type_meandr_pack:
+            interval0 = get_cfg_param(config, c_meandr_interval_width, 0, 'i') # config[]
+            interval1 = get_cfg_param(config, c_meandr_random_interval, 0, 'i')
+            config[c_meandr_random_interval] = 0
+            istep = get_cfg_param(config, c_meandr_pack_step, 100, 'i')
+
+            y_raw = []
+            cnt = 0
+            while interval0 <= interval1:
+                config[c_meandr_interval_width] = interval0
+                y_raw.extend(meandr(config, **kwargs))
+                y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+                cnt += 1
+                interval0 += istep
+
+            signal_duration *= cnt
+            config[c_meandr_random_interval] = interval1
+
     
-        elif signal_type == s_type_sinus_noise:
-            y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) * random.random()  for _counter in range(point_count)]
-    
-        elif signal_type == s_type_sinus_sinus_noise:  #
+        elif signal_type == s_type_sinus_pack:  #
+            y_raw, signal_duration = sinus_pack(config)
+
+            if y_raw is None:
+                raise Exception('не удалось сформировать сигнал')
+
+
+        elif signal_type == s_type_sinus_sinus_noise:
             k = 0.5
             y_raw = [(signal_amplitude * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(point_count)]
+            y_raw = add_fading(config, y_raw)
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
     
         elif signal_type == s_type_lfm:
-            f0 = config[c_freq_min] # начальная частота
-            f1 = config[c_freq_max] # конечная частота
+            f0 = config[c_freq0] # начальная частота
+            f1 = config[c_freq1] # конечная частота
             fd = signal_sampling   # частота дискретизации
             T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
             d = 1 / (fd * T) # шаг приращения
 
             y_raw = [signal_amplitude * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(point_count)]
-            #  
+            
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
 
-        # применяем параметры раскачки и затухания и сохраняем конечный сигнал
-        _y = []
-        _y.extend([y_raw[_counter] * (_counter * fade_in_step) for _counter in range(fade_in_point_count)])
-        _y.extend(y_raw[fade_in_point_count : point_count - fade_out_point_count])
-        _y.extend([y_raw[point_count - _counter] * (_counter * fade_out_step) for _counter in range(fade_out_point_count, 0, -1)])
-
-        # добавляем тишину в конце, если необходимо
-        _y.extend(np.zeros(hush_count))
-
+        
+       
         # повторяем полученный сигнал заданное количество раз
         y = []
         for i in range(repeat_count):
-            y.extend(_y)
+            y.extend(y_raw)
 
         # добавляем паузу, если необходимо
         y.extend(np.zeros(pause_count))
+
+        config[c_duration] = signal_duration * repeat_count + pause
     
         print('ok')
     
@@ -312,7 +330,7 @@ def meandr(config, **kwargs):
 
         # << 2
 
-        return y_raw
+        return list(y_raw)
 
     except Exception as E:
         print('error in func _generator_main.meandr(): %s' % E, file=sys.stderr)
@@ -336,6 +354,77 @@ def get_rnd(min_val, max_val):
     
     return random_val
 
+def sinus_pack(config):
+    try:
+        # print('generator1: duration=%i' % config[c_duration])
+    
+        f0 = int(config[c_freq0])
+        f1 = int(config[c_freq1])
+        f_step = int(config[c_sinus_pack_step])
+        sampling = int(config[c_sampling])
+        signal_duration = int(config[c_duration])
+        amplitude = int(config[c_amplitude])
+        
+        # fade_in = int(config[c_fadein])
+        # fade_out = int(config[c_fadeout])
+        # file_name = get_path(config, 'raw')
+        
+        hush_duration = int(config[c_hush])
+        
+        point_count = int(sampling * signal_duration / 1000)
+        signal_count = int(sampling * (signal_duration - hush_duration) / 1000)
+        hush_count = int(sampling * hush_duration / 1000)
+    
+        y_raw = []
+        cnt = 0
+        while f0 <= f1:
+            x_step = f0 / sampling
+            _y = [amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_count)]
+            _y = add_fading(config, _y)
+            
+            y_raw.extend(_y)
+            y_raw.extend(np.zeros(hush_count))
+            f0 += f_step
+            cnt += 1
+    
+    
+        signal_duration *= cnt
+        # point_count *= cnt
+
+        return y_raw, signal_duration
+
+    except Exception as E:
+        print('error in func _generator_main.sinus_pack(): %s' % E, file=sys.stderr)
+        return None, None
+
+def add_fading(config, y_raw):
+    # применяем параметры раскачки и затухания
+    signal_sampling = int(config[c_sampling])
+    signal_duration = int(config[c_duration])
+    fade_in = int(config[c_fadein])
+    fade_out = int(config[c_fadeout])
+    hush_duration = int(config[c_hush])
+
+    if fade_in == 0 and fade_out == 0:
+        return y_raw
+
+    point_count = int(signal_sampling * (signal_duration - hush_duration) / 1000)
+    # print('generator: duration=%i' % signal_duration)
+
+    # количество точек на раскачку сигнала
+    fade_in_point_count = int(point_count / 100 * fade_in) if fade_in > 0 else 0
+    fade_in_step = 1 / fade_in_point_count if fade_in > 0 else 0.0
+    
+    # количество точек на затухание сигнала    
+    fade_out_point_count = int(point_count / 100 * fade_out) if fade_out > 0 else 0
+    fade_out_step = 1 / fade_out_point_count if fade_out > 0 else 0.0
+    print('gen: point_count=%i  fade_in_point_count=%i  fade_out_point_count=%i' % (point_count, fade_in_point_count, fade_out_point_count))
+    _y = []
+    _y.extend([y_raw[_counter] * (_counter * fade_in_step) for _counter in range(fade_in_point_count)])
+    _y.extend(y_raw[fade_in_point_count : point_count - fade_out_point_count])
+    _y.extend([y_raw[point_count - _counter] * (_counter * fade_out_step) for _counter in range(fade_out_point_count, 0, -1)])
+    print(len(y_raw))
+    return _y
 
 
 ###############################################        

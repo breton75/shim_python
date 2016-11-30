@@ -44,7 +44,8 @@ m_channels_alternate = 2
 
 ## константы
 c_signal_type = 'signal_type'
-c_freq  = 'freq'
+c_freq0  = 'freq0'
+c_freq1  = 'freq1'
 c_sampling = 'sampling'			
 c_duration = 'duration'		
 c_hush = 'hush'
@@ -58,12 +59,13 @@ c_meandr_pulse_width = 'meandr_pulse_width'
 c_meandr_interval_width = 'meandr_interval_width'
 c_meandr_type = 'meandr_type'
 c_meandr_random_interval='meandr_random_interval'
-
+c_meandr_pack_step = 'meandr_pack_step'
+c_sinus_pack_step = 'sinus_pack_step'
 
 c_filtrate = 'filtrate'
 # c_band_pass_filter
-c_freq_min = 'freq_min'
-c_freq_max = 'freq_max'
+c_filter_freq_min = 'filter_freq_min'
+c_filter_freq_max = 'filter_freq_max'
 c_apply_spectrum_form = 'apply_spectrum_form'
 c_apply_accurately_to_form = 'apply_accurately_to_form'
 

@@ -137,7 +137,7 @@ def shim(config, **kwargs):
     try:
         print('shim conversion ... ', end='')
 
-        SIGNAL_FREQUENCY = int(config[c_freq])
+        SIGNAL_FREQUENCY = int(config[c_freq0])
         SIGNAL_SAMPLING = int(config[c_sampling])
         SIGNAL_DURATION = int(config[c_duration])
         SIGNAL_AMPLITUDE = int(config[c_amplitude])
