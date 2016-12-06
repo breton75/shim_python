@@ -99,7 +99,7 @@ def plot(config, **kwargs):
 
                 ts = 1 / SIGNAL_SAMPLING * 1000
                 
-                print(len(araw))
+                # print(len(araw))
                 plt.plot(araw[POINT_1:POINT_2], label='Исходный сигнал', drawstyle='default') #, marker='s', markerfacecolor='r') #, markersize=10) #, color='black', lw=0)
                 # plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1 * ts, POINT_2 * ts, (POINT_2 - POINT_1) * ts //10))
                 plt.xlabel('миллисекунды')
@@ -112,7 +112,7 @@ def plot(config, **kwargs):
                 #     plt.xticks(arange(0, (POINT_2 - POINT_1) + 1, (POINT_2 - POINT_1) // 10), arange(POINT_1, POINT_2 + 1, (POINT_2 - POINT_1) // 10))
                 #     plt.xlabel('точки')
 
-                plt.yticks(arange(-amplitude, amplitude + 1, amplitude * 2 / 10), arange(-amplitude, amplitude + 1, amplitude * 2 / 10))                    
+                # plt.yticks(arange(-amplitude, amplitude + 1, amplitude * 2 / 10), arange(-amplitude, amplitude + 1, amplitude * 2 / 10))                    
 
                 plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small')
                 plt.grid()
@@ -228,7 +228,7 @@ def plot(config, **kwargs):
                 if aspec is None:
                     raise Exception('no spectrum for plotting')
     
-                # plt.plot(aspec, label='Filtered signal spectrum', color='g')
+                plt.plot(aspec, label='Filtered signal spectrum', color='g')
                 plt.vlines(range(len(aspec)), 0, aspec, label='Спектр отфильтрованного сигнала', color='g')
                 plt.legend(loc='upper left', shadow=True, frameon=True, fontsize='small')
                 plt.grid()

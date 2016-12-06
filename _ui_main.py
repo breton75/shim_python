@@ -64,7 +64,7 @@ class mainFrame(Frame):
 		# тип сигнала
 		self.lblSignalType = tk.Label(self.frameSignal, text='Тип сигнала', width=25)
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров'])
+		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра'])
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
 		self.cbSignalType.current(newindex=get_cfg_param(self.config, c_signal_type, 0, 'i'))
 	

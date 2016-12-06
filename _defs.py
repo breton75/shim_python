@@ -37,6 +37,17 @@ def get_path(config, extention):
 		return None
 
 
+# тип сигналов
+s_type_noise = 0
+s_type_sinus = 1
+s_type_meandr = 2
+s_type_sinus_pack = 3
+s_type_sinus_sinus_noise = 4
+s_type_lfm = 5
+s_type_meandr_pack = 6
+s_type_spectrum = 7
+
+# тип меандра
 m_one_channel = 0
 m_channels_iterleaved = 1
 m_channels_alternate = 2

@@ -7,15 +7,11 @@ import array
 import random
 import numpy as np
 
-from _defs import *
+from scipy.fftpack import fft
+from scipy.fftpack import ifft
+import scipy
 
-s_type_noise = 0
-s_type_sinus = 1
-s_type_meandr = 2
-s_type_sinus_pack = 3
-s_type_sinus_sinus_noise = 4
-s_type_lfm = 5
-s_type_meandr_pack = 6
+from _defs import *
 
 
 def createParser ():
@@ -85,6 +81,17 @@ def generate(config=None, **kwargs):
             y_raw = add_fading(config, y_raw)
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
 
+
+            print(fft(y_raw))
+
+            # _y = fft(y_raw)
+            # from matplotlib import pyplot
+            # pyplot.subplot(111)
+            # pyplot.plot(_y[:N].real)
+            # pyplot.grid()
+            # pyplot.show()
+
+
         elif signal_type == s_type_meandr:
 
             y_raw = meandr(config, **kwargs)
@@ -137,6 +144,115 @@ def generate(config=None, **kwargs):
             
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
 
+        elif signal_type == s_type_spectrum:
+            f0 = config[c_freq0] # начальная частота
+            f1 = config[c_freq1] # конечная частота
+            fd = signal_sampling   # частота дискретизации
+            clean_duration = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
+
+            # определяем количество точек сигнала
+            N = int(fd * clean_duration) # 5000
+
+            spectrum = np.empty(N, dtype=complex)
+            for i in range(N):
+                spectrum[i] = complex(0.0, 0.0)
+            
+            noise = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(N)]
+            spec_noise = fft(noise)
+
+            _f0 = int(f0 * clean_duration)
+            _f1 = int(f1 * clean_duration)
+            
+            fade_point_count = int(config[c_fadein])
+            fade_step = 1 / fade_point_count if fade_point_count > 0 else 0.0
+            
+            _snap = [3000, 4000, 6000, 6500]
+            snap = [s * clean_duration + c for c in range(10) for s in _snap]
+
+            for i in np.arange(_f0, _f1):
+                k = 1
+            # >> трапеция
+                # if i - _f0 < fade_point_count: k = fade_step * (i - _f0)
+                # elif _f1 - i <= fade_point_count: k = fade_step * (_f1 - i)
+                # else: k = 1
+            # << трапеция
+
+            # >> S-образное окно
+                # if i - _f0 < fade_point_count: m = math.sin((-math.pi/2) + math.pi * ((fade_point_count - (fade_point_count - (i - _f0))) / fade_point_count))
+                # elif _f1 - i <= fade_point_count: m = math.sin((-math.pi/2) + math.pi * ((fade_point_count - (fade_point_count - (_f1 - i))) / fade_point_count))
+                # else: m = 1
+                # k = (m + 1)/2
+            # << S-образное окно
+
+                # print(k)
+
+
+                imag = random.uniform(-signal_amplitude * k, signal_amplitude * k) #  spec_noise[i].imag % signal_amplitude            
+                ireal = (-1)**int(random.uniform(1,2)) * math.sqrt((signal_amplitude * k)**2 - imag**2)
+
+                # imag = 0.0
+                # ireal = signal_amplitude
+
+                # print(ireal)
+                if i not in snap:
+                    spectrum[i] = complex(ireal, imag)
+                    spectrum[-i] = complex(ireal, -imag)
+
+            # for i in range(len(spectrum)):
+            #     print(spectrum[i])
+
+            
+        # >> синусоида
+            # spectrum = np.empty(190, dtype=complex)
+            # spectrum[:] = complex(0.0, 0.0)
+
+            # # spectrum[10] = complex(250.0, 0.0)
+            # # spectrum[-10] = complex(250.0, 0.0)
+            
+            # for i in np.arange(10, 11):
+            #     spectrum[i] = complex(1, 0)
+            #     spectrum[-i] = complex(1, 0)
+
+        # << синусоида
+
+            _y = ifft(spectrum)
+            # print('len _y=%i, type: %s of %s' % (len(_y), type(_y), type(_y[0])))
+
+            # from matplotlib import pyplot
+            # pyplot.subplot(111)
+            # pyplot.plot(_y.real)
+            # pyplot.grid()
+            # pyplot.show()
+            
+            y_raw = array.array('d', _y.real) #.tolist()
+            
+            m1 = 0
+            m2 = fade_point_count
+            
+            for i in np.arange(m1, m2):
+                
+                # if i < fade_point_count: k = 0.0 #fade_step * i
+                # elif (len(y_raw) - i) <= fade_point_count: k = 0.0 #  fade_step * (len(y_raw) - i)
+                # else: k = 1
+
+                # print(k)
+                m = math.sin((-math.pi/2) + math.pi * ((i - m1) / (m2 - m1)))
+                # mm = math.sin((math.pi/2) + math.pi * ((i - m1) / (m2 - m1)))
+
+                k = (m + 1)/2
+                # kk = 1 - (mm + 1) / 2
+                # print(kk)
+                y_raw[i] *= 0.0
+                y_raw[-i] *= 0.0
+
+                # y_raw[i] = (-1)**(i%2) * 10 * k
+                # y_raw[-i] = (-1)**(i%2) * 10 * k
+
+
+            # y_raw = add_fading(config, y_raw)
+
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+            
         
        
         # повторяем полученный сигнал заданное количество раз
@@ -419,11 +535,12 @@ def add_fading(config, y_raw):
     fade_out_point_count = int(point_count / 100 * fade_out) if fade_out > 0 else 0
     fade_out_step = 1 / fade_out_point_count if fade_out > 0 else 0.0
     print('gen: point_count=%i  fade_in_point_count=%i  fade_out_point_count=%i' % (point_count, fade_in_point_count, fade_out_point_count))
+
     _y = []
     _y.extend([y_raw[_counter] * (_counter * fade_in_step) for _counter in range(fade_in_point_count)])
     _y.extend(y_raw[fade_in_point_count : point_count - fade_out_point_count])
     _y.extend([y_raw[point_count - _counter] * (_counter * fade_out_step) for _counter in range(fade_out_point_count, 0, -1)])
-    print(len(y_raw))
+    
     return _y
 
 
