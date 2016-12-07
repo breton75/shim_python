@@ -125,27 +125,60 @@ class mainFrame(Frame):
 		self.editFadeOut.grid(row=8, column=1, sticky=tk.W)
 		self.editFadeOut.insert(0, get_cfg_param(self.config, c_fadeout, '0'))
 
-		self.frameCycleSignal = tk.LabelFrame(self.frameSignal, text='Повтор сигнала')
-		self.frameCycleSignal.grid(row=9, column=0, sticky=tk.W, columnspan=2)
+
+	### <- параметры сигнала ###	
+
+	## -> постобработка
+
+		self.framePostprocessing = tk.LabelFrame(self, text='Постобработка сигнала')
+		self.framePostprocessing.grid(row=1, column=0, sticky=tk.N, rowspan=1)
+
+		# тип окна
+		self.lblSignalWindowType = tk.Label(self.framePostprocessing, text='Наложить окно', width=25).grid(row=0, column=0, sticky=tk.E)
+		self.cbSignalWindowType = ttk.Combobox(self.framePostprocessing, width=13, values=['Нет окна', 'Трапеция', 'Cosinus', 'S-образное'])
+		self.cbSignalWindowType.grid(row=0, column=1, sticky=tk.W)
+		self.cbSignalWindowType.current(newindex=get_cfg_param(self.config, c_signal_window_type, 0, 'i'))
+
+		# как накладывать
+		self.lblSignalWindowMethod = tk.Label(self.framePostprocessing, text='Способ наложения', width=25).grid(row=1, column=0, sticky=tk.E)
+		self.cbSignalWindowMethod = ttk.Combobox(self.framePostprocessing, width=13, values=['Поверх сигнала', 'Добавить шум'])
+		self.cbSignalWindowMethod.grid(row=1, column=1, sticky=tk.W)
+		self.cbSignalWindowMethod.current(newindex=get_cfg_param(self.config, c_signal_window_method, 0, 'i'))
+
+		# куда накладывать
+		self.lblSignalWindowPlace = tk.Label(self.framePostprocessing, text='Место наложения', width=25).grid(row=2, column=0, sticky=tk.E)
+		self.cbSignalWindowPlace = ttk.Combobox(self.framePostprocessing, width=13, values=['Начало и конец каждой пачки', 'Начало каждой пачки', 'Конец каждой пачки', 'Начало и конец сигнала', 'Начало сигнала', 'Конец сигнала'])
+		self.cbSignalWindowPlace.grid(row=2, column=1, sticky=tk.W)
+		self.cbSignalWindowPlace.current(newindex=get_cfg_param(self.config, c_signal_window_place, 0, 'i'))
+
+		# длительность окна
+		lblWindowDuration = tk.Label(self.framePostprocessing, text='Длительность окна, мс.', width=25).grid(row=3, column=0, sticky=tk.E)
+		self.editWindowDuration = tk.Entry(self.framePostprocessing, width=16)
+		self.editWindowDuration.grid(row=3, column=1, sticky=tk.W)
+		self.editWindowDuration.insert(0, get_cfg_param(self.config, c_signal_window_duration, '1'))	
+
+
+		# self.frameCycleSignal = tk.LabelFrame(self.framePostprocessing, text='Повтор сигнала')
+		# self.frameCycleSignal.grid(row=1, column=0, sticky=tk.W, columnspan=2)
 
 		# количество повторений сгенерированного сигнала
-		lblCyclesCount = tk.Label(self.frameCycleSignal, text='Повторов, раз', width=25).grid(row=0, column=0, sticky=tk.E)
-		self.editRepeatCount = tk.Entry(self.frameCycleSignal, width=16)
-		self.editRepeatCount.grid(row=0, column=1, sticky=tk.W)
+		lblCyclesCount = tk.Label(self.framePostprocessing, text='Повторить сигнал, раз', width=25).grid(row=4, column=0, sticky=tk.E)
+		self.editRepeatCount = tk.Entry(self.framePostprocessing, width=16)
+		self.editRepeatCount.grid(row=4, column=1, sticky=tk.W)
 		self.editRepeatCount.insert(0, get_cfg_param(self.config, c_repeat_count, '1'))	
 
 		# пауза после всех повторов
-		lblPause = tk.Label(self.frameCycleSignal, text='Пауза после (мс.)', width=25).grid(row=1, column=0, sticky=tk.E)
-		self.editPause = tk.Entry(self.frameCycleSignal, width=16)
-		self.editPause.grid(row=1, column=1, sticky=tk.W)
+		lblPause = tk.Label(self.framePostprocessing, text='Пауза после (мс.)', width=25).grid(row=5, column=0, sticky=tk.E)
+		self.editPause = tk.Entry(self.framePostprocessing, width=16)
+		self.editPause.grid(row=5, column=1, sticky=tk.W)
 		self.editPause.insert(0, get_cfg_param(self.config, c_pause, '0'))	
 
-	### <- параметры сигнала ###	
+	## <- постобработка
 
 	## -> фильтрация ##
 
 		self.frameFilter = tk.LabelFrame(self, text='Фильтрация')
-		self.frameFilter.grid(row=0, column=1, sticky=tk.W)
+		self.frameFilter.grid(row=0, column=1, sticky=tk.W, rowspan=2)
 
 		self.filtrate = BooleanVar()
 		self.checkFilter = tk.Checkbutton(self.frameFilter, text='Применить полосовой фильтр', variable=self.filtrate)
@@ -204,7 +237,7 @@ class mainFrame(Frame):
 	## -> преобразование шим ##
 
 		self.frameShim = tk.LabelFrame(self, text='Преобразование ШИМ')
-		self.frameShim.grid(row=1, column=0, sticky=tk.N, rowspan=1)
+		self.frameShim.grid(row=2, column=0, sticky=tk.N, rowspan=1)
 
 		# кол-во каналов
 		self.lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
@@ -235,7 +268,7 @@ class mainFrame(Frame):
 	## -> выгрузка на устройство ##
 
 		self.frameSend = tk.LabelFrame(self, text='Выгрузка')
-		self.frameSend.grid(row=1, column=1, sticky=tk.N)
+		self.frameSend.grid(row=2, column=1, sticky=tk.N)
 
 		self.send = BooleanVar()
 		self.checkSend = tk.Checkbutton(self.frameSend, text='Выгрузить сигнал на устройство', variable=self.send)
@@ -551,6 +584,10 @@ class mainFrame(Frame):
 				c_fadeout:   int(self.editFadeOut.get()),
 				c_repeat_count: 		   int(self.editRepeatCount.get()),
 				c_pause: 				   int(self.editPause.get()),
+				c_signal_window_type:		int(self.cbSignalWindowType.current()),
+				c_signal_window_method:		int(self.cbSignalWindowMethod.current()),
+				c_signal_window_place:		int(self.cbSignalWindowPlace.current()),
+				c_signal_window_duration:	int(self.editWindowDuration.get()),
 				# c_meandr_pulse_width:	   get_cfg_param(cfg, c_meandr_pulse_width, 250, 'i'),
 				# c_meandr_interval_width:   get_cfg_param(cfg, c_meandr_interval_width, 100, 'i'),
 				# c_meandr_type:  		   get_cfg_param(cfg, c_meandr_type, m_one_channel, 'i'),

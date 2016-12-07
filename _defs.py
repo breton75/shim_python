@@ -52,6 +52,21 @@ m_one_channel = 0
 m_channels_iterleaved = 1
 m_channels_alternate = 2
 
+w_type_no_window = 0
+w_type_trapeze = 1
+w_type_cos = 2
+w_type_s = 3
+
+w_method_atop = 0
+w_method_add = 1
+
+w_place_pack_begin_end = 0
+w_place_pack_begin = 1
+w_place_pack_end = 2
+w_place_signal_begin_end = 3
+w_place_signal_begin = 4
+w_place_signal_end = 5
+
 
 ## константы
 c_signal_type = 'signal_type'
@@ -63,8 +78,6 @@ c_hush = 'hush'
 c_amplitude	= 'amplitude'
 c_fadein = 'fadein'	
 c_fadeout = 'fadeout'
-c_repeat_count = 'repeat_count'
-c_pause = 'pause'
 
 c_meandr_pulse_width = 'meandr_pulse_width'
 c_meandr_interval_width = 'meandr_interval_width'
@@ -72,6 +85,14 @@ c_meandr_type = 'meandr_type'
 c_meandr_random_interval='meandr_random_interval'
 c_meandr_pack_step = 'meandr_pack_step'
 c_sinus_pack_step = 'sinus_pack_step'
+
+# постобработка
+c_signal_window_type = 'signal_window_type'
+c_signal_window_method = 'signal_window_method' 
+c_signal_window_place = 'signal_window_place'
+c_signal_window_duration = 'signal_window_duration'
+c_repeat_count = 'repeat_count'
+c_pause = 'pause'
 
 c_filtrate = 'filtrate'
 # c_band_pass_filter

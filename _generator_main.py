@@ -57,11 +57,17 @@ def generate(config=None, **kwargs):
         if repeat_count < 1: repeat_count = 1
         pause = int(config[c_pause])
 
+        window_type = int(config[c_signal_window_type])
+        window_method = int(config[c_signal_window_method])
+        window_place = int(config[c_signal_window_place])
+        window_duration = int(config[c_signal_window_duration])
+
+
             # meandr_pulse_width = kwargs['mpw']
             # meandr_pulse_interval = kwargs['mpi']
             
         #общее количество точек, которое будет обсчитано
-        point_count = int(signal_sampling * (signal_duration - hush_duration) / 1000)
+        signal_point_count = int(signal_sampling * (signal_duration - hush_duration) / 1000)
         hush_count = int(signal_sampling * hush_duration / 1000)
         pause_count = int(signal_sampling * pause / 1000)
     
@@ -71,35 +77,35 @@ def generate(config=None, **kwargs):
         
         # формируем сырой сигнал
         if signal_type == s_type_noise:
-            y_raw = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(point_count)]
-            y_raw = add_fading(config, y_raw)
+            y_raw = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)]
+
+            if window_type != w_type_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                y_raw = apply_window(config, y_raw)
+                if y_raw is None: raise Exception('не удалось сформировать сигнал')
+            
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
         
         elif signal_type == s_type_sinus:
-            # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2 + 0.5) for _counter in range(point_count)]
-            y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(point_count)]
-            y_raw = add_fading(config, y_raw)
-            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+            # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2 + 0.5) for _counter in range(signal_point_count)]
+            y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count)]
+            
+            if window_type != w_type_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                y_raw = apply_window(config, y_raw)
+                if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
-
-            print(fft(y_raw))
-
-            # _y = fft(y_raw)
-            # from matplotlib import pyplot
-            # pyplot.subplot(111)
-            # pyplot.plot(_y[:N].real)
-            # pyplot.grid()
-            # pyplot.show()
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
 
 
         elif signal_type == s_type_meandr:
 
             y_raw = meandr(config, **kwargs)
+            if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
-            if y_raw is None:
-                raise Exception('не удалось сформировать сигнал')
+            if window_type != w_type_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                y_raw = apply_window(config, y_raw)
+                if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
-            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
 
         elif signal_type == s_type_meandr_pack:
             interval0 = get_cfg_param(config, c_meandr_interval_width, 0, 'i') # config[]
@@ -112,7 +118,13 @@ def generate(config=None, **kwargs):
             while interval0 <= interval1:
                 config[c_meandr_interval_width] = interval0
                 y_raw.extend(meandr(config, **kwargs))
-                y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+                
+                if window_type != w_type_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                    y_raw = apply_window(config, y_raw)
+                    if y_raw is None: raise Exception('не удалось сформировать сигнал')
+                
+                y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
+                
                 cnt += 1
                 interval0 += istep
 
@@ -123,15 +135,18 @@ def generate(config=None, **kwargs):
         elif signal_type == s_type_sinus_pack:  #
             y_raw, signal_duration = sinus_pack(config)
 
-            if y_raw is None:
-                raise Exception('не удалось сформировать сигнал')
+            if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
 
         elif signal_type == s_type_sinus_sinus_noise:
             k = 0.5
-            y_raw = [(signal_amplitude * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(point_count)]
-            y_raw = add_fading(config, y_raw)
-            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+            y_raw = [(signal_amplitude * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(signal_point_count)]
+            
+            if window_type != w_type_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                y_raw = apply_window(config, y_raw)
+                if y_raw is None: raise Exception('не удалось сформировать сигнал')
+
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
     
         elif signal_type == s_type_lfm:
             f0 = config[c_freq0] # начальная частота
@@ -140,8 +155,12 @@ def generate(config=None, **kwargs):
             T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
             d = 1 / (fd * T) # шаг приращения
 
-            y_raw = [signal_amplitude * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(point_count)]
+            y_raw = [signal_amplitude * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(signal_point_count)]
             
+            if window_type != w_type_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                y_raw = apply_window(config, y_raw)
+                if y_raw is None: raise Exception('не удалось сформировать сигнал')
+
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
 
         elif signal_type == s_type_spectrum:
@@ -163,11 +182,8 @@ def generate(config=None, **kwargs):
             _f0 = int(f0 * clean_duration)
             _f1 = int(f1 * clean_duration)
             
-            fade_point_count = int(config[c_fadein])
-            fade_step = 1 / fade_point_count if fade_point_count > 0 else 0.0
-            
-            _snap = [3000, 4000, 6000, 6500]
-            snap = [s * clean_duration + c for c in range(10) for s in _snap]
+            # список частот, которые отстутствуют в спектре
+            snap = [s * clean_duration + c for c in range(10) for s in [3000, 4000, 6000, 6500]]
 
             for i in np.arange(_f0, _f1):
                 k = 1
@@ -184,22 +200,12 @@ def generate(config=None, **kwargs):
                 # k = (m + 1)/2
             # << S-образное окно
 
-                # print(k)
-
-
                 imag = random.uniform(-signal_amplitude * k, signal_amplitude * k) #  spec_noise[i].imag % signal_amplitude            
                 ireal = (-1)**int(random.uniform(1,2)) * math.sqrt((signal_amplitude * k)**2 - imag**2)
 
-                # imag = 0.0
-                # ireal = signal_amplitude
-
-                # print(ireal)
                 if i not in snap:
                     spectrum[i] = complex(ireal, imag)
                     spectrum[-i] = complex(ireal, -imag)
-
-            # for i in range(len(spectrum)):
-            #     print(spectrum[i])
 
             
         # >> синусоида
@@ -215,7 +221,9 @@ def generate(config=None, **kwargs):
 
         # << синусоида
 
+            # обратное преобразование
             _y = ifft(spectrum)
+            y_raw = array.array('d', _y.real)
             # print('len _y=%i, type: %s of %s' % (len(_y), type(_y), type(_y[0])))
 
             # from matplotlib import pyplot
@@ -224,33 +232,12 @@ def generate(config=None, **kwargs):
             # pyplot.grid()
             # pyplot.show()
             
-            y_raw = array.array('d', _y.real) #.tolist()
+
+            # накладываем окно на пачку, если необходимо
+            if window_type != w_type_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                y_raw = apply_window(config, y_raw)
+                if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
-            m1 = 0
-            m2 = fade_point_count
-            
-            for i in np.arange(m1, m2):
-                
-                # if i < fade_point_count: k = 0.0 #fade_step * i
-                # elif (len(y_raw) - i) <= fade_point_count: k = 0.0 #  fade_step * (len(y_raw) - i)
-                # else: k = 1
-
-                # print(k)
-                m = math.sin((-math.pi/2) + math.pi * ((i - m1) / (m2 - m1)))
-                # mm = math.sin((math.pi/2) + math.pi * ((i - m1) / (m2 - m1)))
-
-                k = (m + 1)/2
-                # kk = 1 - (mm + 1) / 2
-                # print(kk)
-                y_raw[i] *= 0.0
-                y_raw[-i] *= 0.0
-
-                # y_raw[i] = (-1)**(i%2) * 10 * k
-                # y_raw[-i] = (-1)**(i%2) * 10 * k
-
-
-            # y_raw = add_fading(config, y_raw)
-
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
             
         
@@ -260,11 +247,25 @@ def generate(config=None, **kwargs):
         for i in range(repeat_count):
             y.extend(y_raw)
 
+        # добавляем окно ко всему сигналу, если необходимо        
+        if window_type != w_type_no_window:
+            y = apply_window(config, y)
+            if y == None: raise Exception('не удалось сформировать сигнал')
+
+        # определяем общуюу длину получившегося сигнала
+        if window_type != w_type_no_window and window_method == w_method_add:
+            
+            if window_place == w_place_signal_begin_end:  config[c_duration] = signal_duration * repeat_count + window_duration * 2 + pause
+            elif window_place in [w_place_signal_begin, w_place_signal_end]:    config[c_duration] = signal_duration * repeat_count + window_duration + pause
+            elif window_place == w_place_pack_begin_end:    config[c_duration] = (signal_duration + window_duration * 2) * repeat_count + pause
+            elif window_place in [w_place_pack_begin, w_place_pack_end]:    config[c_duration] = (signal_duration + window_duration) * repeat_count + pause
+        
+        else: config[c_duration] = signal_duration * repeat_count + pause
+
+    
         # добавляем паузу, если необходимо
         y.extend(np.zeros(pause_count))
 
-        config[c_duration] = signal_duration * repeat_count + pause
-    
         print('ok')
     
 
@@ -512,6 +513,73 @@ def sinus_pack(config):
     except Exception as E:
         print('error in func _generator_main.sinus_pack(): %s' % E, file=sys.stderr)
         return None, None
+
+def apply_window(config, y_raw):
+    try:
+        signal_sampling = int(config[c_sampling])
+        signal_amplitude = int(config[c_amplitude])
+        window_type = int(config[c_signal_window_type])
+        window_method = int(config[c_signal_window_method])
+        window_place = int(config[c_signal_window_place])
+        window_duration = int(config[c_signal_window_duration])
+    
+        window_point_count = int(signal_sampling * window_duration / 1000)
+    
+        if window_type == w_type_no_window or window_duration == 0 or window_point_count == 0:
+            return y_raw
+    
+        _y = []
+        if window_method == w_method_add:
+            if window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_signal_begin, w_place_signal_begin_end]:
+                _y.extend([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(window_point_count)])
+    
+            _y.extend(y_raw)
+    
+            if window_place in [w_place_pack_begin_end, w_place_pack_end, w_place_signal_end, w_place_signal_begin_end]:
+                _y.extend([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(window_point_count)])
+    
+    
+        else:
+            _y.extend(y_raw)
+    
+    
+    
+        for i in np.arange(0, window_point_count):
+            
+            k =1
+    
+            # >> S-образное окно
+            if window_type == w_type_s:
+                m = math.sin((-math.pi/2) + math.pi * (i / window_point_count))
+                k = (m + 1)/2
+                # print(kk)
+            # << S-образное окно
+    
+            # >> трапеция
+            if window_type == w_type_trapeze:
+                k = i / window_point_count
+            # << трапеция
+    
+            # >> cosinus окно
+            if window_type == w_type_cos:
+                m = math.cos(math.pi/2 * (i / window_point_count))
+                k = 1 - m
+            # << cosinus окно
+    
+            if window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_signal_begin, w_place_signal_begin_end]:
+                # _y[i] *= k
+                _y[i] = (-1)**(i%2) * signal_amplitude * k
+
+            if window_place in [w_place_pack_begin_end, w_place_pack_end, w_place_signal_end, w_place_signal_begin_end]:
+                # _y[-i] *= k
+                _y[-i] = (-1)**(i%2) * signal_amplitude * k
+    
+        return _y
+
+    except Exception as E:
+        print('error in function apply_window(): %s' % E, file=sys.stderr)
+        return None
+
 
 def add_fading(config, y_raw):
     # применяем параметры раскачки и затухания
