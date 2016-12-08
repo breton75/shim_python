@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 
 def get_cfg_param(config, param_name, default, type='s'):
 	try:
@@ -29,13 +30,17 @@ def get_path(config, extention):
 
 		if filename_template[-1] != '/': filename_template += '/'
 
-		return filename_template + config[c_filename_template] + '.' + extention
+		fn = config[c_filename_template].replace('{DATE_TIME}', config[c_cur_time])
+
+		return filename_template + fn + '.' + extention
 
 
 	except Exception as E:
 		print('error in func get_path(): %s' % E, file=sys.stderr)
 		return None
 
+
+c_cur_time = 'cur_time'
 
 # тип сигналов
 s_type_noise = 0
@@ -59,6 +64,7 @@ w_type_s = 3
 
 w_method_atop = 0
 w_method_add = 1
+w_method_cut = 2
 
 w_place_pack_begin_end = 0
 w_place_pack_begin = 1

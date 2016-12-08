@@ -182,8 +182,16 @@ def generate(config=None, **kwargs):
             _f0 = int(f0 * clean_duration)
             _f1 = int(f1 * clean_duration)
             
-            # список частот, которые отстутствуют в спектре
-            snap = [s * clean_duration + c for c in range(10) for s in [3000, 4000, 6000, 6500]]
+            # список частот, которые отстутствуют в спектре (снимок)
+            snapshot = [s * clean_duration + c for c in range(10) for s in [1400, 1700, 3100, 3500]]
+
+            # список частот, которые должны присутствовать в спектре
+            # specform = [c * clean_duration for c in np.arange(1100, 1901)]
+            # specform.extend([c * clean_duration for c in np.arange(2900, 4001)])
+            
+            specform = array.array('i')
+            specform.extend(np.arange(int(1100 * clean_duration), int(1910 * clean_duration)))
+            specform.extend(np.arange(int(2900 * clean_duration), int(4010 * clean_duration)))
 
             for i in np.arange(_f0, _f1):
                 k = 1
@@ -203,7 +211,7 @@ def generate(config=None, **kwargs):
                 imag = random.uniform(-signal_amplitude * k, signal_amplitude * k) #  spec_noise[i].imag % signal_amplitude            
                 ireal = (-1)**int(random.uniform(1,2)) * math.sqrt((signal_amplitude * k)**2 - imag**2)
 
-                if i not in snap:
+                if i in specform and i not in snapshot:
                     spectrum[i] = complex(ireal, imag)
                     spectrum[-i] = complex(ireal, -imag)
 
@@ -248,7 +256,7 @@ def generate(config=None, **kwargs):
             y.extend(y_raw)
 
         # добавляем окно ко всему сигналу, если необходимо        
-        if window_type != w_type_no_window:
+        if window_type != w_type_no_window and window_place in [w_place_signal_begin_end, w_place_signal_begin, w_place_signal_end]:
             y = apply_window(config, y)
             if y == None: raise Exception('не удалось сформировать сигнал')
 
@@ -260,6 +268,15 @@ def generate(config=None, **kwargs):
             elif window_place == w_place_pack_begin_end:    config[c_duration] = (signal_duration + window_duration * 2) * repeat_count + pause
             elif window_place in [w_place_pack_begin, w_place_pack_end]:    config[c_duration] = (signal_duration + window_duration) * repeat_count + pause
         
+        elif window_type != w_type_no_window and window_method == w_method_cut:
+
+            if window_place == w_place_signal_begin_end:  config[c_duration] = signal_duration * repeat_count - window_duration * 2 + pause
+            elif window_place in [w_place_signal_begin, w_place_signal_end]:    config[c_duration] = signal_duration * repeat_count - window_duration + pause
+            elif window_place == w_place_pack_begin_end:    config[c_duration] = (signal_duration - window_duration * 2) * repeat_count + pause
+            elif window_place in [w_place_pack_begin, w_place_pack_end]:
+                print(signal_duration, window_duration, repeat_count, pause,  (signal_duration - window_duration) * signal_sampling / 1000, (signal_duration - window_duration) * signal_sampling / 1000 * repeat_count)
+                config[c_duration] = (signal_duration - window_duration) * repeat_count + pause
+
         else: config[c_duration] = signal_duration * repeat_count + pause
 
     
@@ -518,29 +535,67 @@ def apply_window(config, y_raw):
     try:
         signal_sampling = int(config[c_sampling])
         signal_amplitude = int(config[c_amplitude])
+        amp = (max(y_raw) - min(y_raw)) / 2
+        # amp = 6
+        hush_duration = int(config[c_hush])
+        
         window_type = int(config[c_signal_window_type])
         window_method = int(config[c_signal_window_method])
         window_place = int(config[c_signal_window_place])
         window_duration = int(config[c_signal_window_duration])
     
         window_point_count = int(signal_sampling * window_duration / 1000)
-    
+        hush_point_count = int(signal_sampling * hush_duration / 1000)
+
         if window_type == w_type_no_window or window_duration == 0 or window_point_count == 0:
             return y_raw
     
         _y = []
-        if window_method == w_method_add:
+        if window_method == w_method_cut: # обрезка сигнала
+            
+            _y.extend(y_raw)
+
+            # начало пачки или сигнала
             if window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_signal_begin, w_place_signal_begin_end]:
-                _y.extend([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(window_point_count)])
+                _y = _y[window_point_count:]
+
+            # конец пачки !!! в конце пачки тишины не должно быть
+            if window_place in [w_place_pack_begin_end, w_place_pack_end]:
+                _y = _y[:-window_point_count]
+
+            #  конец всего сигнала!! в конце сигнала может быть тишина. поэтому временно отбрасываем тишину в конце последней пачки сигнала
+            if window_place in [w_place_signal_end, w_place_signal_begin_end]:
+                # if hush_point_count:
+                _y = y_raw[:-window_point_count-hush_point_count]
+                _y.extend(np.zeros(hush_point_count))
+
+            return _y
+
+        elif window_method == w_method_add:
+            if window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_signal_begin, w_place_signal_begin_end]:
+                _y.extend([random.uniform(-amp, amp) for _counter in range(window_point_count)])
     
             _y.extend(y_raw)
     
-            if window_place in [w_place_pack_begin_end, w_place_pack_end, w_place_signal_end, w_place_signal_begin_end]:
-                _y.extend([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(window_point_count)])
+            if window_place in [w_place_pack_begin_end, w_place_pack_end]:
+                _y.extend([random.uniform(-amp, amp) for _counter in range(window_point_count)])
+
+            # если необходимо вставить окно в конец всего сигнала, то его надо вставить перед тишиной в конце последней пачки.
+            if window_place in [w_place_signal_end, w_place_signal_begin_end]:
+                if hush_point_count:
+                    _y = _y[:-hush_point_count] # временно отбрасываем тишину в конце последней пачки сигнала
     
+                _y.extend([random.uniform(-amp, amp) for _counter in range(window_point_count)])
     
-        else:
+
+        else: # c_signal_window_method == w_method_atop:
             _y.extend(y_raw)
+
+            # если необходимо вставить окно в конец всего сигнала, то его надо вставить перед тишиной в конце последней пачки.
+            if hush_point_count and window_place in [w_place_signal_end, w_place_signal_begin_end]:
+                _y = _y[:-hush_point_count] # временно отбрасываем тишину в конце последней пачки сигнала
+                print(len(_y))
+
     
     
     
@@ -567,13 +622,19 @@ def apply_window(config, y_raw):
             # << cosinus окно
     
             if window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_signal_begin, w_place_signal_begin_end]:
-                # _y[i] *= k
-                _y[i] = (-1)**(i%2) * signal_amplitude * k
+                _y[i] *= k
+                # _y[i] = (-1)**(i%2) * amp * k
 
             if window_place in [w_place_pack_begin_end, w_place_pack_end, w_place_signal_end, w_place_signal_begin_end]:
-                # _y[-i] *= k
-                _y[-i] = (-1)**(i%2) * signal_amplitude * k
+                _y[-i] *= k
+                # _y[-i] = (-1)**(i%2) * amp * k
     
+            
+        # если у нас конец всего сигнала, то вставляем тишину в конце, которую удаляли
+        if hush_point_count and window_place in [w_place_signal_end, w_place_signal_begin_end]:
+            _y.extend(np.zeros(hush_point_count))
+
+
         return _y
 
     except Exception as E:

@@ -1,8 +1,11 @@
 import sys
 import tkinter as tk
 import tkinter.ttk as ttk
+from tkinter import filedialog
 from tkinter import *
 import time
+import numpy as np
+import array as arr
 
 from _defs import *
 
@@ -133,17 +136,17 @@ class mainFrame(Frame):
 		self.framePostprocessing = tk.LabelFrame(self, text='Постобработка сигнала')
 		self.framePostprocessing.grid(row=1, column=0, sticky=tk.N, rowspan=1)
 
-		# тип окна
-		self.lblSignalWindowType = tk.Label(self.framePostprocessing, text='Наложить окно', width=25).grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalWindowType = ttk.Combobox(self.framePostprocessing, width=13, values=['Нет окна', 'Трапеция', 'Cosinus', 'S-образное'])
-		self.cbSignalWindowType.grid(row=0, column=1, sticky=tk.W)
-		self.cbSignalWindowType.current(newindex=get_cfg_param(self.config, c_signal_window_type, 0, 'i'))
-
-		# как накладывать
+		# метод наложения
 		self.lblSignalWindowMethod = tk.Label(self.framePostprocessing, text='Способ наложения', width=25).grid(row=1, column=0, sticky=tk.E)
-		self.cbSignalWindowMethod = ttk.Combobox(self.framePostprocessing, width=13, values=['Поверх сигнала', 'Добавить шум'])
-		self.cbSignalWindowMethod.grid(row=1, column=1, sticky=tk.W)
+		self.cbSignalWindowMethod = ttk.Combobox(self.framePostprocessing, width=13, values=['Поверх сигнала', 'Добавить шум', 'Обрезать'])
+		self.cbSignalWindowMethod.grid(row=0, column=1, sticky=tk.W)
 		self.cbSignalWindowMethod.current(newindex=get_cfg_param(self.config, c_signal_window_method, 0, 'i'))
+
+		# тип окна
+		self.lblSignalWindowType = tk.Label(self.framePostprocessing, text='Тип окна', width=25).grid(row=0, column=0, sticky=tk.E)
+		self.cbSignalWindowType = ttk.Combobox(self.framePostprocessing, width=13, values=['Нет окна', 'Трапеция', 'Cosinus', 'S-образное'])
+		self.cbSignalWindowType.grid(row=1, column=1, sticky=tk.W)
+		self.cbSignalWindowType.current(newindex=get_cfg_param(self.config, c_signal_window_type, 0, 'i'))
 
 		# куда накладывать
 		self.lblSignalWindowPlace = tk.Label(self.framePostprocessing, text='Место наложения', width=25).grid(row=2, column=0, sticky=tk.E)
@@ -297,6 +300,10 @@ class mainFrame(Frame):
 		self.bnSendStop = tk.Button(self.frameSend, text='Отправить STOP', command=self.send_stop)
 		self.bnSendStop.grid(row=4, column=0, sticky=tk.E, columnspan=2)
 
+		# выгрузить файл
+		self.bnSendFile = tk.Button(self.frameSend, text='Выгрузить файл', command=self.send_file)
+		self.bnSendFile.grid(row=5, column=0, sticky=tk.E, columnspan=2)
+
 	## <- выгрузка на устройство ##
 
 
@@ -395,6 +402,17 @@ class mainFrame(Frame):
 	# def get_cfg(self, param_name, default):
 	# 	if param_name in self.config: return self.config[param_name]
 	# 	else: return default
+
+	def send_file(self):
+		try:
+			
+			filename = filedialog.askopenfilename(defaultextension='shim', initialdir=self.config[c_workdir], multiple=False, filetypes=[('shim files', '.shim'), ('all files', '.*')])
+			
+			if filename:
+				sock.send(self.config, fname=filename)
+
+		except Exception as E:
+			sys.stderror.write(E)
 
 
 	def send_stop(self):
@@ -638,6 +656,8 @@ class mainFrame(Frame):
 
 
 def do(config):
+	config[c_cur_time] = time.strftime('%d_%m_%Y %H_%M_%S')
+
 	# пишем текущую конфигурацию в лог
 	if not config[c_log_file_name] is None:
 		with open(config[c_log_file_name], 'w') as log_file:
@@ -653,72 +673,29 @@ def do(config):
 	filename_shim = get_path(config, 'shim')
 	filename_spectrum = get_path(config, 'spectrum')
 
-	# генератор  s_type_noise | s_type_sinus | s_type_sinus_noise | s_type_sinus_sinus_noise
-	# print(config.keys())
-	# meandr_pulse_width = get_cfg_param(config, c_meandr_pulse_width, 0, 'i')
-	# meandr_pulse_interval = get_cfg_param(config, c_meandr_pulse_interval, 0, 'i')
-
-
-	signal_type = get_cfg_param(config, c_signal_type, gen.s_type_noise, 'i')
-	freq0 = get_cfg_param(config, c_freq0, 1000, 'i')
-	freq1 = get_cfg_param(config, c_freq1, 2000, 'i')
-	sampling = get_cfg_param(config, c_sampling, 100000, 'i')
-	duration = get_cfg_param(config, c_duration, 1000, 'i')
-	hush = get_cfg_param(config, c_hush, 0, 'i')
-	amplitude = get_cfg_param(config, c_amplitude, 1024, 'i')
-	fadein = get_cfg_param(config, c_fadein, 0, 'i')
-	fadeout = get_cfg_param(config, c_fadeout, 0, 'i')
-	  
-	# фильтр
-	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
-	filter_freq_min = get_cfg_param(config, c_filter_freq_min, 1000, 'i')
-	filter_freq_max = get_cfg_param(config, c_filter_freq_max, 4000, 'i')
-	# edit_spectrum_form = get_cfg_param(config, c_edit_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus)
-	apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
-	apply_accurately_to_form = get_cfg_param(config, c_apply_accurately_to_form, False, 'b') and apply_spectrum_form
-	 
-	# преобразование ШИМ
-	channel_count = get_cfg_param(config, c_channel_count, 2, 'i')
-	saw_count_per_point = get_cfg_param(config, c_saw_count_per_point, 1, 'i')
-	zero_smooth = get_cfg_param(config, c_zero_smooth, 0, 'i')
-	channel_gap = get_cfg_param(config, c_channel_gap, 0, 'i')
-	 
-	# загрузка по сети
-	send = get_cfg_param(config, c_send, True, 'b')
-	host = get_cfg_param(config, c_host, '172.16.4.55')
-	port = get_cfg_param(config, c_port, 35580, 'i')
-	mode = get_cfg_param(config, c_mode, sock.e_mode_loop, 'i')
-	
-	# отрисовка
-	plot_from_point = get_cfg_param(config, c_plot_from_point, 1, 'i')
-	plot_to_point = get_cfg_param(config, c_plot_to_point, 1000, 'i')
-	plot_signal = get_cfg_param(config, c_plot_signal, True, 'b')
-	plot_signal_spectrum = get_cfg_param(config, c_plot_signal_spectrum, True, 'b')
-	plot_filtered_signal = get_cfg_param(config, c_plot_filtered_signal, True, 'b')
-	plot_filtered_spectrum = get_cfg_param(config, c_plot_filtered_spectrum, True, 'b')
-	plot_shim = get_cfg_param(config, c_plot_shim, True, 'b')
-	plot_signal_saw = get_cfg_param(config, c_plot_signal_saw, False, 'b')
-	 
 	#####################################################
 	#####################################################
 	 
 	SEND_STOP = 0
 	 
 	MAKE_SHIM = bool(1)
-	 
-	PLOT_SIGNAL = int(plot_signal)
-	PLOT_FILTERED = int(plot_filtered_signal) & (int(filtrate) | int(apply_spectrum_form))
-	PLOT_SIGNAL_SPECTRUM = int(plot_signal_spectrum)
-	PLOT_FILTERED_SPECTRUM = int(plot_filtered_spectrum) & (int(filtrate) | int(apply_spectrum_form))
-	PLOT_SHIM = int(plot_shim) and MAKE_SHIM
-	PLOT_SIGNAL_SAW = int(plot_signal_saw)
+	
+	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
+	apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
+
+	PLOT_SIGNAL = int(get_cfg_param(config, c_plot_signal, True, 'b'))
+	PLOT_FILTERED = int(get_cfg_param(config, c_plot_filtered_signal, True, 'b')) & (int(filtrate) | int(apply_spectrum_form))
+	PLOT_SIGNAL_SPECTRUM = int(get_cfg_param(config, c_plot_signal_spectrum, True, 'b'))
+	PLOT_FILTERED_SPECTRUM = int(get_cfg_param(config, c_plot_filtered_spectrum, True, 'b')) & (int(filtrate) | int(apply_spectrum_form))
+	PLOT_SHIM = int(get_cfg_param(config, c_plot_shim, True, 'b')) and MAKE_SHIM
+	PLOT_SIGNAL_SAW = int(get_cfg_param(config, c_plot_signal_saw, False, 'b'))
 	
 	FLAGS = PLOT_SIGNAL | (PLOT_FILTERED << 1) | (PLOT_SIGNAL_SPECTRUM << 2) | (PLOT_FILTERED_SPECTRUM << 3) | (PLOT_SHIM << 4) | (PLOT_SIGNAL_SAW << 5)
 	
 	# hellooo
 	READ_WAV = 0
 	
-	SEND = send
+	SEND = get_cfg_param(config, c_send, True, 'b')
 	PLOT = bool(1) and bool(FLAGS)
 	
 	#####################################################
@@ -734,92 +711,42 @@ def do(config):
 				   to_file=filename_raw)
 	else:
 		araw = gen.generate(config)
+		
 
-		# araw = gen.generate(t=signal_type,
-		# 	   f=freq,
-		# 	   s=sampling,
-		# 	   d=duration,
-		# 	   h=hush,
-		# 	   a=amplitude,
-		# 	   fi=fadein,
-		# 	   fo=fadeout,
-		# 	   fn=filename_raw,
-		# 	   mpw=meandr_pulse_width,
-		# 	   mpi=meandr_pulse_interval)
+	# >> перебор интервалов
+
+		# araw = intervals(config)
+
+    # << перебор интервалов
+
 	 
 	if araw is None:
 		return
 
-
-	# if edit_spectrum_form:
-	# 	spectrum.edit_spectrum(s=sampling, d=duration,
-	# 					   signal_data=araw,
-	# 					   sffn=filename_spectrum,
-	# 					   band_pass=filtrate,
-	# 					   fmin=freq_min, fmax=freq_max)
 	 
 	# sys.exit(0)
 	if filtrate or apply_spectrum_form:
 		arawf = spectrum.apply_spectrum(config, signal_data=araw)
 
-							    #    s=sampling, d=duration,
-								   # signal_data=araw,
-								   # rawf=filename_flt,
-								   # apply_spectrum_form=apply_spectrum_form,
-								   # apply_accurately=apply_accurately_to_form,
-								   # sffn=filename_spectrum,
-								   # band_pass_filter=filtrate,
-								   # fmin=freq_min, fmax=freq_max)
 	else:
 		arawf = araw
 
 	if arawf is None:
 		return
+
 	 
 	if MAKE_SHIM:
 		if not shim.shim(config, data=arawf):
 			return
 
-			# f=freq,
-			# 		s=sampling,
-			# 		d=duration,
-			# 		a=amplitude,
-			# 		rawfn=filename_raw,
-			# 		shimfn=filename_shim,
-			# 		zero=zero_smooth,
-			# 		chgap=channel_gap,
-			# 		chcnt=channel_count,
-			# 		sawpp=saw_count_per_point,
-			# 		data=arawf):
-			# 		# fmin=freq_min,
-			# 		# fmax=freq_max,
-			# 		# falg=filter_algorithm,
-			# 		# ftype=filter_type,
-			# 		# rp=filter_rp,
-			# 		# rs=filter_rs,
-			# 		# tb=transition_band,
-	 
 
 	if SEND:
 		sock.send(config)
 
-			# host=host,
-			# 	port=port,
-			# 	mode=mode,
-			# 	fn=filename_shim)
 	 
 	if PLOT:
 		plot.plot(config, flags=FLAGS)
 
-			# raw=filename_raw,
-			# 	rawf=filename_flt,
-			# 	shim=filename_shim,
-			# 	s=sampling,
-			# 	d=duration,
-			# 	a=amplitude,
-			# 	p1=plot_from_point,
-			# 	p2=plot_to_point,
-			# 	flags=FLAGS)
 
 
 def showWindow(version):
@@ -834,4 +761,41 @@ def showWindow(version):
 	# window.close()
 
 
+def intervals(config):
+	araw = arr.array('d')
+	dur = 0
+	i = 1
 
+	try:
+		int_file = get_path(config, 'txt')
+		with open(int_file, 'w') as ifile:
+			ifile.write(int_file + '\n\n')
+			for low_int in np.arange(200, 260, 10): # 5 кГц - 4 кГц
+				
+				config[c_meandr_interval_width] = low_int
+				
+				for high_int in np.arange(500, 1050, 50): # 2 кГц - 1 кГц
+					config[c_meandr_random_interval] = high_int
+	
+					a = gen.generate(config)
+					araw.extend(a)
+	
+					dur += config[c_duration]
+
+					ifile.write('%i\timp=%s\tint0=%i\tint1=%i\n' % (i, config[c_meandr_pulse_width], low_int, high_int))
+					i += 1
+
+			ifile.write('\nduration=%i\n' % dur)
+			config[c_duration] = dur
+
+		
+		with open(filename_raw, 'wb') as f:
+			araw.tofile(f)
+
+		print('полный файл записан ok')
+
+		return araw
+
+	except Exception as E:
+		print('ошибка при переборе интервалов: %s' % E, file=sys.stderr)
+		return None

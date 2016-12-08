@@ -30,13 +30,19 @@ def createParser ():
 
 
 
-def send(config):
+def send(config, **kwargs):
 
     try:
         host = config[c_host]
         port = config[c_port]
         mode = config[c_mode]
-        file_name = get_path(config, 'shim')
+
+        if 'fname' in kwargs:
+            file_name = kwargs['fname']
+            
+        else:
+            file_name = get_path(config, 'shim')
+
     
         if not sendSTOP(host, port):
             return False
