@@ -138,13 +138,13 @@ class mainFrame(Frame):
 
 		# метод наложения
 		self.lblSignalWindowMethod = tk.Label(self.framePostprocessing, text='Способ наложения', width=25).grid(row=1, column=0, sticky=tk.E)
-		self.cbSignalWindowMethod = ttk.Combobox(self.framePostprocessing, width=13, values=['Поверх сигнала', 'Добавить шум', 'Обрезать'])
+		self.cbSignalWindowMethod = ttk.Combobox(self.framePostprocessing, width=13, values=['Нет окна', 'Поверх сигнала', 'Добавить шум', 'Обрезать'])
 		self.cbSignalWindowMethod.grid(row=0, column=1, sticky=tk.W)
 		self.cbSignalWindowMethod.current(newindex=get_cfg_param(self.config, c_signal_window_method, 0, 'i'))
 
 		# тип окна
 		self.lblSignalWindowType = tk.Label(self.framePostprocessing, text='Тип окна', width=25).grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalWindowType = ttk.Combobox(self.framePostprocessing, width=13, values=['Нет окна', 'Трапеция', 'Cosinus', 'S-образное'])
+		self.cbSignalWindowType = ttk.Combobox(self.framePostprocessing, width=13, values=['Трапеция', 'Cosinus', 'S-образное'])
 		self.cbSignalWindowType.grid(row=1, column=1, sticky=tk.W)
 		self.cbSignalWindowType.current(newindex=get_cfg_param(self.config, c_signal_window_type, 0, 'i'))
 
@@ -656,7 +656,8 @@ class mainFrame(Frame):
 
 
 def do(config):
-	config[c_cur_time] = time.strftime('%d_%m_%Y %H_%M_%S')
+	config[c_cur_date] = time.strftime('%d_%m_%Y')
+	config[c_cur_time] = time.strftime('%H_%M_%S')
 
 	# пишем текущую конфигурацию в лог
 	if not config[c_log_file_name] is None:
@@ -769,27 +770,30 @@ def intervals(config):
 	try:
 		int_file = get_path(config, 'txt')
 		with open(int_file, 'w') as ifile:
+
 			ifile.write(int_file + '\n\n')
+			
 			for low_int in np.arange(200, 260, 10): # 5 кГц - 4 кГц
 				
 				config[c_meandr_interval_width] = low_int
 				
 				for high_int in np.arange(500, 1050, 50): # 2 кГц - 1 кГц
+					
 					config[c_meandr_random_interval] = high_int
-	
+					
 					a = gen.generate(config)
+					
 					araw.extend(a)
-	
+					
 					dur += config[c_duration]
-
 					ifile.write('%i\timp=%s\tint0=%i\tint1=%i\n' % (i, config[c_meandr_pulse_width], low_int, high_int))
 					i += 1
-
+	
 			ifile.write('\nduration=%i\n' % dur)
 			config[c_duration] = dur
 
 		
-		with open(filename_raw, 'wb') as f:
+		with open(get_path(config, 'raw'), 'wb') as f:
 			araw.tofile(f)
 
 		print('полный файл записан ok')

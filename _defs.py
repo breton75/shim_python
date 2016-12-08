@@ -30,7 +30,8 @@ def get_path(config, extention):
 
 		if filename_template[-1] != '/': filename_template += '/'
 
-		fn = config[c_filename_template].replace('{DATE_TIME}', config[c_cur_time])
+		fn = config[c_filename_template].replace('{DATE}', config[c_cur_date])
+		fn = fn.replace('{TIME}', config[c_cur_time])
 
 		return filename_template + fn + '.' + extention
 
@@ -39,7 +40,7 @@ def get_path(config, extention):
 		print('error in func get_path(): %s' % E, file=sys.stderr)
 		return None
 
-
+c_cur_date = 'cur_date'
 c_cur_time = 'cur_time'
 
 # тип сигналов
@@ -57,14 +58,14 @@ m_one_channel = 0
 m_channels_iterleaved = 1
 m_channels_alternate = 2
 
-w_type_no_window = 0
 w_type_trapeze = 1
 w_type_cos = 2
 w_type_s = 3
 
-w_method_atop = 0
-w_method_add = 1
-w_method_cut = 2
+w_method_no_window = 0
+w_method_atop = 1
+w_method_add = 2
+w_method_cut = 3
 
 w_place_pack_begin_end = 0
 w_place_pack_begin = 1
