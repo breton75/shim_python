@@ -181,7 +181,7 @@ class mainFrame(Frame):
 	## -> фильтрация ##
 
 		self.frameFilter = tk.LabelFrame(self, text='Фильтрация')
-		self.frameFilter.grid(row=0, column=1, sticky=tk.W, rowspan=2)
+		self.frameFilter.grid(row=0, column=1, sticky=tk.W, rowspan=1)
 
 		self.filtrate = BooleanVar()
 		self.checkFilter = tk.Checkbutton(self.frameFilter, text='Применить полосовой фильтр', variable=self.filtrate)
@@ -271,7 +271,7 @@ class mainFrame(Frame):
 	## -> выгрузка на устройство ##
 
 		self.frameSend = tk.LabelFrame(self, text='Выгрузка')
-		self.frameSend.grid(row=2, column=1, sticky=tk.N)
+		self.frameSend.grid(row=1, column=1, sticky=tk.N, rowspan=2)
 
 		self.send = BooleanVar()
 		self.checkSend = tk.Checkbutton(self.frameSend, text='Выгрузить сигнал на устройство', variable=self.send)

@@ -177,8 +177,8 @@ def generate(config=None, **kwargs):
             for i in range(N):
                 spectrum[i] = complex(0.0, 0.0)
             
-            noise = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(N)]
-            spec_noise = fft(noise)
+            # noise = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(N)]
+            # spec_noise = fft(noise)
 
             _f0 = int(f0 * clean_duration)
             _f1 = int(f1 * clean_duration)
@@ -213,6 +213,7 @@ def generate(config=None, **kwargs):
                 ireal = (-1)**int(random.uniform(1,2)) * math.sqrt((signal_amplitude * k)**2 - imag**2)
 
                 if i in specform and i not in snapshot:
+                # if i not in snapshot:
                     spectrum[i] = complex(ireal, imag)
                     spectrum[-i] = complex(ireal, -imag)
 
@@ -568,9 +569,9 @@ def apply_window(config, y_raw):
             #  конец всего сигнала!! в конце сигнала может быть тишина. поэтому временно отбрасываем тишину в конце последней пачки сигнала
             if window_place in [w_place_signal_end, w_place_signal_begin_end]:
                 # if hush_point_count:
-                _y = _y[:-window_point_count]
+                _y = _y[:-window_point_count-hush_point_count]
                 _y.extend(np.zeros(hush_point_count))
-                print(len(_y))
+
                 
 
             return _y
