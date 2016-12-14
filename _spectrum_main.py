@@ -347,7 +347,7 @@ def signal2spectrum(config, **kwargs):
         j = 0
         for i in range(fsdpcnt):
             k = int(i / fsdpcnt * fpcnt) + 1
-            aspec[j:k] = abs(spectrum[i] / fsdpcnt * 2)
+            aspec[j:k] = abs(spectrum[i]) # / fsdpcnt * 2)
             j = k
             # pp = abs(spectrum[i].real) / fsdpcnt * 2
             # if i < 10: print('i={0}  pp={1}  pp.type={2}  spectrum={3}  type={4}  real={5}  type={6}'.format(i, pp, type(pp), spectrum[i], type(spectrum[i]), spectrum[i].real, type(spectrum[i].real)))

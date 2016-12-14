@@ -318,7 +318,18 @@ def shim(config, **kwargs):
                 if i == 0:      _xb = 0
                 else:           _xb = int(R - x_b)
     
-          
+            
+            if _xa < 0: _xa = 0
+            if _xa > 0xFFFF: _xa = 0xFFFF
+
+            if _xb < 0: _xb = 0
+            if _xb > 0xFFFF: _xb = 0xFFFF
+            
+            if x_a < 0: x_a = 0
+            if x_a > 0xFFFF: x_a = 0xFFFF
+            
+            if x_b < 0: x_b = 0
+            if x_b > 0xFFFF: x_b = 0xFFFF
     
             for saw_num in range(SAW_COUNT_PER_POINT):
                 fshim.write(struct.pack('<H', (_xa))) # время до перехода в 1, канал a

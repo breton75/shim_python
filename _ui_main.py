@@ -67,7 +67,7 @@ class mainFrame(Frame):
 		# тип сигнала
 		self.lblSignalType = tk.Label(self.frameSignal, text='Тип сигнала', width=25)
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра'])
+		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра', 'Ровный спектр'])
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
 		self.cbSignalType.current(newindex=get_cfg_param(self.config, c_signal_type, 0, 'i'))
 	
@@ -636,7 +636,10 @@ class mainFrame(Frame):
 				c_filename_template:      self.editFilenameTemplate.get()
 			}
 
-			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval, c_save_log, c_sinus_pack_step, c_meandr_pack_step])
+			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval,
+								 c_save_log,
+								 c_sinus_pack_step, c_meandr_pack_step,
+								 c_spectrum_norm_level, c_spectrum_divider])
 
 			log_file_name = None
 			

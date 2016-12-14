@@ -52,6 +52,7 @@ s_type_sinus_sinus_noise = 4
 s_type_lfm = 5
 s_type_meandr_pack = 6
 s_type_spectrum = 7
+s_type_flat_spectrum = 8
 
 # тип меандра
 m_one_channel = 0
@@ -85,6 +86,9 @@ c_hush = 'hush'
 c_amplitude	= 'amplitude'
 c_fadein = 'fadein'	
 c_fadeout = 'fadeout'
+
+c_spectrum_norm_level = 'spectrum_norm_level'
+c_spectrum_divider = 'spectrum_divider'
 
 c_meandr_pulse_width = 'meandr_pulse_width'
 c_meandr_interval_width = 'meandr_interval_width'

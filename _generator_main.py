@@ -6,12 +6,14 @@ import matplotlib.pyplot as plt
 import array
 import random
 import numpy as np
+import cmath
 
 from scipy.fftpack import fft
 from scipy.fftpack import ifft
 import scipy
 
 from _defs import *
+import _duty as duty
 
 
 def createParser ():
@@ -99,7 +101,7 @@ def generate(config=None, **kwargs):
         elif signal_type == s_type_meandr:
 
             y_raw = meandr(config, **kwargs)
-            print('meandr')
+
             if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
             if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
@@ -164,58 +166,82 @@ def generate(config=None, **kwargs):
 
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
 
+        elif signal_type == s_type_flat_spectrum:
+            
+            spec = get_flat_spectrum(config)
+
+            y_raw = ifft(spec).real
+
+            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                y_raw = apply_window(config, y_raw)
+                if y_raw is None: raise Exception('не удалось сформировать сигнал')
+
+
         elif signal_type == s_type_spectrum:
+
+            # get_flat_spectrum(config)
+            # raise Exception('aa')
+            
+            snoise = fft([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)])
+            snoise = fft(meandr(config, **kwargs))
+            # snoise = fft([signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count - 50)])
+
+            from matplotlib import pyplot
+            pyplot.subplot(111)
+            plt.vlines(range(signal_point_count//2), 0, abs(snoise)[:signal_point_count//2])
+            # pyplot.plot(abs(snoise)[:signal_point_count//2])
+            pyplot.grid()
+            pyplot.show()
+
             f0 = config[c_freq0] # начальная частота
             f1 = config[c_freq1] # конечная частота
             fd = signal_sampling   # частота дискретизации
-            clean_duration = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
+            T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
 
-            # определяем количество точек сигнала
-            N = int(fd * clean_duration) # 5000
 
-            spectrum = np.empty(N, dtype=complex)
-            for i in range(N):
-                spectrum[i] = complex(0.0, 0.0)
+            spectrum = np.empty(signal_point_count, dtype=complex)
+            spectrum.fill(complex(0.0, 0.0))
             
-            # noise = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(N)]
-            # spec_noise = fft(noise)
-
-            _f0 = int(f0 * clean_duration)
-            _f1 = int(f1 * clean_duration)
+            _f0 = int(f0 * T)
+            _f1 = int(f1 * T)
+            
             
             # список частот, которые отстутствуют в спектре (снимок)
-            snapshot = [s * clean_duration + c for c in range(10) for s in [1400, 1700, 3100, 3500]]
+            # snapshot = [s * clean_duration + c for c in range(10) for s in [1400, 1700, 3100, 3500]]
 
             # список частот, которые должны присутствовать в спектре
             # specform = [c * clean_duration for c in np.arange(1100, 1901)]
             # specform.extend([c * clean_duration for c in np.arange(2900, 4001)])
             
-            specform = array.array('i')
-            specform.extend(np.arange(int(1100 * clean_duration), int(1910 * clean_duration)))
-            specform.extend(np.arange(int(2900 * clean_duration), int(4010 * clean_duration)))
+            # specform = array.array('i')
+            # specform.extend(np.arange(int(f0 * clean_duration), int(f1 + 10 * clean_duration)))
+            # specform.extend(np.arange(int(2900 * clean_duration), int(4010 * clean_duration)))
 
+            a = duty.read_file('2016_12_09 13_38_08 2 1 48828.pcm', 'f', 110175 * 4, 48828)
+            sform = fft(a)
+            sfmax = max(abs(sform))
+
+            norm_level = int(config[c_spectrum_norm_level])
+            divider = int(config[c_spectrum_divider])
+
+            print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
+
+            A = signal_amplitude
             for i in np.arange(_f0, _f1):
-                k = 1
-            # >> трапеция
-                # if i - _f0 < fade_point_count: k = fade_step * (i - _f0)
-                # elif _f1 - i <= fade_point_count: k = fade_step * (_f1 - i)
-                # else: k = 1
-            # << трапеция
+                
+                j = int(f0 + (i - _f0) / T)
+                
+                k = sfmax / (abs(sform[j]) + 1) / divider
+                k = k if k <= norm_level else k / sfmax * norm_level
+                # k=1
+                # print('spcmmax=%0.1f\t apcm[%i]=%0.2f \t\t spcm[%i]=%f \t k=%f' % (spcmmax, oi, apcm[oi], oi, spcm[oi], k))
+                
+                imag = k * A * cmath.cos(cmath.phase(snoise[i]))  # x
+                ireal = k * A * cmath.sin(cmath.phase(snoise[i])) # y
 
-            # >> S-образное окно
-                # if i - _f0 < fade_point_count: m = math.sin((-math.pi/2) + math.pi * ((fade_point_count - (fade_point_count - (i - _f0))) / fade_point_count))
-                # elif _f1 - i <= fade_point_count: m = math.sin((-math.pi/2) + math.pi * ((fade_point_count - (fade_point_count - (_f1 - i))) / fade_point_count))
-                # else: m = 1
-                # k = (m + 1)/2
-            # << S-образное окно
-
-                imag = random.uniform(-signal_amplitude * k, signal_amplitude * k) #  spec_noise[i].imag % signal_amplitude            
-                ireal = (-1)**int(random.uniform(1,2)) * math.sqrt((signal_amplitude * k)**2 - imag**2)
-
-                if i in specform and i not in snapshot:
                 # if i not in snapshot:
-                    spectrum[i] = complex(ireal, imag)
-                    spectrum[-i] = complex(ireal, -imag)
+                spectrum[i] = complex(ireal, imag)
+                spectrum[-i] = complex(ireal, -imag)
 
             
         # >> синусоида
@@ -307,6 +333,43 @@ def generate(config=None, **kwargs):
         return None
     
     return arr
+
+def get_flat_spectrum(config):
+
+    signal_duration = int(config[c_duration])
+    hush_duration = int(config[c_hush])
+    f0 = int(config[c_freq0]) # начальная частота
+    f1 = int(config[c_freq1]) # конечная частота
+    fd = int(config[c_sampling])   # частота дискретизации
+
+    signal_point_count = int(fd * (signal_duration - hush_duration) / 1000)
+
+    A = int(config[c_amplitude])
+
+    snoise = fft([random.uniform(-A, A) for _counter in range(signal_point_count)])
+
+    spectrum = np.empty(signal_point_count, dtype=complex)
+    spectrum.fill(complex(0.0, 0.0))
+
+    for i in np.arange(f0, f1):
+        
+        imag = A * cmath.cos(cmath.phase(snoise[i]))  # x
+        ireal = A * cmath.sin(cmath.phase(snoise[i])) # y
+
+        spectrum[i] = complex(ireal, imag)
+        spectrum[-i] = complex(ireal, -imag)
+
+    # from matplotlib import pyplot
+    # pyplot.subplot(211)
+    # pyplot.plot(ifft(spectrum).real) #abs(spectrum[:signal_point_count//2]))
+    # pyplot.subplot(212)
+    # pyplot.plot(abs(spectrum[:signal_point_count//2])) # [:signal_point_count//2]))
+    # pyplot.grid()
+    # pyplot.show()
+
+    return spectrum
+
+
 
 
 def meandr(config, **kwargs):
