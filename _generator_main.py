@@ -183,15 +183,15 @@ def generate(config=None, **kwargs):
             # raise Exception('aa')
             
             snoise = fft([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)])
-            snoise = fft(meandr(config, **kwargs))
+            # snoise = fft(meandr(config, **kwargs))
             # snoise = fft([signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count - 50)])
 
-            from matplotlib import pyplot
-            pyplot.subplot(111)
-            plt.vlines(range(signal_point_count//2), 0, abs(snoise)[:signal_point_count//2])
-            # pyplot.plot(abs(snoise)[:signal_point_count//2])
-            pyplot.grid()
-            pyplot.show()
+            # from matplotlib import pyplot
+            # pyplot.subplot(111)
+            # plt.vlines(range(signal_point_count//2), 0, abs(snoise)[:signal_point_count//2])
+            # # pyplot.plot(abs(snoise)[:signal_point_count//2])
+            # pyplot.grid()
+            # pyplot.show()
 
             f0 = config[c_freq0] # начальная частота
             f1 = config[c_freq1] # конечная частота
@@ -217,7 +217,7 @@ def generate(config=None, **kwargs):
             # specform.extend(np.arange(int(f0 * clean_duration), int(f1 + 10 * clean_duration)))
             # specform.extend(np.arange(int(2900 * clean_duration), int(4010 * clean_duration)))
 
-            a = duty.read_file('2016_12_09 13_38_08 2 1 48828.pcm', 'f', 110175 * 4, 48828)
+            a = duty.read_file(config[c_spectrum_source_file], 'f', 110175 * 4, 48828)
             sform = fft(a)
             sfmax = max(abs(sform))
 

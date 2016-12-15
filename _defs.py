@@ -89,6 +89,7 @@ c_fadeout = 'fadeout'
 
 c_spectrum_norm_level = 'spectrum_norm_level'
 c_spectrum_divider = 'spectrum_divider'
+c_spectrum_source_file = 'spectrum_source_file'
 
 c_meandr_pulse_width = 'meandr_pulse_width'
 c_meandr_interval_width = 'meandr_interval_width'
