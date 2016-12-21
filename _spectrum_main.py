@@ -27,7 +27,7 @@ from matplotlib.text import Text
 
 HEADER_STRUCT = '16sIIII' # заголовок, версия, кол-во точек # fmin, fmax
 FILE_DESIGNATION = b'SPECTRUM FORM   '
-FILE_VER = 0x00000001 # 0.0.0.2
+FILE_VER = 0x00000002 # 0.0.0.2
 CONTROL_COUNT = 41
 
 class PolygonInteractor(object):
@@ -376,7 +376,7 @@ def read_spectrum_form_file(config, **kwargs):
 
     try:
 
-        spectrum_form_file_name = get_path(config, 'spectrum')
+        spectrum_form_file_name = config[c_spectrum_form_file]  # get_path(config, 'spectrum')
 
         header = duty.read_header(spectrum_form_file_name, HEADER_STRUCT)
         
@@ -390,7 +390,7 @@ def read_spectrum_form_file(config, **kwargs):
         controls_count = header[2]
         minX = header[3]
         maxX = header[4]
-
+        print(spectrum_form_file_name)
         controls = duty.read_file(spectrum_form_file_name, 'd', struct.calcsize(HEADER_STRUCT), controls_count)
 
     except Exception as E:
@@ -438,19 +438,21 @@ def edit_spectrum(config, **kwargs):
         # задаем границы массива диапазон частот [fmin:fmax]
         fmin = 1
         fmax = int(sampling / 2)
-        if c_filter_freq_min in config and config[c_filter_freq_min] in range(fmin, fmax): fmin = config[c_filter_freq_min]
-        if c_filter_freq_max in config and config[c_filter_freq_max] in range(fmin, fmax): fmax = config[c_filter_freq_max]
+        if c_freq0 in config and config[c_freq0] in range(fmin, fmax): fmin = config[c_freq0]
+        if c_freq1 in config and config[c_freq1] in range(fmin, fmax): fmax = config[c_freq1]
 
         spectrumMax = 100 # в процентах %
-
-        spectrum_form_file_name = get_path(config, 'spectrum')
+        # spectrum_form_file_name = config[c_spectrum_form_file] # get_path(config, 'spectrum')
+        
+        newForm = False
+        if 'newForm' in kwargs: newForm = kwargs['newForm']
 
     ###############################################
 
         ver, controls_count, controls, minX, maxX = read_spectrum_form_file(config, **kwargs)
 
         # если не удалось прочитать сохраненную форму спектра, то создаем новую
-        if controls_count is None:
+        if newForm or controls_count is None:
             controls_count = CONTROL_COUNT
             minX = fmin
             maxX = fmax
@@ -459,7 +461,7 @@ def edit_spectrum(config, **kwargs):
         xs, ys = get_xs_ys(minX, maxX, controls_count)
             
         # если создаем новую форму спектра, то значения у всех регуляторов равно 100%
-        if controls is None:
+        if newForm or controls is None:
             ys[1:-1] = spectrumMax
 
         else:
@@ -476,7 +478,7 @@ def edit_spectrum(config, **kwargs):
         
         poly = Polygon(list(zip(xs, ys)), animated=True, closed=False, color=colorConverter.to_rgba('b', 0.250), visible=True)
         ax.add_patch(poly)
-        p = PolygonInteractor(ax, poly, spectrum_form_file_name, minX, maxX) # , aspec
+        p = PolygonInteractor(ax, poly, config[c_spectrum_form_file], minX, maxX) # , aspec
         
         plt.autumn()
         plt.grid()

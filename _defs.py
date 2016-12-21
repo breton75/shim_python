@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+import sys
 
 def get_cfg_param(config, param_name, default, type='s'):
 	try:
@@ -53,6 +54,7 @@ s_type_lfm = 5
 s_type_meandr_pack = 6
 s_type_spectrum = 7
 s_type_flat_spectrum = 8
+s_type_spectrum_form = 9
 
 # тип меандра
 m_one_channel = 0
@@ -112,6 +114,7 @@ c_filter_freq_min = 'filter_freq_min'
 c_filter_freq_max = 'filter_freq_max'
 c_apply_spectrum_form = 'apply_spectrum_form'
 c_apply_accurately_to_form = 'apply_accurately_to_form'
+c_spectrum_form_file = 'spectrum_form_file'
 
 
 c_channel_count = 'channel_count'

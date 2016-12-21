@@ -58,16 +58,23 @@ class mainFrame(Frame):
 			print(E, file=sys.stderr)  
 			self.config = {}
 
+		self.frameLeft = tk.Frame(self)
+		self.frameLeft.grid(row=0, column=0, sticky=tk.W)
 
+		self.frameRight = tk.Frame(self)
+		self.frameRight.grid(row=0, column=1, sticky=tk.E)
+		
+		# self.lblSignalType = tk.Label(self.frameRight, text='Тип сигнала', width=25)
+		# self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
 	### -> параметры генерации исходного сигнала ###
 	
-		self.frameSignal = tk.LabelFrame(self, text='Генератор')
-		self.frameSignal.grid(row=0, column=0, sticky=tk.W)
+		self.frameSignal = tk.LabelFrame(self.frameLeft, text='Генератор')
+		self.frameSignal.grid(row=0, column=0, sticky=tk.N)
 
 		# тип сигнала
 		self.lblSignalType = tk.Label(self.frameSignal, text='Тип сигнала', width=25)
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра', 'Ровный спектр'])
+		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра', 'Ровный спектр', 'Форма спектра'])
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
 		self.cbSignalType.current(newindex=get_cfg_param(self.config, c_signal_type, 0, 'i'))
 	
@@ -133,8 +140,8 @@ class mainFrame(Frame):
 
 	## -> постобработка
 
-		self.framePostprocessing = tk.LabelFrame(self, text='Постобработка сигнала')
-		self.framePostprocessing.grid(row=1, column=0, sticky=tk.N, rowspan=1)
+		self.framePostprocessing = tk.LabelFrame(self.frameLeft, text='Постобработка сигнала')
+		self.framePostprocessing.grid(row=1, column=0, sticky=tk.N)
 
 		# метод наложения
 		self.lblSignalWindowMethod = tk.Label(self.framePostprocessing, text='Способ наложения', width=25).grid(row=1, column=0, sticky=tk.E)
@@ -178,10 +185,68 @@ class mainFrame(Frame):
 
 	## <- постобработка
 
+	## -> преобразование шим ##
+
+		self.frameShim = tk.LabelFrame(self.frameLeft, text='Преобразование ШИМ')
+		self.frameShim.grid(row=2, column=0, sticky=tk.N)
+
+		# кол-во каналов
+		self.lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
+		self.editChannelCount = tk.Entry(self.frameShim, width=16)
+		self.editChannelCount.grid(row=0, column=1, sticky=tk.W)
+		self.editChannelCount.insert(0, get_cfg_param(self.config, c_channel_count, '2'))
+		
+		# пил на точку
+		self.lblSawpp = tk.Label(self.frameShim, text='Пил на точку', width=25).grid(row=1, column=0, sticky=tk.E)
+		self.editSawpp = tk.Entry(self.frameShim, width=16)
+		self.editSawpp.grid(row=1, column=1, sticky=tk.W)
+		self.editSawpp.insert(0, get_cfg_param(self.config, c_saw_count_per_point, '1'))
+		
+		# размытие нуля
+		self.lblZeroSmooth = tk.Label(self.frameShim, text='Размытие нуля (%)', width=25).grid(row=2, column=0, sticky=tk.E)
+		self.editZeroSmooth = tk.Entry(self.frameShim, width=16)
+		self.editZeroSmooth.grid(row=2, column=1, sticky=tk.W)
+		self.editZeroSmooth.insert(0, get_cfg_param(self.config, c_zero_smooth, '0'))
+
+		# разрыв между каналами
+		self.lblChannelGap = tk.Label(self.frameShim, text='Разрыв между каналами (%)', width=25).grid(row=3, column=0, sticky=tk.E)
+		self.editChannelGap = tk.Entry(self.frameShim, width=16)
+		self.editChannelGap.grid(row=3, column=1, sticky=tk.W)
+		self.editChannelGap.insert(0, get_cfg_param(self.config, c_channel_gap, '0'))
+
+	## <- преобразование шим ##
+
+	## -> редактор формы спектра ##
+
+		self.frameSpectrumFormEditor = tk.LabelFrame(self.frameRight, text='Редактор формы спектра')
+		self.frameSpectrumFormEditor.grid(row=0, column=0, sticky=tk.N)
+
+		# имя файла
+		lblSpectrumFormFile = tk.Label(self.frameSpectrumFormEditor, text='Файл', width=10).grid(row=0, column=0, sticky=tk.W, columnspan=2)
+		self.editSpectrumFormFile = tk.Entry(self.frameSpectrumFormEditor, width=32)
+		self.editSpectrumFormFile.grid(row=0, column=1, sticky=tk.W, columnspan=3)
+		self.editSpectrumFormFile.insert(0, get_cfg_param(self.config, c_spectrum_form_file, ''))
+
+		# выбор файла
+		self.bnSelectSpectrumFormFile = tk.Button(self.frameSpectrumFormEditor, text='...', command=self.select_spectrum_form_file)
+		self.bnSelectSpectrumFormFile.grid(row=0, column=2, sticky=tk.E, columnspan=2)
+
+		# новая форма спектра
+		self.bnCreateSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Новая форма', command=self.create_spectrum)
+		self.bnCreateSpectrumForm.grid(row=1, column=0, sticky=tk.E)#, columnspan=3)
+
+		# редактор
+		self.bnEditSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Редактировать', command=self.edit_spectrum)
+		self.bnEditSpectrumForm.grid(row=1, column=1, sticky=tk.E, columnspan=3)
+
+
+	## <- редактор формы спектра ##
+
+
 	## -> фильтрация ##
 
-		self.frameFilter = tk.LabelFrame(self, text='Фильтрация')
-		self.frameFilter.grid(row=0, column=1, sticky=tk.W, rowspan=1)
+		self.frameFilter = tk.LabelFrame(self.frameRight, text='Фильтрация')
+		self.frameFilter.grid(row=1, column=0, sticky=tk.N)
 
 		self.filtrate = BooleanVar()
 		self.checkFilter = tk.Checkbutton(self.frameFilter, text='Применить полосовой фильтр', variable=self.filtrate)
@@ -222,56 +287,13 @@ class mainFrame(Frame):
 		self.checkApplyFccuratelyToForm.grid(row=5, column=0, sticky=tk.W, columnspan=2)
 		self.apply_accurately_to_form.set(get_cfg_param(self.config, c_apply_accurately_to_form, False, 'b'))
 
-
-		# редактор формы спектра
-		self.frameSpectrumFormEditor = tk.LabelFrame(self.frameFilter, text='Редактор формы спектра')
-		self.frameSpectrumFormEditor.grid(row=6, column=0, sticky=tk.W, columnspan=4 )
-
-		# новая форма спектра
-		self.bnCreateSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Новая форма', command=self.create_spectrum)
-		self.bnCreateSpectrumForm.grid(row=0, column=0, sticky=tk.W) #, columnspan=2)
-
-		# редактор
-		self.bnEditSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Редактировать', command=self.edit_spectrum)
-		self.bnEditSpectrumForm.grid(row=0, column=1, sticky=tk.E) #, columnspan=2)
-
 	## <- фильтрация ##
 
-	## -> преобразование шим ##
-
-		self.frameShim = tk.LabelFrame(self, text='Преобразование ШИМ')
-		self.frameShim.grid(row=2, column=0, sticky=tk.N, rowspan=1)
-
-		# кол-во каналов
-		self.lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
-		self.editChannelCount = tk.Entry(self.frameShim, width=16)
-		self.editChannelCount.grid(row=0, column=1, sticky=tk.W)
-		self.editChannelCount.insert(0, get_cfg_param(self.config, c_channel_count, '2'))
-		
-		# пил на точку
-		self.lblSawpp = tk.Label(self.frameShim, text='Пил на точку', width=25).grid(row=1, column=0, sticky=tk.E)
-		self.editSawpp = tk.Entry(self.frameShim, width=16)
-		self.editSawpp.grid(row=1, column=1, sticky=tk.W)
-		self.editSawpp.insert(0, get_cfg_param(self.config, c_saw_count_per_point, '1'))
-		
-		# размытие нуля
-		self.lblZeroSmooth = tk.Label(self.frameShim, text='Размытие нуля (%)', width=25).grid(row=2, column=0, sticky=tk.E)
-		self.editZeroSmooth = tk.Entry(self.frameShim, width=16)
-		self.editZeroSmooth.grid(row=2, column=1, sticky=tk.W)
-		self.editZeroSmooth.insert(0, get_cfg_param(self.config, c_zero_smooth, '0'))
-
-		# разрыв между каналами
-		self.lblChannelGap = tk.Label(self.frameShim, text='Разрыв между каналами (%)', width=25).grid(row=3, column=0, sticky=tk.E)
-		self.editChannelGap = tk.Entry(self.frameShim, width=16)
-		self.editChannelGap.grid(row=3, column=1, sticky=tk.W)
-		self.editChannelGap.insert(0, get_cfg_param(self.config, c_channel_gap, '0'))
-
-	## <- преобразование шим ##
 
 	## -> выгрузка на устройство ##
 
-		self.frameSend = tk.LabelFrame(self, text='Выгрузка')
-		self.frameSend.grid(row=1, column=1, sticky=tk.N, rowspan=2)
+		self.frameSend = tk.LabelFrame(self.frameRight, text='Выгрузка')
+		self.frameSend.grid(row=2, column=0, sticky=tk.N)
 
 		self.send = BooleanVar()
 		self.checkSend = tk.Checkbutton(self.frameSend, text='Выгрузить сигнал на устройство', variable=self.send)
@@ -310,7 +332,7 @@ class mainFrame(Frame):
 	## -> отрисовка ##
 
 		self.framePlot = tk.LabelFrame(self, text='Отрисовка')
-		self.framePlot.grid(row=3, column=0, sticky=tk.W, columnspan=3)
+		self.framePlot.grid(row=1, column=0, sticky=tk.W, columnspan=2)
 
 		# отобразить сигнал
 		self.plot_signal = BooleanVar()
@@ -364,7 +386,7 @@ class mainFrame(Frame):
 	## -> общее ##
 	
 		self.frameGen = tk.LabelFrame(self, text='Общее')
-		self.frameGen.grid(row=5, column=0, sticky=tk.W, columnspan=2)
+		self.frameGen.grid(row=2, column=0, sticky=tk.W, columnspan=2)
 
 		# рабочий каталог
 		lblWorkDir = tk.Label(self.frameGen, text='Рабочий каталог', width=25).grid(row=0, column=0, sticky=tk.E)
@@ -383,7 +405,7 @@ class mainFrame(Frame):
 	## -> кнопки ##
 
 		self.frameButtons = tk.Frame(self)
-		self.frameButtons.grid(row=6, column=0, sticky=tk.W, columnspan=2)
+		self.frameButtons.grid(row=3, column=0, sticky=tk.W, columnspan=2)
 
 		# ПУСК
 		self.bnStart = tk.Button(self.frameButtons, text='Старт', width=80, command = self.start)
@@ -412,7 +434,20 @@ class mainFrame(Frame):
 				sock.send(self.config, fname=filename)
 
 		except Exception as E:
-			sys.stderror.write(E)
+			print(E, file=sys.stderr)
+
+
+	def select_spectrum_form_file(self):
+		try:
+			
+			filename = filedialog.askopenfilename(defaultextension='spectrum', initialdir=self.config[c_workdir], multiple=False, filetypes=[('spectrum files', '.spectrum'), ('all files', '.*')])
+			
+			if filename:
+				self.editSpectrumFormFile.delete(0, END)
+				self.editSpectrumFormFile.insert(0, filename)
+
+		except Exception as E:
+			print(E, file=sys.stderr)
 
 
 	def send_stop(self):
@@ -422,40 +457,21 @@ class mainFrame(Frame):
 			sock.sendSTOP(h, p)
 
 		except Exception as E:
-			sys.stderror.write(E)
+			print(E, file=sys.stderr)
 
 
 	def create_spectrum(self):
 		try:
-			if self.checkout_config() is None: return
-
-			fn = self.config[c_workdir]
-			if len(fn) == 0:
-				raise Exception('Path not found')
-
-			if fn[-1] != '/': fn += '/'
-			fn += self.config[c_filename_template]
-
-			with open(fn + '.spectrum', 'w') as f:
-				pass
-
-			spectrum.edit_spectrum(self.config)
+			self.save()
+			spectrum.edit_spectrum(self.config, newForm=True)
 
 		except Exception as E:
-			print(E, file=sys.stderr)			
+			print(E, file=sys.stderr)
 
 
 	def edit_spectrum(self):
 		try:
-			if self.checkout_config() is None: return
-
-			fn = self.config[c_workdir]
-			if len(fn) == 0:
-				raise Exception('Path not found')
-
-			if fn[-1] != '/': fn += '/'
-			fn += self.config[c_filename_template]
-
+			self.save()
 			spectrum.edit_spectrum(self.config)
 
 		except Exception as E:
@@ -513,9 +529,6 @@ class mainFrame(Frame):
 		try:
 
 			self.save()
-
-			
-
 			do(self.config)
 	  
 		except Exception as E:
@@ -613,7 +626,7 @@ class mainFrame(Frame):
 				c_filter_freq_min:   int(self.editFilterFreqMin.get()),
 				c_filter_freq_max:   int(self.editFilterFreqMax.get()),
 				c_filtrate:            bool(self.filtrate.get()),
-				# c_edit_spectrum_form:  bool(self.edit_spectrum_form.get()),
+				c_spectrum_form_file:  self.editSpectrumFormFile.get(),
 				c_apply_spectrum_form: bool(self.apply_spectrum_form.get()),
 				c_apply_accurately_to_form: bool(self.apply_accurately_to_form.get()),
 				c_channel_count:    int(self.editChannelCount.get()),

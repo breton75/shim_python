@@ -8,6 +8,8 @@ import random
 import numpy as np
 import cmath
 
+import _spectrum_main as specm
+
 from scipy.fftpack import fft
 from scipy.fftpack import ifft
 import scipy
@@ -78,6 +80,8 @@ def generate(config=None, **kwargs):
         x_step = signal_frequency0 / signal_sampling
         
         # формируем сырой сигнал
+
+    ## >> s_type_noise ##
         if signal_type == s_type_noise:
             y_raw = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)]
 
@@ -86,7 +90,9 @@ def generate(config=None, **kwargs):
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
-        
+    ## << s_type_noise ##
+
+    ## >> s_type_sinus ##
         elif signal_type == s_type_sinus:
             # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2 + 0.5) for _counter in range(signal_point_count)]
             y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count)]
@@ -96,8 +102,9 @@ def generate(config=None, **kwargs):
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
+    ## << s_type_sinus ##
 
-
+    ## >> s_type_meandr ##
         elif signal_type == s_type_meandr:
 
             y_raw = meandr(config, **kwargs)
@@ -109,7 +116,9 @@ def generate(config=None, **kwargs):
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
+    ## << s_type_meandr ##
 
+    ## >> s_type_meandr_pack ##
         elif signal_type == s_type_meandr_pack:
             interval0 = get_cfg_param(config, c_meandr_interval_width, 0, 'i') # config[]
             interval1 = get_cfg_param(config, c_meandr_random_interval, 0, 'i')
@@ -133,14 +142,16 @@ def generate(config=None, **kwargs):
 
             signal_duration *= cnt
             config[c_meandr_random_interval] = interval1
+    ## << s_type_meandr_pack ##
 
-    
+    ## >> s_type_sinus_pack ##    
         elif signal_type == s_type_sinus_pack:  #
             y_raw, signal_duration = sinus_pack(config)
 
             if y_raw is None: raise Exception('не удалось сформировать сигнал')
+    ## << s_type_sinus_pack ##
 
-
+    ## >> s_type_sinus_sinus_noise ##
         elif signal_type == s_type_sinus_sinus_noise:
             k = 0.5
             y_raw = [(signal_amplitude * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(signal_point_count)]
@@ -150,7 +161,9 @@ def generate(config=None, **kwargs):
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
-    
+    ## << s_type_sinus_sinus_noise ##
+
+    ## >> s_type_lfm ##
         elif signal_type == s_type_lfm:
             f0 = config[c_freq0] # начальная частота
             f1 = config[c_freq1] # конечная частота
@@ -165,7 +178,9 @@ def generate(config=None, **kwargs):
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+    ## << s_type_lfm ##
 
+    ## >> s_type_flat_spectrum ##
         elif signal_type == s_type_flat_spectrum:
             
             spec = get_flat_spectrum(config)
@@ -175,8 +190,9 @@ def generate(config=None, **kwargs):
             if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
+    ## << s_type_flat_spectrum ##
 
-
+    ## >> s_type_spectrum ##
         elif signal_type == s_type_spectrum:
 
             # get_flat_spectrum(config)
@@ -275,7 +291,108 @@ def generate(config=None, **kwargs):
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
             y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+    ## << s_type_spectrum ##
+
+    ## >> s_type_spectrum_form ##
+        elif signal_type == s_type_spectrum_form:
+
+            snoise = fft([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)])
+
+            f0 = config[c_freq0] # начальная частота
+            f1 = config[c_freq1] # конечная частота
+            fd = signal_sampling   # частота дискретизации
+            T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
+
+
+            spectrum = np.empty(signal_point_count, dtype=complex)
+            spectrum.fill(complex(0.0, 0.0))
             
+            _f0 = int(f0 * T)
+            _f1 = int(f1 * T)
+
+            # читаем файл с сохраненной формой спектра
+            ver, controls_count, controls, minX, maxX = specm.read_spectrum_form_file(config, **kwargs)
+
+            # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
+            if controls_count is None or controls is None:
+                raise Exception('error on reading spectrum form')
+
+            xstep = (_f1 - _f0) / (controls_count - 1)
+
+            x = _f0
+            x1 = _f0
+            y1 = controls[0]
+
+            # maxY_pos = max(abs(snoise)) # макс. положительное значение спектра в заданной полосе
+            # minY_neg = min(abs(snoise)) # мин.  отрицательное значение спектра в заданной полосе
+            
+            # if maxY_pos > abs(minY_neg): maxYreal = maxY_pos
+            # else: maxYreal = abs(minY_neg)
+            # print('maxY_pos = {}  maxY_neg={}'.format(maxY_pos, minY_neg))
+
+            for i in range(1, controls_count):
+                x2 = _f0 + i * xstep
+                y2 = controls[i]
+
+                while x < x2:
+                    y = ((x - x1) / (x2 - x1) * (y2 - y1) + y1) / 100.0
+
+                    if c_apply_accurately_to_form in config and config[c_apply_accurately_to_form] == True:
+                        A =  y * signal_amplitude
+
+                    else: A = y * abs(snoise[x]) # * cmath.sin(cmath.phase(snoise[x]))
+                    # print(A)
+
+                    imag = A * cmath.cos(cmath.phase(snoise[x]))  # x
+                    ireal = A * cmath.sin(cmath.phase(snoise[x])) # y
+
+                    spectrum[x] = complex(ireal, imag)
+                    spectrum[-x] = complex(ireal, -imag)
+
+                    x+=1
+    
+                x1 = x2
+                y1 = y2
+
+            # a = duty.read_file(config[c_spectrum_source_file], 'f', 110175 * 4, 48828)
+            # sform = fft(a)
+            # sfmax = max(abs(sform))
+
+            # norm_level = int(config[c_spectrum_norm_level])
+            # divider = int(config[c_spectrum_divider])
+
+            # print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
+
+            # for i in np.arange(_f0, _f1):
+                
+            #     j = int(f0 + (i - _f0) / T)
+                
+            #     k = sfmax / (abs(sform[j]) + 1) / divider
+            #     k = k if k <= norm_level else k / sfmax * norm_level
+            #     # k=1
+            #     # print('spcmmax=%0.1f\t apcm[%i]=%0.2f \t\t spcm[%i]=%f \t k=%f' % (spcmmax, oi, apcm[oi], oi, spcm[oi], k))
+                
+            #     imag = k * A * cmath.cos(cmath.phase(snoise[i]))  # x
+            #     ireal = k * A * cmath.sin(cmath.phase(snoise[i])) # y
+
+            #     # if i not in snapshot:
+            #     spectrum[i] = complex(ireal, imag)
+            #     spectrum[-i] = complex(ireal, -imag)
+
+
+            # обратное преобразование
+            _y = ifft(spectrum)
+            y_raw = array.array('d', _y.real)
+            # print('len _y=%i, type: %s of %s' % (len(_y), type(_y), type(_y[0])))
+
+            # накладываем окно на пачку, если необходимо
+            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                y_raw = apply_window(config, y_raw)
+                if y_raw is None: raise Exception('не удалось сформировать сигнал')
+            
+            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо    
+
+        ## << s_type_spectrum_form ##
         
        
         # повторяем полученный сигнал заданное количество раз
