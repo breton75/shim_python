@@ -46,6 +46,8 @@ def get_path(config, extention):
 
 c_cur_date = 'cur_date'
 c_cur_time = 'cur_time'
+c_date_format = '%Y_%m_%d'
+c_time_format = '%H_%M_%S'
 
 # тип сигналов
 s_type_noise = 0
