@@ -7,6 +7,8 @@ import time
 import numpy as np
 import array as arr
 
+import shutil
+
 from _defs import *
 
 import _generator_main as gen
@@ -697,7 +699,7 @@ class mainFrame(Frame):
 			if get_cfg_param(self.config, c_save_log, True, 'b') == True:
 				work_dir = self.config[c_workdir]
 				if work_dir[-1] != '/': work_dir += '/'
-				log_file_name = work_dir + time.strftime('%d_%m_%Y %H_%M_%S') + '.log'
+				log_file_name = work_dir + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
 
 			self.config[c_log_file_name] = log_file_name
 
@@ -710,8 +712,8 @@ class mainFrame(Frame):
 
 
 def do(config):
-	config[c_cur_date] = time.strftime('%d_%m_%Y')
-	config[c_cur_time] = time.strftime('%H_%M_%S')
+	config[c_cur_date] = time.strftime(c_date_format)
+	config[c_cur_time] = time.strftime(c_time_format)
 
 	# пишем текущую конфигурацию в лог
 	if not config[c_log_file_name] is None:
@@ -720,6 +722,9 @@ def do(config):
 				log_file.write(key + '=' + str(config[key]) + '\n')
 
 			log_file.write('\n')
+
+	if get_cfg_param(config, c_save_log, True, 'b') == True and config[c_signal_type] == s_type_spectrum_form:
+		shutil.copyfile(config[c_spectrum_form_file], config[c_workdir] + time.strftime(c_date_format + ' ' + c_time_format) + '.spectrum')
 
 
 	# имена файлов
