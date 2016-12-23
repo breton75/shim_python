@@ -53,8 +53,8 @@ def generate(config=None, **kwargs):
         signal_sampling = int(config[c_sampling])
         signal_duration = int(config[c_duration])
         signal_amplitude = int(config[c_amplitude])
-        fade_in = int(config[c_fadein])
-        fade_out = int(config[c_fadeout])
+        # fade_in = int(config[c_fadein])
+        # fade_out = int(config[c_fadeout])
         file_name = get_path(config, 'raw')
         hush_duration = int(config[c_hush])
         repeat_count = int(config[c_repeat_count])
@@ -239,6 +239,7 @@ def generate(config=None, **kwargs):
 
             norm_level = int(config[c_spectrum_norm_level])
             divider = int(config[c_spectrum_divider])
+            koeff = float(config[c_spectrum_koeff])
 
             print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
 
@@ -247,7 +248,7 @@ def generate(config=None, **kwargs):
                 
                 j = int(f0 + (i - _f0) / T)
                 
-                k = sfmax / (abs(sform[j]) + 1) / divider
+                k = sfmax / (abs(sform[j]) + 1) * koeff
                 k = k if k <= norm_level else k / sfmax * norm_level
                 # k=1
                 # print('spcmmax=%0.1f\t apcm[%i]=%0.2f \t\t spcm[%i]=%f \t k=%f' % (spcmmax, oi, apcm[oi], oi, spcm[oi], k))
@@ -322,13 +323,8 @@ def generate(config=None, **kwargs):
             x = _f0
             x1 = _f0
             y1 = controls[0]
-
-            # maxY_pos = max(abs(snoise)) # макс. положительное значение спектра в заданной полосе
-            # minY_neg = min(abs(snoise)) # мин.  отрицательное значение спектра в заданной полосе
             
-            # if maxY_pos > abs(minY_neg): maxYreal = maxY_pos
-            # else: maxYreal = abs(minY_neg)
-            # print('maxY_pos = {}  maxY_neg={}'.format(maxY_pos, minY_neg))
+            koeff = float(config[c_spectrum_koeff])
 
             for i in range(1, controls_count):
                 x2 = _f0 + i * xstep
@@ -343,8 +339,8 @@ def generate(config=None, **kwargs):
                     else: A = y * abs(snoise[x]) # * cmath.sin(cmath.phase(snoise[x]))
                     # print(A)
 
-                    imag = A * cmath.cos(cmath.phase(snoise[x]))  # x
-                    ireal = A * cmath.sin(cmath.phase(snoise[x])) # y
+                    imag = koeff * A * cmath.cos(cmath.phase(snoise[x]))  # x
+                    ireal = koeff * A * cmath.sin(cmath.phase(snoise[x])) # y
 
                     spectrum[x] = complex(ireal, imag)
                     spectrum[-x] = complex(ireal, -imag)
@@ -354,30 +350,6 @@ def generate(config=None, **kwargs):
                 x1 = x2
                 y1 = y2
 
-            # a = duty.read_file(config[c_spectrum_source_file], 'f', 110175 * 4, 48828)
-            # sform = fft(a)
-            # sfmax = max(abs(sform))
-
-            # norm_level = int(config[c_spectrum_norm_level])
-            # divider = int(config[c_spectrum_divider])
-
-            # print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
-
-            # for i in np.arange(_f0, _f1):
-                
-            #     j = int(f0 + (i - _f0) / T)
-                
-            #     k = sfmax / (abs(sform[j]) + 1) / divider
-            #     k = k if k <= norm_level else k / sfmax * norm_level
-            #     # k=1
-            #     # print('spcmmax=%0.1f\t apcm[%i]=%0.2f \t\t spcm[%i]=%f \t k=%f' % (spcmmax, oi, apcm[oi], oi, spcm[oi], k))
-                
-            #     imag = k * A * cmath.cos(cmath.phase(snoise[i]))  # x
-            #     ireal = k * A * cmath.sin(cmath.phase(snoise[i])) # y
-
-            #     # if i not in snapshot:
-            #     spectrum[i] = complex(ireal, imag)
-            #     spectrum[-i] = complex(ireal, -imag)
 
 
             # обратное преобразование
@@ -681,10 +653,6 @@ def sinus_pack(config):
         signal_duration = int(config[c_duration])
         amplitude = int(config[c_amplitude])
         
-        # fade_in = int(config[c_fadein])
-        # fade_out = int(config[c_fadeout])
-        # file_name = get_path(config, 'raw')
-        
         hush_duration = int(config[c_hush])
         
         point_count = int(sampling * signal_duration / 1000)
@@ -696,8 +664,11 @@ def sinus_pack(config):
         while f0 <= f1:
             x_step = f0 / sampling
             _y = [amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_count)]
-            _y = add_fading(config, _y)
             
+            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                _y = apply_window(config, _y)
+                if _y is None: raise Exception('не удалось сформировать сигнал')
+
             y_raw.extend(_y)
             y_raw.extend(np.zeros(hush_count))
             f0 += f_step
@@ -825,37 +796,6 @@ def apply_window(config, y_raw):
     except Exception as E:
         print('error in function apply_window(): %s' % E, file=sys.stderr)
         return None
-
-
-def add_fading(config, y_raw):
-    # применяем параметры раскачки и затухания
-    signal_sampling = int(config[c_sampling])
-    signal_duration = int(config[c_duration])
-    fade_in = int(config[c_fadein])
-    fade_out = int(config[c_fadeout])
-    hush_duration = int(config[c_hush])
-
-    if fade_in == 0 and fade_out == 0:
-        return y_raw
-
-    point_count = int(signal_sampling * (signal_duration - hush_duration) / 1000)
-    # print('generator: duration=%i' % signal_duration)
-
-    # количество точек на раскачку сигнала
-    fade_in_point_count = int(point_count / 100 * fade_in) if fade_in > 0 else 0
-    fade_in_step = 1 / fade_in_point_count if fade_in > 0 else 0.0
-    
-    # количество точек на затухание сигнала    
-    fade_out_point_count = int(point_count / 100 * fade_out) if fade_out > 0 else 0
-    fade_out_step = 1 / fade_out_point_count if fade_out > 0 else 0.0
-    print('gen: point_count=%i  fade_in_point_count=%i  fade_out_point_count=%i' % (point_count, fade_in_point_count, fade_out_point_count))
-
-    _y = []
-    _y.extend([y_raw[_counter] * (_counter * fade_in_step) for _counter in range(fade_in_point_count)])
-    _y.extend(y_raw[fade_in_point_count : point_count - fade_out_point_count])
-    _y.extend([y_raw[point_count - _counter] * (_counter * fade_out_step) for _counter in range(fade_out_point_count, 0, -1)])
-    
-    return _y
 
 
 ###############################################        

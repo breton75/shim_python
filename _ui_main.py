@@ -31,33 +31,9 @@ class mainFrame(Frame):
 		self.showFrame()
 
 
-
 	def showFrame(self):
- 
-		# читаем файл _main.config
-		try:
-
-			with open('_main.config', 'r', encoding="utf8") as configfile:
-				lines = configfile.readlines()
-
-				# разбираем параметры записанные в файле _main.config
-				lst=[]
-				for line in lines: # если строка начинается не с буквы, то эту строку пропускаем
-					if line[0] in ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
-						lst.append(line.split('='))
-	  
-				for i in range(len(lst)):
-					for j in range(len(lst[i])):
-						lst[i][j] = lst[i][j].strip()
-
-				self.config = dict(lst)
-				# print(self.config)
-
-		except Exception as E:
-			print('error on reading self.config file: ', file=sys.stderr, end='')
-			print(E, file=sys.stderr)  
-			self.config = {}
-
+ 		
+		# создаем виджеты
 		self.frameLeft = tk.Frame(self)
 		self.frameLeft.grid(row=0, column=0, sticky=tk.W)
 
@@ -66,8 +42,9 @@ class mainFrame(Frame):
 		
 		# self.lblSignalType = tk.Label(self.frameRight, text='Тип сигнала', width=25)
 		# self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
-	### -> параметры генерации исходного сигнала ###
-	
+
+	## >> параметры генерации исходного сигнала ##
+
 		self.frameSignal = tk.LabelFrame(self.frameLeft, text='Генератор')
 		self.frameSignal.grid(row=0, column=0, sticky=tk.N)
 
@@ -76,70 +53,46 @@ class mainFrame(Frame):
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
 		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра', 'Ровный спектр', 'Форма спектра'])
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
-		self.cbSignalType.current(newindex=get_cfg_param(self.config, c_signal_type, 0, 'i'))
 	
 		# частота начальная
 		self.lblFrequency0 = tk.Label(self.frameSignal, text='Частота начальная', width=25)
 		self.lblFrequency0.grid(row=1, column=0, sticky=tk.E)
 		self.editFrequency0 = tk.Entry(self.frameSignal, width=16)
 		self.editFrequency0.grid(row=1, column=1, sticky=tk.W)
-		self.editFrequency0.insert(0, get_cfg_param(self.config, c_freq0, '8000'))
 
 		# частота конечная
 		self.lblFrequency1 = tk.Label(self.frameSignal, text='Частота конечная', width=25)
 		self.lblFrequency1.grid(row=2, column=0, sticky=tk.E)
 		self.editFrequency1 = tk.Entry(self.frameSignal, width=16)
 		self.editFrequency1.grid(row=2, column=1, sticky=tk.W)
-		self.editFrequency1.insert(0, get_cfg_param(self.config, c_freq1, '8000'))
-
 
 		# дискретизация
 		self.lblSampling = tk.Label(self.frameSignal, text='Дискретизация', width=25)
 		self.lblSampling.grid(row=3, column=0, sticky=tk.E)
 		self.editSampling = tk.Entry(self.frameSignal, width=16)
 		self.editSampling.grid(row=3, column=1, sticky=tk.W)
-		self.editSampling.insert(0, get_cfg_param(self.config, c_sampling, '100000'))
-
 
 		# длительность (мс.)
 		self.lblDuration = tk.Label(self.frameSignal, text='Общая длительность (мс)', width=25)
 		self.lblDuration.grid(row=4, column=0, sticky=tk.E)
 		self.editDuration = tk.Entry(self.frameSignal, width=16)
 		self.editDuration.grid(row=4, column=1, sticky=tk.W)
-		self.editDuration.insert(0, get_cfg_param(self.config, c_duration, '1000'))
 
 		# длительность тишины (мс.)
 		self.lblHush = tk.Label(self.frameSignal, text='Длительность тишины (мс)', width=25)
 		self.lblHush.grid(row=5, column=0, sticky=tk.E)
 		self.editHush = tk.Entry(self.frameSignal, width=16)
 		self.editHush.grid(row=5, column=1, sticky=tk.W)
-		self.editHush.insert(0, get_cfg_param(self.config, c_hush, '0'))
 
 		# амплитуда
 		self.lblAmplitude = tk.Label(self.frameSignal, text='Амплитуда', width=25)
 		self.lblAmplitude.grid(row=6, column=0, sticky=tk.E)
 		self.editAmplitude = tk.Entry(self.frameSignal, width=16)
 		self.editAmplitude.grid(row=6, column=1, sticky=tk.W)
-		self.editAmplitude.insert(0, get_cfg_param(self.config, c_amplitude, '1024'))
 
-		# раскачка сигнала
-		self.lblFadeIn = tk.Label(self.frameSignal, text='Раскачка (%)', width=25)
-		self.lblFadeIn.grid(row=7, column=0, sticky=tk.E)
-		self.editFadeIn = tk.Entry(self.frameSignal, width=16)
-		self.editFadeIn.grid(row=7, column=1, sticky=tk.W)
-		self.editFadeIn.insert(0, get_cfg_param(self.config, c_fadein, '0'))
+	## << параметры сигнала
 
-		# затухание сигнала
-		lblFadeOut = tk.Label(self.frameSignal, text='Затухание (%)', width=25).grid(row=8, column=0, sticky=tk.E)
-		self.editFadeOut = tk.Entry(self.frameSignal, width=16)
-		self.editFadeOut.grid(row=8, column=1, sticky=tk.W)
-		self.editFadeOut.insert(0, get_cfg_param(self.config, c_fadeout, '0'))
-
-
-	### <- параметры сигнала ###	
-
-	## -> постобработка
-
+	## >> постобработка
 		self.framePostprocessing = tk.LabelFrame(self.frameLeft, text='Постобработка сигнала')
 		self.framePostprocessing.grid(row=1, column=0, sticky=tk.N)
 
@@ -147,46 +100,34 @@ class mainFrame(Frame):
 		self.lblSignalWindowMethod = tk.Label(self.framePostprocessing, text='Способ наложения', width=25).grid(row=1, column=0, sticky=tk.E)
 		self.cbSignalWindowMethod = ttk.Combobox(self.framePostprocessing, width=13, values=['Нет окна', 'Поверх сигнала', 'Добавить шум', 'Обрезать'])
 		self.cbSignalWindowMethod.grid(row=0, column=1, sticky=tk.W)
-		self.cbSignalWindowMethod.current(newindex=get_cfg_param(self.config, c_signal_window_method, 0, 'i'))
 
 		# тип окна
 		self.lblSignalWindowType = tk.Label(self.framePostprocessing, text='Тип окна', width=25).grid(row=0, column=0, sticky=tk.E)
 		self.cbSignalWindowType = ttk.Combobox(self.framePostprocessing, width=13, values=['Трапеция', 'Cosinus', 'S-образное'])
 		self.cbSignalWindowType.grid(row=1, column=1, sticky=tk.W)
-		self.cbSignalWindowType.current(newindex=get_cfg_param(self.config, c_signal_window_type, 0, 'i'))
 
 		# куда накладывать
 		self.lblSignalWindowPlace = tk.Label(self.framePostprocessing, text='Место наложения', width=25).grid(row=2, column=0, sticky=tk.E)
 		self.cbSignalWindowPlace = ttk.Combobox(self.framePostprocessing, width=13, values=['Начало и конец каждой пачки', 'Начало каждой пачки', 'Конец каждой пачки', 'Начало и конец сигнала', 'Начало сигнала', 'Конец сигнала'])
 		self.cbSignalWindowPlace.grid(row=2, column=1, sticky=tk.W)
-		self.cbSignalWindowPlace.current(newindex=get_cfg_param(self.config, c_signal_window_place, 0, 'i'))
 
 		# длительность окна
 		lblWindowDuration = tk.Label(self.framePostprocessing, text='Длительность окна, мс.', width=25).grid(row=3, column=0, sticky=tk.E)
 		self.editWindowDuration = tk.Entry(self.framePostprocessing, width=16)
 		self.editWindowDuration.grid(row=3, column=1, sticky=tk.W)
-		self.editWindowDuration.insert(0, get_cfg_param(self.config, c_signal_window_duration, '1'))	
-
-
-		# self.frameCycleSignal = tk.LabelFrame(self.framePostprocessing, text='Повтор сигнала')
-		# self.frameCycleSignal.grid(row=1, column=0, sticky=tk.W, columnspan=2)
 
 		# количество повторений сгенерированного сигнала
 		lblCyclesCount = tk.Label(self.framePostprocessing, text='Повторить сигнал, раз', width=25).grid(row=4, column=0, sticky=tk.E)
 		self.editRepeatCount = tk.Entry(self.framePostprocessing, width=16)
 		self.editRepeatCount.grid(row=4, column=1, sticky=tk.W)
-		self.editRepeatCount.insert(0, get_cfg_param(self.config, c_repeat_count, '1'))	
 
 		# пауза после всех повторов
 		lblPause = tk.Label(self.framePostprocessing, text='Пауза после (мс.)', width=25).grid(row=5, column=0, sticky=tk.E)
 		self.editPause = tk.Entry(self.framePostprocessing, width=16)
 		self.editPause.grid(row=5, column=1, sticky=tk.W)
-		self.editPause.insert(0, get_cfg_param(self.config, c_pause, '0'))	
 
-	## <- постобработка
 
-	## -> преобразование шим ##
-
+	## >> преобразование шим ##
 		self.frameShim = tk.LabelFrame(self.frameLeft, text='Преобразование ШИМ')
 		self.frameShim.grid(row=2, column=0, sticky=tk.N)
 
@@ -194,30 +135,25 @@ class mainFrame(Frame):
 		self.lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
 		self.editChannelCount = tk.Entry(self.frameShim, width=16)
 		self.editChannelCount.grid(row=0, column=1, sticky=tk.W)
-		self.editChannelCount.insert(0, get_cfg_param(self.config, c_channel_count, '2'))
-		
+
 		# пил на точку
 		self.lblSawpp = tk.Label(self.frameShim, text='Пил на точку', width=25).grid(row=1, column=0, sticky=tk.E)
 		self.editSawpp = tk.Entry(self.frameShim, width=16)
 		self.editSawpp.grid(row=1, column=1, sticky=tk.W)
-		self.editSawpp.insert(0, get_cfg_param(self.config, c_saw_count_per_point, '1'))
-		
+
 		# размытие нуля
 		self.lblZeroSmooth = tk.Label(self.frameShim, text='Размытие нуля (%)', width=25).grid(row=2, column=0, sticky=tk.E)
 		self.editZeroSmooth = tk.Entry(self.frameShim, width=16)
 		self.editZeroSmooth.grid(row=2, column=1, sticky=tk.W)
-		self.editZeroSmooth.insert(0, get_cfg_param(self.config, c_zero_smooth, '0'))
 
 		# разрыв между каналами
 		self.lblChannelGap = tk.Label(self.frameShim, text='Разрыв между каналами (%)', width=25).grid(row=3, column=0, sticky=tk.E)
 		self.editChannelGap = tk.Entry(self.frameShim, width=16)
 		self.editChannelGap.grid(row=3, column=1, sticky=tk.W)
-		self.editChannelGap.insert(0, get_cfg_param(self.config, c_channel_gap, '0'))
 
-	## <- преобразование шим ##
+	## << преобразование шим ##
 
-	## -> редактор формы спектра ##
-
+	## >> редактор формы спектра ##
 		self.frameSpectrumFormEditor = tk.LabelFrame(self.frameRight, text='Редактор формы спектра')
 		self.frameSpectrumFormEditor.grid(row=0, column=0, sticky=tk.N)
 
@@ -225,7 +161,6 @@ class mainFrame(Frame):
 		lblSpectrumFormFile = tk.Label(self.frameSpectrumFormEditor, text='Файл', width=10).grid(row=0, column=0, sticky=tk.W, columnspan=2)
 		self.editSpectrumFormFile = tk.Entry(self.frameSpectrumFormEditor, width=32)
 		self.editSpectrumFormFile.grid(row=0, column=1, sticky=tk.W, columnspan=3)
-		self.editSpectrumFormFile.insert(0, get_cfg_param(self.config, c_spectrum_form_file, ''))
 
 		# выбор файла
 		self.bnSelectSpectrumFormFile = tk.Button(self.frameSpectrumFormEditor, text='...', command=self.select_spectrum_form_file)
@@ -239,84 +174,63 @@ class mainFrame(Frame):
 		self.bnEditSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Редактировать', command=self.edit_spectrum)
 		self.bnEditSpectrumForm.grid(row=1, column=1, sticky=tk.E, columnspan=3)
 
+	## << редактор формы спектра ##
 
-	## <- редактор формы спектра ##
 
-
-	## -> фильтрация ##
-
+	## >> фильтрация ##
 		self.frameFilter = tk.LabelFrame(self.frameRight, text='Фильтрация')
 		self.frameFilter.grid(row=1, column=0, sticky=tk.N)
 
 		self.filtrate = BooleanVar()
 		self.checkFilter = tk.Checkbutton(self.frameFilter, text='Применить полосовой фильтр', variable=self.filtrate)
 		self.checkFilter.grid(row=0, column=0, sticky=tk.W, columnspan=2)
-		self.filtrate.set(get_cfg_param(self.config, c_filtrate, True, 'b'))
-		# else: self.filtrate.set(False)
 
 		# минимальная частота
 		self.lblFilterFreqMin = tk.Label(self.frameFilter, text='Мин. частота', width=25)
 		self.lblFilterFreqMin.grid(row=1, column=0, sticky=tk.E)
 		self.editFilterFreqMin = tk.Entry(self.frameFilter, width=16)
 		self.editFilterFreqMin.grid(row=1, column=1, sticky=tk.W)
-		self.editFilterFreqMin.insert(0, get_cfg_param(self.config, c_filter_freq_min, '1000'))
 
 		# максимальная частота
 		self.lblFilterFreqMax = tk.Label(self.frameFilter, text='Макс. частота', width=25)
 		self.lblFilterFreqMax.grid(row=2, column=0, sticky=tk.E)
 		self.editFilterFreqMax = tk.Entry(self.frameFilter, width=16)
 		self.editFilterFreqMax.grid(row=2, column=1, sticky=tk.W)
-		self.editFilterFreqMax.insert(0, get_cfg_param(self.config, c_filter_freq_max, '4000'))
-		
-		# редактировать форму спектра
-		# self.edit_spectrum_form = BooleanVar()
-		# self.checkEditSpectrumForm = tk.Checkbutton(self.frameFilter, text='Редактировать форму спектра', variable=self.edit_spectrum_form)
-		# self.checkEditSpectrumForm.grid(row=3, column=0, sticky=tk.W, columnspan=2)
-		# self.edit_spectrum_form.set(get_cfg_param(self.config, 'edit_spectrum_form', False, 'b'))
-
 
 		# # применить форму спектра
 		self.apply_spectrum_form = BooleanVar()
 		self.checkApplySpectrumForm = tk.Checkbutton(self.frameFilter, text='Применить заданную форму спектра', variable=self.apply_spectrum_form)
 		self.checkApplySpectrumForm.grid(row=4, column=0, sticky=tk.W, columnspan=2)
-		self.apply_spectrum_form.set(get_cfg_param(self.config, c_apply_spectrum_form, False, 'b'))
 
 		# подгонять значения точно заданной форме
 		self.apply_accurately_to_form = BooleanVar()
 		self.checkApplyFccuratelyToForm = tk.Checkbutton(self.frameFilter, text='Точно по форме', variable=self.apply_accurately_to_form)
 		self.checkApplyFccuratelyToForm.grid(row=5, column=0, sticky=tk.W, columnspan=2)
-		self.apply_accurately_to_form.set(get_cfg_param(self.config, c_apply_accurately_to_form, False, 'b'))
 
-	## <- фильтрация ##
+	## << фильтрация ##
 
-
-	## -> выгрузка на устройство ##
-
+	## >> выгрузка на устройство ##
 		self.frameSend = tk.LabelFrame(self.frameRight, text='Выгрузка')
 		self.frameSend.grid(row=2, column=0, sticky=tk.N)
 
 		self.send = BooleanVar()
 		self.checkSend = tk.Checkbutton(self.frameSend, text='Выгрузить сигнал на устройство', variable=self.send)
 		self.checkSend.grid(row=0, column=0, sticky=tk.E, columnspan=2)
-		self.send.set(get_cfg_param(self.config, c_send, True, 'b'))
 
 		# host
 		self.lblHost = tk.Label(self.frameSend, text='IP', width=25).grid(row=1, column=0, sticky=tk.E)
 		self.editHost = tk.Entry(self.frameSend, width=16)
 		self.editHost.grid(row=1, column=1, sticky=tk.W)
-		self.editHost.insert(0, get_cfg_param(self.config, c_host, '172.16.4.55'))
-		
+
 		# port
 		self.lblPort = tk.Label(self.frameSend, text='Порт', width=25).grid(row=2, column=0, sticky=tk.E)
 		self.editPort = tk.Entry(self.frameSend, width=16)
 		self.editPort.grid(row=2, column=1, sticky=tk.W)
-		self.editPort.insert(0, get_cfg_param(self.config, c_port, '35580'))
-		
+
 		# режим работы: ONE или LOOP
 		self.lblMode = tk.Label(self.frameSend, text='Режим работы', width=25).grid(row=3, column=0, sticky=tk.E)
 		self.cbMode = ttk.Combobox(self.frameSend, width=13, values=['ONE', 'LOOP'])
 		self.cbMode.grid(row=3, column=1, sticky=tk.W)
-		self.cbMode.current(newindex=get_cfg_param(self.config, c_mode, 1))
 
 		# send STOP
 		self.bnSendStop = tk.Button(self.frameSend, text='Отправить STOP', command=self.send_stop)
@@ -326,11 +240,10 @@ class mainFrame(Frame):
 		self.bnSendFile = tk.Button(self.frameSend, text='Выгрузить файл', command=self.send_file)
 		self.bnSendFile.grid(row=5, column=0, sticky=tk.E, columnspan=2)
 
-	## <- выгрузка на устройство ##
+	## << выгрузка на устройство ##
 
 
-	## -> отрисовка ##
-
+	## >> отрисовка ##
 		self.framePlot = tk.LabelFrame(self, text='Отрисовка')
 		self.framePlot.grid(row=1, column=0, sticky=tk.W, columnspan=2)
 
@@ -338,53 +251,44 @@ class mainFrame(Frame):
 		self.plot_signal = BooleanVar()
 		self.checkPlotSignal = tk.Checkbutton(self.framePlot, text='Сигнал', variable=self.plot_signal)
 		self.checkPlotSignal.grid(row=0, column=0, sticky=tk.W, columnspan=4)
-		self.plot_signal.set(get_cfg_param(self.config, c_plot_signal, True, 'b'))
 
 		# отобразить спектр сигнала
 		self.plot_signal_spectrum = BooleanVar()
 		self.checkSignalSpectrum = tk.Checkbutton(self.framePlot, text='Спектр сигнала', variable=self.plot_signal_spectrum)
 		self.checkSignalSpectrum.grid(row=0, column=1, sticky=tk.W, columnspan=4)
-		self.plot_signal_spectrum.set(get_cfg_param(self.config, c_plot_signal_spectrum, True, 'b'))
-		
+
 		# отобразить отфильтрованный сигнал
 		self.plot_filtered_signal = BooleanVar()
 		self.checkPlotFiltered = tk.Checkbutton(self.framePlot, text='Отфильтрованный сигнал', variable=self.plot_filtered_signal)
 		self.checkPlotFiltered.grid(row=1, column=0, sticky=tk.W, columnspan=4)
-		self.plot_filtered_signal.set(get_cfg_param(self.config, c_plot_filtered_signal, True, 'b'))
-	
+
 		# отобразить спектр отфильтрованного сигнала
 		self.plot_filtered_spectrum = BooleanVar()
 		self.checkPlotFilteredSignalSpectrum = tk.Checkbutton(self.framePlot, text='Спектр отфильтрованного сигнала', variable=self.plot_filtered_spectrum)
 		self.checkPlotFilteredSignalSpectrum.grid(row=1, column=1, sticky=tk.W, columnspan=4)
-		self.plot_filtered_spectrum.set(get_cfg_param(self.config, c_plot_filtered_spectrum, True, 'b'))
 
 		# отобразить ШИМ
 		self.plot_shim = BooleanVar()
 		self.checkPlotShim = tk.Checkbutton(self.framePlot, text='ШИМ', variable=self.plot_shim)
 		self.checkPlotShim.grid(row=2, column=0, sticky=tk.W, columnspan=4)
-		self.plot_shim.set(get_cfg_param(self.config, c_plot_shim, True, 'b'))
-		
+
 		# отобразить сигнал + пила
 		self.plot_signal_saw = BooleanVar()
 		self.checkSignalSaw = tk.Checkbutton(self.framePlot, text='Сигнал + Пила', variable=self.plot_signal_saw)
 		self.checkSignalSaw.grid(row=2, column=1, sticky=tk.W, columnspan=4)
-		self.plot_signal_saw.set(get_cfg_param(self.config, c_plot_signal_saw, False, 'b'))
 
 		# сигнал с точки .. по ..
 		lblPlotFromPoint = tk.Label(self.framePlot, text='Показать точки с', width=25).grid(row=3, column=0, sticky=tk.E)
 		self.editPlotFromPoint = tk.Entry(self.framePlot, width=5)
 		self.editPlotFromPoint.grid(row=3, column=1, sticky=tk.W)
-		self.editPlotFromPoint.insert(0, get_cfg_param(self.config, c_plot_from_point, '1'))
-		
+
 		lblPlotToPoint = tk.Label(self.framePlot, text=' по ', width=4).grid(row=3, column=2, sticky=tk.E)
 		self.editPlotToPoint = tk.Entry(self.framePlot, width=53)
 		self.editPlotToPoint.grid(row=3, column=3, sticky=tk.W)
-		self.editPlotToPoint.insert(0, get_cfg_param(self.config, c_plot_to_point, '1000'))
 
-	## <- отрисовка ##
+	## << отрисовка ##
 
-	## -> общее ##
-	
+	## >> общее ##
 		self.frameGen = tk.LabelFrame(self, text='Общее')
 		self.frameGen.grid(row=2, column=0, sticky=tk.W, columnspan=2)
 
@@ -392,18 +296,15 @@ class mainFrame(Frame):
 		lblWorkDir = tk.Label(self.frameGen, text='Рабочий каталог', width=25).grid(row=0, column=0, sticky=tk.E)
 		self.editWorkDir = tk.Entry(self.frameGen, width=65)
 		self.editWorkDir.grid(row=0, column=1, sticky=tk.W)
-		self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, ''))
-		
+
 		# шаблон имен файлов
 		lblFilenameTemplate = tk.Label(self.frameGen, text='Шаблон имен файлов', width=25).grid(row=1, column=0, sticky=tk.E)
 		self.editFilenameTemplate = tk.Entry(self.frameGen, width=65)
 		self.editFilenameTemplate.grid(row=1, column=1, sticky=tk.W)
-		self.editFilenameTemplate.insert(0, get_cfg_param(self.config, c_filename_template, ''))
-		
-	## <- общее ##
 
-	## -> кнопки ##
+	## << общее ##
 
+	## >> кнопки ##
 		self.frameButtons = tk.Frame(self)
 		self.frameButtons.grid(row=3, column=0, sticky=tk.W, columnspan=2)
 
@@ -412,18 +313,148 @@ class mainFrame(Frame):
 		self.bnStart.grid(row=1, column=0, sticky=tk.E, columnspan=2)
 
 		# сохранить
-		self.bnSave = tk.Button(self.frameButtons, text='Сохранить', width=80, command = self.save)
-		self.bnSave.grid(row=3, column=0, sticky=tk.E, columnspan=2)
+		self.bnSaveConfig = tk.Button(self.frameButtons, text='Сохранить', width=80, command = self.save)
+		self.bnSaveConfig.grid(row=3, column=0, sticky=tk.E, columnspan=2)
+
+		# загрузить конфигурацию
+		self.bnLoadConfig = tk.Button(self.frameButtons, text='Загрузить конфигурацию', width=80, command = self.load_config)
+		self.bnLoadConfig.grid(row=4, column=0, sticky=tk.E, columnspan=2)
 
 		# редактор параметров
 		self.bnEditSignalParams = tk.Button(self.frameButtons, text='Редактировать параметры', width=80, command=self.edit_signal_params)
-		self.bnEditSignalParams.grid(row=4, column=0, sticky=tk.E, columnspan=2)
+		self.bnEditSignalParams.grid(row=5, column=0, sticky=tk.E, columnspan=2)
 
-	## <- кнопки ##
+	## << кнопки ##
+ 		
+ 		# читаем файл _main.config
+		self.config = self.read_config_file()			
+		if self.config == {}:
+			raise Exception('wrong configuration')
+		
+		self.set_widget_values()
 
-	# def get_cfg(self, param_name, default):
-	# 	if param_name in self.config: return self.config[param_name]
-	# 	else: return default
+
+
+	def read_config_file(self, **kwargs):
+		
+		config = {}
+
+		try:
+
+			filename = '_main.config'
+			if 'config_file_name' in kwargs:
+				filename = kwargs['config_file_name']
+	
+			with open(filename, 'r', encoding="utf8") as configfile:
+				lines = configfile.readlines()
+	
+				# разбираем параметры записанные в файле .config или .log
+				lst=[]
+				for line in lines: # если строка начинается не с буквы, то эту строку пропускаем
+					if line[0] in ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
+						lst.append(line.split('='))
+		  
+				for i in range(len(lst)):
+					for j in range(len(lst[i])):
+						lst[i][j] = lst[i][j].strip()
+	
+			config = dict(lst)
+			# self.config = dict(lst)
+			# print(self.config)
+
+		except Exception as E:
+			print('error in func mainFrame.load_config(): %s' % E, file=sys.stderr, end='')
+			
+		finally:
+			return config
+
+
+	def set_widget_values(self):
+		
+	## >> параметры генерации исходного сигнала ##
+		self.cbSignalType.current(newindex=get_cfg_param(self.config, c_signal_type, 0, 'i'))
+		
+		self.editFrequency0.delete(0, END)
+		self.editFrequency0.insert(0, get_cfg_param(self.config, c_freq0, '8000'))
+		self.editFrequency1.delete(0, END)
+		self.editFrequency1.insert(0, get_cfg_param(self.config, c_freq1, '8000'))
+		self.editSampling.delete(0, END)
+		self.editSampling.insert(0, get_cfg_param(self.config, c_sampling, '100000'))
+		self.editDuration.delete(0, END)
+		self.editDuration.insert(0, get_cfg_param(self.config, c_duration, '1000'))
+		self.editHush.delete(0, END)
+		self.editHush.insert(0, get_cfg_param(self.config, c_hush, '0'))
+		self.editAmplitude.delete(0, END)
+		self.editAmplitude.insert(0, get_cfg_param(self.config, c_amplitude, '1024'))
+	## << параметры сигнала ##
+
+	## >> постобработка
+		self.cbSignalWindowMethod.current(newindex=get_cfg_param(self.config, c_signal_window_method, 0, 'i'))
+		self.cbSignalWindowType.current(newindex=get_cfg_param(self.config, c_signal_window_type, 0, 'i'))
+		self.cbSignalWindowPlace.current(newindex=get_cfg_param(self.config, c_signal_window_place, 0, 'i'))
+		self.editWindowDuration.delete(0, END)
+		self.editWindowDuration.insert(0, get_cfg_param(self.config, c_signal_window_duration, '1'))	
+		self.editRepeatCount.delete(0, END)
+		self.editRepeatCount.insert(0, get_cfg_param(self.config, c_repeat_count, '1'))	
+		self.editPause.delete(0, END)
+		self.editPause.insert(0, get_cfg_param(self.config, c_pause, '0'))	
+	## << постобработка
+
+	## >> редактор формы спектра ##
+		self.editSpectrumFormFile.delete(0, END)
+		self.editSpectrumFormFile.insert(0, get_cfg_param(self.config, c_spectrum_form_file, ''))
+	## << редактор формы спектра ##
+
+	## >> преобразование шим ##
+		self.editChannelCount.delete(0, END)
+		self.editChannelCount.insert(0, get_cfg_param(self.config, c_channel_count, '2'))
+		self.editSawpp.delete(0, END)
+		self.editSawpp.insert(0, get_cfg_param(self.config, c_saw_count_per_point, '1'))
+		self.editZeroSmooth.delete(0, END)
+		self.editZeroSmooth.insert(0, get_cfg_param(self.config, c_zero_smooth, '0'))
+		self.editChannelGap.delete(0, END)
+		self.editChannelGap.insert(0, get_cfg_param(self.config, c_channel_gap, '0'))
+	## << преобразование шим ##
+
+	## >> фильтрация ##
+		self.filtrate.set(get_cfg_param(self.config, c_filtrate, True, 'b'))
+		self.editFilterFreqMin.delete(0, END)
+		self.editFilterFreqMin.insert(0, get_cfg_param(self.config, c_filter_freq_min, '1000'))
+		self.editFilterFreqMax.delete(0, END)		
+		self.editFilterFreqMax.insert(0, get_cfg_param(self.config, c_filter_freq_max, '4000'))
+		self.apply_spectrum_form.set(get_cfg_param(self.config, c_apply_spectrum_form, False, 'b'))
+		self.apply_accurately_to_form.set(get_cfg_param(self.config, c_apply_accurately_to_form, False, 'b'))
+	## << фильтрация ##
+
+	## >> выгрузка на устройство ##
+		self.send.set(get_cfg_param(self.config, c_send, True, 'b'))
+		self.editHost.delete(0, END)
+		self.editHost.insert(0, get_cfg_param(self.config, c_host, '172.16.4.55'))
+		self.editPort.delete(0, END)
+		self.editPort.insert(0, get_cfg_param(self.config, c_port, '35580'))
+		self.cbMode.current(newindex=get_cfg_param(self.config, c_mode, 1))
+	## << выгрузка на устройство ##
+
+	## >> отрисовка ##
+		self.plot_signal.set(get_cfg_param(self.config, c_plot_signal, True, 'b'))
+		self.plot_signal_spectrum.set(get_cfg_param(self.config, c_plot_signal_spectrum, True, 'b'))
+		self.plot_filtered_signal.set(get_cfg_param(self.config, c_plot_filtered_signal, True, 'b'))
+		self.plot_filtered_spectrum.set(get_cfg_param(self.config, c_plot_filtered_spectrum, True, 'b'))
+		self.plot_shim.set(get_cfg_param(self.config, c_plot_shim, True, 'b'))
+		self.plot_signal_saw.set(get_cfg_param(self.config, c_plot_signal_saw, False, 'b'))
+		self.editPlotFromPoint.delete(0, END)
+		self.editPlotFromPoint.insert(0, get_cfg_param(self.config, c_plot_from_point, '1'))
+		self.editPlotToPoint.delete(0, END)
+		self.editPlotToPoint.insert(0, get_cfg_param(self.config, c_plot_to_point, '1000'))
+	## << отрисовка ##
+
+	## >> общее ##
+		self.editWorkDir.delete(0, END)
+		self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, ''))
+		self.editFilenameTemplate.delete(0, END)
+		self.editFilenameTemplate.insert(0, get_cfg_param(self.config, c_filename_template, ''))
+	## << общее ##
+
 
 	def send_file(self):
 		try:
@@ -525,6 +556,25 @@ class mainFrame(Frame):
 			print(E, file=sys.stderr)  
 
 
+	def load_config(self):
+		try:
+			
+			filename = filedialog.askopenfilename(defaultextension='config', initialdir=self.config[c_workdir], multiple=False, filetypes=[('config files', '.config'), ('log files', '.log'), ('all files', '.*')])
+			
+			if not filename:
+				return
+
+			self.config = self.read_config_file(config_file_name=filename)
+			if self.config == {}:
+				raise Exception('wrong configuration')
+
+			self.set_widget_values()
+
+
+		except Exception as E:
+			print(E, file=sys.stderr)
+
+
 	def start(self):
 		try:
 
@@ -571,31 +621,19 @@ class mainFrame(Frame):
 
 
 	def re_read_params(self, pnames):
- 
-		# читаем файл _main.config
+ 		
 		try:
+			_cfg = self.read_config_file()
+			if _cfg == {}:
+				raise Exception('wrong configuration')
 
-			with open('_main.config', 'r', encoding="utf8") as configfile:
-				lines = configfile.readlines()
-
-				# разбираем параметры записанные в файле _main.config
-				lst=[]
-				for line in lines: # если строка начинается не с буквы, то эту строку пропускаем
-					if line[0] in ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
-						lst.append(line.split('='))
-				
-				for i in range(len(lst)):
-					for j in range(len(lst[i])):
-						lst[i][j] = lst[i][j].strip()
-
-				_cfg = dict(lst)
-				for param in pnames:
-					self.config[param] = _cfg[param]
+			for param in pnames:
+				self.config[param] = _cfg[param]
 
 				# print(self.config)
 
 		except Exception as E:
-			print('error on reading self.config file: %s' % E, file=sys.stderr)
+			print('error in func mainFrame.re_read_params(): %s' % E, file=sys.stderr)
 
 
 	def checkout_config(self):
@@ -611,8 +649,8 @@ class mainFrame(Frame):
 				c_amplitude: int(self.editAmplitude.get()),
 				c_duration:  int(self.editDuration.get()),
 				c_hush:      int(self.editHush.get()),
-				c_fadein:    int(self.editFadeIn.get()),
-				c_fadeout:   int(self.editFadeOut.get()),
+				# c_fadein:    int(self.editFadeIn.get()),
+				# c_fadeout:   int(self.editFadeOut.get()),
 				c_repeat_count: 		   int(self.editRepeatCount.get()),
 				c_pause: 				   int(self.editPause.get()),
 				c_signal_window_type:		int(self.cbSignalWindowType.current()),
@@ -652,7 +690,7 @@ class mainFrame(Frame):
 			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval,
 								 c_save_log,
 								 c_sinus_pack_step, c_meandr_pack_step,
-								 c_spectrum_norm_level, c_spectrum_divider, c_spectrum_source_file])
+								 c_spectrum_norm_level, c_spectrum_divider, c_spectrum_source_file, c_spectrum_koeff])
 
 			log_file_name = None
 			

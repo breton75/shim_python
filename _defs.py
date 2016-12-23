@@ -11,6 +11,9 @@ def get_cfg_param(config, param_name, default, type='s'):
 			if param_name in config:
 				return str(config[param_name]).lower() in ['1', 'yes', 'y', 'true', 't']
 			else: return default
+		elif type == 'f':
+			if param_name in config: return float(config[param_name])
+			else: return default
 		else:
 			if param_name in config: return config[param_name]
 			else: return default
@@ -91,6 +94,7 @@ c_fadeout = 'fadeout'
 
 c_spectrum_norm_level = 'spectrum_norm_level'
 c_spectrum_divider = 'spectrum_divider'
+c_spectrum_koeff = 'spectrum_koeff'
 c_spectrum_source_file = 'spectrum_source_file'
 
 c_meandr_pulse_width = 'meandr_pulse_width'
