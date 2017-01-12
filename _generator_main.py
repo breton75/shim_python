@@ -75,6 +75,7 @@ def generate(config=None, **kwargs):
         hush_count = int(signal_sampling * hush_duration / 1000)
         pause_count = int(signal_sampling * pause / 1000)
     
+        koeff = config[c_koeff]
 
         # шаг приращения по оси x
         x_step = signal_frequency0 / signal_sampling
@@ -83,7 +84,7 @@ def generate(config=None, **kwargs):
 
     ## >> s_type_noise ##
         if signal_type == s_type_noise:
-            y_raw = [random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)]
+            y_raw = [random.uniform(-signal_amplitude * koeff, signal_amplitude * koeff) for _counter in range(signal_point_count)]
 
             if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
@@ -95,7 +96,7 @@ def generate(config=None, **kwargs):
     ## >> s_type_sinus ##
         elif signal_type == s_type_sinus:
             # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2 + 0.5) for _counter in range(signal_point_count)]
-            y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count)]
+            y_raw = [signal_amplitude * koeff * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count)]
             
             if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
@@ -154,7 +155,7 @@ def generate(config=None, **kwargs):
     ## >> s_type_sinus_sinus_noise ##
         elif signal_type == s_type_sinus_sinus_noise:
             k = 0.5
-            y_raw = [(signal_amplitude * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(signal_point_count)]
+            y_raw = [(signal_amplitude * koeff * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(signal_point_count)]
             
             if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
@@ -171,7 +172,7 @@ def generate(config=None, **kwargs):
             T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
             d = 1 / (fd * T) # шаг приращения
 
-            y_raw = [signal_amplitude * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(signal_point_count)]
+            y_raw = [signal_amplitude * koeff * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(signal_point_count)]
             
             if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
@@ -239,16 +240,16 @@ def generate(config=None, **kwargs):
 
             norm_level = int(config[c_spectrum_norm_level])
             divider = int(config[c_spectrum_divider])
-            koeff = float(config[c_spectrum_koeff])
+            # koeff = float(config[c_koeff])
 
-            print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
+            # print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
 
             A = signal_amplitude
             for i in np.arange(_f0, _f1):
                 
                 j = int(f0 + (i - _f0) / T)
                 
-                k = sfmax / (abs(sform[j]) + 1) * koeff
+                k = koeff * sfmax / (abs(sform[j]) + 1)
                 k = k if k <= norm_level else k / sfmax * norm_level
                 # k=1
                 # print('spcmmax=%0.1f\t apcm[%i]=%0.2f \t\t spcm[%i]=%f \t k=%f' % (spcmmax, oi, apcm[oi], oi, spcm[oi], k))
@@ -324,7 +325,7 @@ def generate(config=None, **kwargs):
             x1 = _f0
             y1 = controls[0]
             
-            koeff = float(config[c_spectrum_koeff])
+            # koeff = float(config[c_koeff])
 
             for i in range(1, controls_count):
                 x2 = _f0 + i * xstep
@@ -476,6 +477,8 @@ def meandr(config, **kwargs):
         meandr_type = get_cfg_param(config, c_meandr_type, m_one_channel, 'i') # config[]
         meandr_random_interval = get_cfg_param(config, c_meandr_random_interval, 0, 'i')
 
+        koeff = config[c_koeff]
+
         ms = 0.000001 # 1 микросекунда
 
         # количество отсчетов (сэмплов) на один импульс
@@ -518,7 +521,7 @@ def meandr(config, **kwargs):
             if meandr_type == m_one_channel:
                 i = 0
                 while i < point_count:
-                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude * koeff)
                     i = fill_meandr(y_raw, n_int, i, point_count, 0)
                       
     
@@ -526,16 +529,16 @@ def meandr(config, **kwargs):
                 i = 0
                 while i < point_count:
 
-                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude)
-                    i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude * koeff)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude * koeff)
                     i = fill_meandr(y_raw, n_int, i, point_count, 0)
 
             else:
                 i = 0
                 while i < point_count:
-                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude * koeff)
                     i = fill_meandr(y_raw, n_int, i, point_count, 0)
-                    i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude * koeff)
                     i = fill_meandr(y_raw, n_int, i, point_count, 0)
 
         # << 1
@@ -568,7 +571,7 @@ def meandr(config, **kwargs):
                 i = 0
                 while i < point_count:
 
-                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude * koeff)
 
                     # n_int_random = random.gammavariate(n_int_min) randrange(n_int_min, n_int_max)
                     # n_int_random = -1
@@ -590,8 +593,8 @@ def meandr(config, **kwargs):
                 i = 0
                 while i < point_count:
 
-                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude)
-                    i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude * koeff)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude * koeff)
 
                     # n_int_random = random.randrange(n_int_min, n_int_max)
                     n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
@@ -602,14 +605,14 @@ def meandr(config, **kwargs):
                 i = 0
                 while i < point_count:
 
-                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude * koeff)
                     
                     # n_int_random = random.randrange(n_int_min, n_int_max)
                     # n_int_random = get_rnd(n_int_min, n_int_max)
                     n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
                     i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
                     
-                    i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude)
+                    i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude * koeff)
 
                     # n_int_random = random.randrange(n_int_min, n_int_max)
                     # n_int_random = get_rnd(n_int_min, n_int_max)
@@ -644,8 +647,6 @@ def get_rnd(min_val, max_val):
 
 def sinus_pack(config):
     try:
-        # print('generator1: duration=%i' % config[c_duration])
-    
         f0 = int(config[c_freq0])
         f1 = int(config[c_freq1])
         f_step = int(config[c_sinus_pack_step])
@@ -659,11 +660,16 @@ def sinus_pack(config):
         signal_count = int(sampling * (signal_duration - hush_duration) / 1000)
         hush_count = int(sampling * hush_duration / 1000)
     
+        window_method = int(config[c_signal_window_method])
+        window_place = int(config[c_signal_window_place])
+
+        koeff = config[c_koeff]
+
         y_raw = []
         cnt = 0
         while f0 <= f1:
             x_step = f0 / sampling
-            _y = [amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_count)]
+            _y = [amplitude * koeff * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_count)]
             
             if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 _y = apply_window(config, _y)

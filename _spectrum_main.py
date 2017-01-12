@@ -526,75 +526,75 @@ def apply_spectrum(config, **kwargs):
         spectrumMax = max(aspec[fmin:fmax])
 
         # ЕСЛИ ЗАДАНА ФОРМА СПЕКТРА, ТО НАКЛАДЫВАЕМ ЕЕ НА СПЕКТР
-        # * начало 1 *
-        if c_apply_spectrum_form in config and config[c_apply_spectrum_form] == True: 
+    # # >> apply_spectrum_form
+    #     if c_apply_spectrum_form in config and config[c_apply_spectrum_form] == True: 
             
-            print('appling spectrum form ...', end='')
+    #         print('appling spectrum form ...', end='')
 
-            spectrum_form_file_name = get_path(config, 'spectrum')
+    #         spectrum_form_file_name = get_path(config, 'spectrum')
 
-            # читаем файл с сохраненной формой спектра
-            ver, controls_count, controls, minX, maxX = read_spectrum_form_file(config, **kwargs)
+    #         # читаем файл с сохраненной формой спектра
+    #         ver, controls_count, controls, minX, maxX = read_spectrum_form_file(config, **kwargs)
 
-            # если диапазон частот форма спектра не соответствует заданным параметрам fmin и fmax, то выходим с ошибкой
-            # if not (fmin == minX and fmax == maxX):
-            #     raise Exception('полоса частот формы спектра (%i - %i) не соответствует заданным параметрам (%i - %i)' % (minX, maxX, fmin, fmax))
-                # raise Exception('frequency band of spectrum form (%i - %i) does not match to given params (%i - %i)' % (minX, maxX, fmin, fmax))
+    #         # если диапазон частот форма спектра не соответствует заданным параметрам fmin и fmax, то выходим с ошибкой
+    #         # if not (fmin == minX and fmax == maxX):
+    #         #     raise Exception('полоса частот формы спектра (%i - %i) не соответствует заданным параметрам (%i - %i)' % (minX, maxX, fmin, fmax))
+    #             # raise Exception('frequency band of spectrum form (%i - %i) does not match to given params (%i - %i)' % (minX, maxX, fmin, fmax))
     
-            # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
-            if controls_count is None or controls is None:
-                raise Exception('error on reading spectrum form')
+    #         # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
+    #         if controls_count is None or controls is None:
+    #             raise Exception('error on reading spectrum form')
 
-            minX_n = int(minX * fsdpcnt / fpcnt) # реальные границы формы спектра 
-            maxX_n = int(maxX * fsdpcnt / fpcnt)
-            # print('minX_n={}  maxX_n={}'.format(minX_n,maxX_n))
+    #         minX_n = int(minX * fsdpcnt / fpcnt) # реальные границы формы спектра 
+    #         maxX_n = int(maxX * fsdpcnt / fpcnt)
+    #         # print('minX_n={}  maxX_n={}'.format(minX_n,maxX_n))
 
-            xstep = get_xstep(maxX_n - minX_n, controls_count)
-            x = minX_n
-            x1 = minX_n
-            y1 = controls[0]
+    #         xstep = get_xstep(maxX_n - minX_n, controls_count)
+    #         x = minX_n
+    #         x1 = minX_n
+    #         y1 = controls[0]
             
-            maxY_pos = max(spectrum[minX_n:maxX_n].real) # макс. положительное значение спектра в заданной полосе
-            minY_neg = min(spectrum[minX_n:maxX_n].real) # мин.  отрицательное значение спектра в заданной полосе
+    #         maxY_pos = max(spectrum[minX_n:maxX_n].real) # макс. положительное значение спектра в заданной полосе
+    #         minY_neg = min(spectrum[minX_n:maxX_n].real) # мин.  отрицательное значение спектра в заданной полосе
             
-            if maxY_pos > abs(minY_neg): maxYreal = maxY_pos
-            else: maxYreal = abs(minY_neg)
-            # print('maxY_pos = {}  maxY_neg={}'.format(maxY_pos, minY_neg))
+    #         if maxY_pos > abs(minY_neg): maxYreal = maxY_pos
+    #         else: maxYreal = abs(minY_neg)
+    #         # print('maxY_pos = {}  maxY_neg={}'.format(maxY_pos, minY_neg))
 
-            for i in range(1, controls_count, 1):
-                x2 = minX_n + i * xstep
-                y2 = controls[i]
+    #         for i in range(1, controls_count, 1):
+    #             x2 = minX_n + i * xstep
+    #             y2 = controls[i]
     
-                # проходим по всем точкам между x1 и x2
-                while x < x2:
+    #             # проходим по всем точкам между x1 и x2
+    #             while x < x2:
         
-                    # находим значение (у) точки пересечения вертикальной прямой в точке x и прямой (x1,y1)-(x2,y2)
-                    # уравнение прямой (х1,у1)-(х2,у2):  (x - x1)/(x2 - x1) = (y - y1)/(y2 - y1), отсюда
-                    # y = (x - x1)/(x2 - x1) * (y2 - y1) + y1. получим:
+    #                 # находим значение (у) точки пересечения вертикальной прямой в точке x и прямой (x1,y1)-(x2,y2)
+    #                 # уравнение прямой (х1,у1)-(х2,у2):  (x - x1)/(x2 - x1) = (y - y1)/(y2 - y1), отсюда
+    #                 # y = (x - x1)/(x2 - x1) * (y2 - y1) + y1. получим:
     
-                    y = ((x - x1) / (x2 - x1) * (y2 - y1) + y1) / 100.0
+    #                 y = ((x - x1) / (x2 - x1) * (y2 - y1) + y1) / 100.0
 
-                    # если необходимо привести спектр, точно к заданной форме, то
-                    # в зависимости от уровня сигнала >0 или <0, задаем уровень спектра в данной точке равным y * макс. или мин. значение
-                    if c_apply_accurately_to_form in config and config[c_apply_accurately_to_form] == True:
-                        if spectrum[x].real > 0: newYreal =  y * maxYreal
-                        else:                    newYreal =  -y * maxYreal
-                        # newYreal =  y * maxYreal
-                    # иначе, изменяем уровень спектра в данной точке пропорционально y
-                    else: # abs(spectrum[x]) > y * spectrumMax:
-                        newYreal = y * spectrum[x].real        
+    #                 # если необходимо привести спектр, точно к заданной форме, то
+    #                 # в зависимости от уровня сигнала >0 или <0, задаем уровень спектра в данной точке равным y * макс. или мин. значение
+    #                 if c_apply_accurately_to_form in config and config[c_apply_accurately_to_form] == True:
+    #                     if spectrum[x].real > 0: newYreal =  y * maxYreal
+    #                     else:                    newYreal =  -y * maxYreal
+    #                     # newYreal =  y * maxYreal
+    #                 # иначе, изменяем уровень спектра в данной точке пропорционально y
+    #                 else: # abs(spectrum[x]) > y * spectrumMax:
+    #                     newYreal = y * spectrum[x].real        
                     
-                    spectrum[x]  = complex(newYreal, spectrum[x].imag)  
-                    spectrum[-x] = complex(newYreal, spectrum[x].imag) # в зеркальной части спектра такое же значение
+    #                 spectrum[x]  = complex(newYreal, spectrum[x].imag)  
+    #                 spectrum[-x] = complex(newYreal, spectrum[x].imag) # в зеркальной части спектра такое же значение
 
-                    x+=1
+    #                 x+=1
     
-                x1 = x2
-                y1 = y2
+    #             x1 = x2
+    #             y1 = y2
 
-            print('ok')
+    #         print('ok')
 
-        # * конец 1 *
+        # << apply_spectrum_form
 
         # >> ПРИМЕНЯЕМ ПОЛОСОВОЙ ФИЛЬТР
         if c_filtrate in config and config[c_filtrate] == True:

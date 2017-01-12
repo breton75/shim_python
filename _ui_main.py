@@ -15,8 +15,9 @@ import _generator_main as gen
 import _plot_main as plot
 import _shim_main as shim
 import _socket_main as sock
-import _read_wav as wav
 import _spectrum_main as spectrum
+import _wav as wav
+import _matlab as matlab
 # from _exec_main import execute
 # from _exec_main import get_cfg_param
 
@@ -91,6 +92,12 @@ class mainFrame(Frame):
 		self.lblAmplitude.grid(row=6, column=0, sticky=tk.E)
 		self.editAmplitude = tk.Entry(self.frameSignal, width=16)
 		self.editAmplitude.grid(row=6, column=1, sticky=tk.W)
+
+		# коэффициент уровня сигнала
+		self.lblKoeff = tk.Label(self.frameSignal, text='Коэфф.', width=25)
+		self.lblKoeff.grid(row=7, column=0, sticky=tk.E)
+		self.editKoeff = tk.Entry(self.frameSignal, width=16)
+		self.editKoeff.grid(row=7, column=1, sticky=tk.W)
 
 	## << параметры сигнала
 
@@ -176,6 +183,11 @@ class mainFrame(Frame):
 		self.bnEditSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Редактировать', command=self.edit_spectrum)
 		self.bnEditSpectrumForm.grid(row=1, column=1, sticky=tk.E, columnspan=3)
 
+		# подгонять значения точно заданной форме
+		self.apply_accurately_to_form = BooleanVar()
+		self.checkApplyFccuratelyToForm = tk.Checkbutton(self.frameSpectrumFormEditor, text='Точно по форме', variable=self.apply_accurately_to_form)
+		self.checkApplyFccuratelyToForm.grid(row=5, column=0, sticky=tk.W, columnspan=2)
+
 	## << редактор формы спектра ##
 
 
@@ -200,14 +212,9 @@ class mainFrame(Frame):
 		self.editFilterFreqMax.grid(row=2, column=1, sticky=tk.W)
 
 		# # применить форму спектра
-		self.apply_spectrum_form = BooleanVar()
-		self.checkApplySpectrumForm = tk.Checkbutton(self.frameFilter, text='Применить заданную форму спектра', variable=self.apply_spectrum_form)
-		self.checkApplySpectrumForm.grid(row=4, column=0, sticky=tk.W, columnspan=2)
-
-		# подгонять значения точно заданной форме
-		self.apply_accurately_to_form = BooleanVar()
-		self.checkApplyFccuratelyToForm = tk.Checkbutton(self.frameFilter, text='Точно по форме', variable=self.apply_accurately_to_form)
-		self.checkApplyFccuratelyToForm.grid(row=5, column=0, sticky=tk.W, columnspan=2)
+		# self.apply_spectrum_form = BooleanVar()
+		# self.checkApplySpectrumForm = tk.Checkbutton(self.frameFilter, text='Применить заданную форму спектра', variable=self.apply_spectrum_form)
+		# self.checkApplySpectrumForm.grid(row=4, column=0, sticky=tk.W, columnspan=2)
 
 	## << фильтрация ##
 
@@ -243,6 +250,24 @@ class mainFrame(Frame):
 		self.bnSendFile.grid(row=5, column=0, sticky=tk.E, columnspan=2)
 
 	## << выгрузка на устройство ##
+
+	## >> выходные файлы ##
+		self.frameOutputFormats = tk.LabelFrame(self.frameRight, text='Выходные файлы')
+		self.frameOutputFormats.grid(row=3, column=0, sticky=tk.N)
+		
+		self.make_shim = BooleanVar()
+		self.checkMakeShim = tk.Checkbutton(self.frameOutputFormats, text='ШИМ', variable=self.make_shim, width=36)
+		self.checkMakeShim.grid(row=0, column=0, sticky=tk.E, columnspan=1)
+
+		self.make_wav = BooleanVar()
+		self.checkMakeWav = tk.Checkbutton(self.frameOutputFormats, text='WAV', variable=self.make_wav, width=36)
+		self.checkMakeWav.grid(row=1, column=0, sticky=tk.E, columnspan=1)
+
+		self.make_matlab = BooleanVar()
+		self.checkMakeMatlab = tk.Checkbutton(self.frameOutputFormats, text='Matlab', variable=self.make_matlab, width=36)
+		self.checkMakeMatlab.grid(row=2, column=0, sticky=tk.E, columnspan=1)
+
+	## << выходные форматы ##
 
 
 	## >> отрисовка ##
@@ -388,6 +413,9 @@ class mainFrame(Frame):
 		self.editHush.insert(0, get_cfg_param(self.config, c_hush, '0'))
 		self.editAmplitude.delete(0, END)
 		self.editAmplitude.insert(0, get_cfg_param(self.config, c_amplitude, '1024'))
+		self.editKoeff.delete(0, END)
+		self.editKoeff.insert(0, get_cfg_param(self.config, c_koeff, '1.0'))
+		# self.editAmplitude.configure(state=DISABLED) #, disabledbackground='white', disabledforeground='black')
 	## << параметры сигнала ##
 
 	## >> постобработка
@@ -424,7 +452,7 @@ class mainFrame(Frame):
 		self.editFilterFreqMin.insert(0, get_cfg_param(self.config, c_filter_freq_min, '1000'))
 		self.editFilterFreqMax.delete(0, END)		
 		self.editFilterFreqMax.insert(0, get_cfg_param(self.config, c_filter_freq_max, '4000'))
-		self.apply_spectrum_form.set(get_cfg_param(self.config, c_apply_spectrum_form, False, 'b'))
+		# self.apply_spectrum_form.set(get_cfg_param(self.config, c_apply_spectrum_form, False, 'b'))
 		self.apply_accurately_to_form.set(get_cfg_param(self.config, c_apply_accurately_to_form, False, 'b'))
 	## << фильтрация ##
 
@@ -436,6 +464,12 @@ class mainFrame(Frame):
 		self.editPort.insert(0, get_cfg_param(self.config, c_port, '35580'))
 		self.cbMode.current(newindex=get_cfg_param(self.config, c_mode, 1))
 	## << выгрузка на устройство ##
+
+	## >> выходные форматы ##
+		self.make_shim.set(get_cfg_param(self.config, c_make_shim, True, 'b'))
+		self.make_wav.set(get_cfg_param(self.config, c_make_wav, False, 'b'))
+		self.make_matlab.set(get_cfg_param(self.config, c_make_matlab, True, 'b'))
+	## << выходные форматы ##
 
 	## >> отрисовка ##
 		self.plot_signal.set(get_cfg_param(self.config, c_plot_signal, True, 'b'))
@@ -659,6 +693,7 @@ class mainFrame(Frame):
 				c_signal_window_method:		int(self.cbSignalWindowMethod.current()),
 				c_signal_window_place:		int(self.cbSignalWindowPlace.current()),
 				c_signal_window_duration:	int(self.editWindowDuration.get()),
+				c_koeff: 				   	float(self.editKoeff.get()),
 				# c_meandr_pulse_width:	   get_cfg_param(cfg, c_meandr_pulse_width, 250, 'i'),
 				# c_meandr_interval_width:   get_cfg_param(cfg, c_meandr_interval_width, 100, 'i'),
 				# c_meandr_type:  		   get_cfg_param(cfg, c_meandr_type, m_one_channel, 'i'),
@@ -667,7 +702,7 @@ class mainFrame(Frame):
 				c_filter_freq_max:   int(self.editFilterFreqMax.get()),
 				c_filtrate:            bool(self.filtrate.get()),
 				c_spectrum_form_file:  self.editSpectrumFormFile.get(),
-				c_apply_spectrum_form: bool(self.apply_spectrum_form.get()),
+				# c_apply_spectrum_form: bool(self.apply_spectrum_form.get()),
 				c_apply_accurately_to_form: bool(self.apply_accurately_to_form.get()),
 				c_channel_count:    int(self.editChannelCount.get()),
 				c_saw_count_per_point:      int(self.editSawpp.get()),
@@ -677,6 +712,9 @@ class mainFrame(Frame):
 				c_host:       self.editHost.get(),
 				c_port:       int(self.editPort.get()),
 				c_mode: 	  int(self.cbMode.current()),
+				c_make_shim:  bool(self.make_shim.get()),
+				c_make_wav:  bool(self.make_wav.get()),
+				c_make_matlab:  bool(self.make_matlab.get()),
 				c_plot_signal:            bool(self.plot_signal.get()),
 				c_plot_filtered_signal:   bool(self.plot_filtered_signal.get()),
 				c_plot_signal_spectrum:   bool(self.plot_signal_spectrum.get()),
@@ -692,7 +730,7 @@ class mainFrame(Frame):
 			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval,
 								 c_save_log,
 								 c_sinus_pack_step, c_meandr_pack_step,
-								 c_spectrum_norm_level, c_spectrum_divider, c_spectrum_source_file, c_spectrum_koeff])
+								 c_spectrum_norm_level, c_spectrum_divider, c_spectrum_source_file])
 
 			log_file_name = None
 			
@@ -702,6 +740,8 @@ class mainFrame(Frame):
 				log_file_name = work_dir + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
 
 			self.config[c_log_file_name] = log_file_name
+
+			self.config[c_signal_name] = self.cbSignalType.get()
 
 			return self.config
 
@@ -738,15 +778,17 @@ def do(config):
 	 
 	SEND_STOP = 0
 	 
-	MAKE_SHIM = bool(1)
+	MAKE_SHIM = config[c_make_shim]
+	MAKE_WAV = config[c_make_wav]
+	MAKE_MATLAB = config[c_make_matlab]
 	
-	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
-	apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
+	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (config[c_signal_type] != gen.s_type_sinus) and (config[c_signal_type] != gen.s_type_lfm)
+	# apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
 
 	PLOT_SIGNAL = int(get_cfg_param(config, c_plot_signal, True, 'b'))
-	PLOT_FILTERED = int(get_cfg_param(config, c_plot_filtered_signal, True, 'b')) & (int(filtrate) | int(apply_spectrum_form))
+	PLOT_FILTERED = int(get_cfg_param(config, c_plot_filtered_signal, True, 'b')) & (int(filtrate)) # | int(apply_spectrum_form))
 	PLOT_SIGNAL_SPECTRUM = int(get_cfg_param(config, c_plot_signal_spectrum, True, 'b'))
-	PLOT_FILTERED_SPECTRUM = int(get_cfg_param(config, c_plot_filtered_spectrum, True, 'b')) & (int(filtrate) | int(apply_spectrum_form))
+	PLOT_FILTERED_SPECTRUM = int(get_cfg_param(config, c_plot_filtered_spectrum, True, 'b')) & (int(filtrate)) # | int(apply_spectrum_form))
 	PLOT_SHIM = int(get_cfg_param(config, c_plot_shim, True, 'b')) and MAKE_SHIM
 	PLOT_SIGNAL_SAW = int(get_cfg_param(config, c_plot_signal_saw, False, 'b'))
 	
@@ -767,7 +809,7 @@ def do(config):
 
 	 
 	if READ_WAV:
-		araw = wav.wav(file_name="D:/c++/AME/imperia march r.wav",
+		araw = wav.read_wav(file_name="D:/c++/AME/imperia march r.wav",
 				   to_file=filename_raw)
 	else:
 		araw = gen.generate(config)
@@ -785,7 +827,7 @@ def do(config):
 
 	 
 	# sys.exit(0)
-	if filtrate or apply_spectrum_form:
+	if filtrate: # or apply_spectrum_form:
 		arawf = spectrum.apply_spectrum(config, signal_data=araw)
 
 	else:
@@ -799,9 +841,15 @@ def do(config):
 		if not shim.shim(config, data=arawf):
 			return
 
+	if MAKE_WAV:
+		wav.write_wav(config, data=arawf)
+		
 
-	if SEND:
+	if SEND and MAKE_SHIM:
 		sock.send(config)
+
+	if MAKE_MATLAB:
+		matlab.write_m_file(config)
 
 	 
 	if PLOT:

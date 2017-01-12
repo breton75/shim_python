@@ -85,6 +85,7 @@ w_place_signal_end = 5
 
 ## константы
 c_signal_type = 'signal_type'
+c_signal_name = 'signal_name'
 c_freq0  = 'freq0'
 c_freq1  = 'freq1'
 c_sampling = 'sampling'			
@@ -96,7 +97,7 @@ c_fadeout = 'fadeout'
 
 c_spectrum_norm_level = 'spectrum_norm_level'
 c_spectrum_divider = 'spectrum_divider'
-c_spectrum_koeff = 'spectrum_koeff'
+c_koeff = 'koeff'
 c_spectrum_source_file = 'spectrum_source_file'
 
 c_meandr_pulse_width = 'meandr_pulse_width'
@@ -133,6 +134,10 @@ c_send = 'send'
 c_host = 'host'
 c_port = 'port'
 c_mode = 'mode'
+
+c_make_shim = 'make_shim'
+c_make_wav = 'make_wav'
+c_make_matlab = 'make_matlab'
 
 
 c_plot_signal = 'plot_signal'
