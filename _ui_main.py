@@ -4,6 +4,7 @@ import tkinter.ttk as ttk
 from tkinter import filedialog
 from tkinter import *
 import time
+from datetime import datetime, date, time
 import numpy as np
 import array as arr
 
@@ -727,6 +728,13 @@ class mainFrame(Frame):
 				c_filename_template:      self.editFilenameTemplate.get()
 			}
 
+			# рабочий каталог
+			self.config[c_workdir].replace('\x005C', '/')
+			if self.config[c_workdir][-1] != '/': self.config[c_workdir] += '/'
+			self.editWorkDir.delete(0, END)
+			self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, ''))
+
+
 			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval,
 								 c_save_log,
 								 c_sinus_pack_step, c_meandr_pack_step,
@@ -735,9 +743,10 @@ class mainFrame(Frame):
 			log_file_name = None
 			
 			if get_cfg_param(self.config, c_save_log, True, 'b') == True:
-				work_dir = self.config[c_workdir]
-				if work_dir[-1] != '/': work_dir += '/'
-				log_file_name = work_dir + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
+				# work_dir = self.config[c_workdir]
+				# if work_dir[-1] != '/': work_dir += '/'
+				# log_file_name = work_dir + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
+				log_file_name = self.config[c_work_dir] + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
 
 			self.config[c_log_file_name] = log_file_name
 
@@ -752,8 +761,9 @@ class mainFrame(Frame):
 
 
 def do(config):
-	config[c_cur_date] = time.strftime(c_date_format)
-	config[c_cur_time] = time.strftime(c_time_format)
+	config[c_cur_time] = datetime.now().timetuple()
+	# config[c_cur_date] = time.strftime(c_date_format)
+	# config[] = time.strftime(c_time_format)
 
 	# пишем текущую конфигурацию в лог
 	if not config[c_log_file_name] is None:

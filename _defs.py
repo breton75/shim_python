@@ -23,26 +23,49 @@ def get_cfg_param(config, param_name, default, type='s'):
 		return None
 
 
-def get_path(config, extention):
+def get_folder_name(config, extention, **kwargs):
+	try:
+		
+		workdir = config[c_workdir]
+		workdir = workdir.replace('{EXT}', extention)
+		workdir = workdir.replace('{DATE}', time.strftime(c_date_format, config[c_cur_time]))
+		workdir = workdir.replace('{TIME}', time.strftime(c_time_format, config[c_cur_time]))
+		workdir = workdir.replace('\x005C', '/')
+
+		if workdir[-1] != '/': workdir += '/'
+
+		return workdir
+
+	except Exception as E:
+		print('error in func get_folder_name(): %s' % E, file=sys.stderr)
+		return None
+
+
+def get_path(config, extention, **kwargs):
 	try:
 		if not (c_workdir in config or c_filename_template in config):
 			raise Exception('config must contains params "filename_template" and "workdir" specifing path and names of created files\nexample: filename_template = home/user/  workdir=test_main')
 	  
-		filename_template = config[c_workdir]
-		if len(filename_template) == 0:
+		if len(config[c_workdir]) == 0:
 			raise Exception("Work directory not specified")
+		
+		workdir = ''
+		if ('only_filename' not in kwargs) or (bool(kwargs['only_filename']) == False):
+			workdir = get_folder_name(config, extention)
+			
+		print(workdir)
+		filename = config[c_filename_template].replace('{DATE}', time.strftime(c_date_format, config[c_cur_time]))
+		filename = filename.replace('{TIME}', time.strftime(c_time_format, config[c_cur_time]))
 
-		if filename_template[-1] != '/': filename_template += '/'
-
-		fn = config[c_filename_template].replace('{DATE}', config[c_cur_date])
-		fn = fn.replace('{TIME}', config[c_cur_time])
-
-		return filename_template + fn + '.' + extention
+		return workdir + filename + '.' + extention
 
 
 	except Exception as E:
 		print('error in func get_path(): %s' % E, file=sys.stderr)
 		return None
+
+
+###########################################
 
 c_cur_date = 'cur_date'
 c_cur_time = 'cur_time'
