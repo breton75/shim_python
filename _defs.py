@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import time
 import sys
+import os
+
 
 def get_cfg_param(config, param_name, default, type='s'):
 	try:
@@ -23,16 +25,19 @@ def get_cfg_param(config, param_name, default, type='s'):
 		return None
 
 
+def replace_re(config, extention, string, **kwargs):
+	return string.replace("\u005c", "/") \
+			  .replace('{EXT}', extention) \
+			  .replace('{DATE}', time.strftime(c_date_format, config[c_cur_time])) \
+			  .replace('{TIME}', time.strftime(c_time_format, config[c_cur_time])) 
+
 def get_folder_name(config, extention, **kwargs):
 	try:
-		
-		workdir = config[c_workdir]
-		workdir = workdir.replace('{EXT}', extention)
-		workdir = workdir.replace('{DATE}', time.strftime(c_date_format, config[c_cur_time]))
-		workdir = workdir.replace('{TIME}', time.strftime(c_time_format, config[c_cur_time]))
-		workdir = workdir.replace('\x005C', '/')
-
+		workdir = replace_re(config, extention, config[c_workdir])
 		if workdir[-1] != '/': workdir += '/'
+
+		if not os.path.exists(workdir):
+			os.makedirs(workdir)
 
 		return workdir
 
@@ -53,9 +58,7 @@ def get_path(config, extention, **kwargs):
 		if ('only_filename' not in kwargs) or (bool(kwargs['only_filename']) == False):
 			workdir = get_folder_name(config, extention)
 			
-		print(workdir)
-		filename = config[c_filename_template].replace('{DATE}', time.strftime(c_date_format, config[c_cur_time]))
-		filename = filename.replace('{TIME}', time.strftime(c_time_format, config[c_cur_time]))
+		filename = replace_re(config, extention, config[c_filename_template])
 
 		return workdir + filename + '.' + extention
 

@@ -44,7 +44,7 @@ def createParser ():
 def generate(config=None, **kwargs):
     try:
 
-        print('generating signal ... ', end='')
+        print('формируем сигнал ... ', end='')
         
 
         signal_type = int(config[c_signal_type])
@@ -317,7 +317,7 @@ def generate(config=None, **kwargs):
 
             # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
             if controls_count is None or controls is None:
-                raise Exception('error on reading spectrum form')
+                raise Exception('ошибка чтения файла формы спектра')
 
             xstep = (_f1 - _f0) / (controls_count - 1)
 
@@ -405,7 +405,7 @@ def generate(config=None, **kwargs):
     
 
         # пишем в файл
-        print('saving signal ...', end='')
+        print('сохраняем сигнал в файл ... ', end='')
         try:
             with open(file_name, 'wb') as f:
                 arr = array.array('d')
@@ -756,7 +756,6 @@ def apply_window(config, y_raw):
             # если необходимо вставить окно в конец всего сигнала, то его надо вставить перед тишиной в конце последней пачки.
             if hush_point_count and window_place in [w_place_signal_end, w_place_signal_begin_end]:
                 _y = _y[:-hush_point_count] # временно отбрасываем тишину в конце последней пачки сигнала
-                print(len(_y))
 
     
     

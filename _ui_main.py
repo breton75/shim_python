@@ -55,7 +55,7 @@ class mainFrame(Frame):
 		# тип сигнала
 		self.lblSignalType = tk.Label(self.frameSignal, text='Тип сигнала', width=25)
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра', 'Ровный спектр', 'Форма спектра'])
+		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра', 'Ровный спектр', 'Из формы спектра'])
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
 	
 		# частота начальная
@@ -729,7 +729,7 @@ class mainFrame(Frame):
 			}
 
 			# рабочий каталог
-			self.config[c_workdir].replace('\x005C', '/')
+			self.config[c_workdir] = self.config[c_workdir].replace('\u005c', '/')
 			if self.config[c_workdir][-1] != '/': self.config[c_workdir] += '/'
 			self.editWorkDir.delete(0, END)
 			self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, ''))

@@ -72,7 +72,7 @@ def read_wav(**kwargs):
 
 
 def write_wav(config, **kwargs):
-    print('пишем wav файл ... ', end='')
+    print('формируем wav файл ... ', end='')
 
     try:
         
@@ -127,7 +127,7 @@ def write_wav(config, **kwargs):
                 wav.write(struct.pack('i', val))
 
 
-        print('успешно')
+        print('ok')
 
     except Exception as E:
         print('ошибка:\n\t%s' % E, file=sys.stderr)

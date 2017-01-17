@@ -241,7 +241,7 @@ def plot(config, **kwargs):
         if flag_shim:
             try:
                 shim_file_name = get_path(config, 'shim')
-    
+                print('here')
                 # читаем заголовок файла
                 header = duty.read_header(shim_file_name, shim.HEADER_PACK)
         

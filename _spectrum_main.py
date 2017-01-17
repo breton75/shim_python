@@ -390,7 +390,7 @@ def read_spectrum_form_file(config, **kwargs):
         controls_count = header[2]
         minX = header[3]
         maxX = header[4]
-        print(spectrum_form_file_name)
+
         controls = duty.read_file(spectrum_form_file_name, 'd', struct.calcsize(HEADER_STRUCT), controls_count)
 
     except Exception as E:
