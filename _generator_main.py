@@ -543,7 +543,7 @@ def meandr(config, **kwargs):
 
         # << 1
 
-        # >> 2. иначе если необходимо расставить интервалы произвольной длины
+        # >> 2. иначе если необходимо расставить интервалы случайной ширины
         else:
 
             # длительность одного отсчета (сэмпла)
@@ -565,6 +565,8 @@ def meandr(config, **kwargs):
             # пустой массив
             y_raw = np.empty(point_count, dtype=float)
 
+            # распределение
+            mode = n_int_min
 
             # расставляем импульсы
             if meandr_type == m_one_channel:
@@ -583,7 +585,7 @@ def meandr(config, **kwargs):
                     
 
                     # n_int_random = random.randrange(n_int_min, n_int_max)
-                    n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
+                    n_int_random = random.triangular(n_int_min, n_int_max, mode)
                     i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
 
                 # print(y)
@@ -595,10 +597,11 @@ def meandr(config, **kwargs):
 
                     i = fill_meandr(y_raw, n_imp, i, point_count, signal_amplitude * koeff)
                     i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude * koeff)
-
+                    
                     # n_int_random = random.randrange(n_int_min, n_int_max)
-                    n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
-                    i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
+                    n_int_random = random.triangular(n_int_min, n_int_max, mode)
+                    print(n_int_random)
+                    i = fill_meandr(y_raw, n_int_random, i, point_count, 0) # n_int_min + (n_int_max - n_int_min) * 
 
 
             else:
@@ -609,14 +612,15 @@ def meandr(config, **kwargs):
                     
                     # n_int_random = random.randrange(n_int_min, n_int_max)
                     # n_int_random = get_rnd(n_int_min, n_int_max)
-                    n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
+                    n_int_random = random.triangular(n_int_min, n_int_max, mode)
                     i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
                     
                     i = fill_meandr(y_raw, n_imp, i, point_count, -signal_amplitude * koeff)
 
                     # n_int_random = random.randrange(n_int_min, n_int_max)
                     # n_int_random = get_rnd(n_int_min, n_int_max)
-                    n_int_random = random.triangular(n_int_min, n_int_max, n_int_min)
+                    
+                    n_int_random = random.triangular(n_int_min, n_int_max, mode)
                     i = fill_meandr(y_raw, n_int_random, i, point_count, 0)
 
         # << 2

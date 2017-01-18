@@ -88,22 +88,32 @@ class mainFrame(Frame):
 		self.editHush = tk.Entry(self.frameSignal, width=16)
 		self.editHush.grid(row=5, column=1, sticky=tk.W)
 
+		# количество повторений сгенерированного сигнала
+		lblCyclesCount = tk.Label(self.frameSignal, text='Повторить сигнал, раз', width=25).grid(row=6, column=0, sticky=tk.E)
+		self.editRepeatCount = tk.Entry(self.frameSignal, width=16)
+		self.editRepeatCount.grid(row=6, column=1, sticky=tk.W)
+
+		# пауза после всех повторов
+		lblPause = tk.Label(self.frameSignal, text='Пауза в конце (мс.)', width=25).grid(row=7, column=0, sticky=tk.E)
+		self.editPause = tk.Entry(self.frameSignal, width=16)
+		self.editPause.grid(row=7, column=1, sticky=tk.W)
+
 		# амплитуда
 		self.lblAmplitude = tk.Label(self.frameSignal, text='Амплитуда', width=25)
-		self.lblAmplitude.grid(row=6, column=0, sticky=tk.E)
+		self.lblAmplitude.grid(row=8, column=0, sticky=tk.E)
 		self.editAmplitude = tk.Entry(self.frameSignal, width=16)
-		self.editAmplitude.grid(row=6, column=1, sticky=tk.W)
+		self.editAmplitude.grid(row=8, column=1, sticky=tk.W)
 
 		# коэффициент уровня сигнала
-		self.lblKoeff = tk.Label(self.frameSignal, text='Коэфф.', width=25)
-		self.lblKoeff.grid(row=7, column=0, sticky=tk.E)
+		self.lblKoeff = tk.Label(self.frameSignal, text='Коэфф. уровня сигнала', width=25)
+		self.lblKoeff.grid(row=9, column=0, sticky=tk.E)
 		self.editKoeff = tk.Entry(self.frameSignal, width=16)
-		self.editKoeff.grid(row=7, column=1, sticky=tk.W)
+		self.editKoeff.grid(row=9, column=1, sticky=tk.W)
 
 	## << параметры сигнала
 
-	## >> постобработка
-		self.framePostprocessing = tk.LabelFrame(self.frameLeft, text='Постобработка сигнала')
+	## >> наложение окна
+		self.framePostprocessing = tk.LabelFrame(self.frameLeft, text='Наложение окна')
 		self.framePostprocessing.grid(row=1, column=0, sticky=tk.N)
 
 		# метод наложения
@@ -125,17 +135,7 @@ class mainFrame(Frame):
 		lblWindowDuration = tk.Label(self.framePostprocessing, text='Длительность окна, мс.', width=25).grid(row=3, column=0, sticky=tk.E)
 		self.editWindowDuration = tk.Entry(self.framePostprocessing, width=16)
 		self.editWindowDuration.grid(row=3, column=1, sticky=tk.W)
-
-		# количество повторений сгенерированного сигнала
-		lblCyclesCount = tk.Label(self.framePostprocessing, text='Повторить сигнал, раз', width=25).grid(row=4, column=0, sticky=tk.E)
-		self.editRepeatCount = tk.Entry(self.framePostprocessing, width=16)
-		self.editRepeatCount.grid(row=4, column=1, sticky=tk.W)
-
-		# пауза после всех повторов
-		lblPause = tk.Label(self.framePostprocessing, text='Пауза после (мс.)', width=25).grid(row=5, column=0, sticky=tk.E)
-		self.editPause = tk.Entry(self.framePostprocessing, width=16)
-		self.editPause.grid(row=5, column=1, sticky=tk.W)
-
+	## << наложение окна
 
 	## >> преобразование шим ##
 		self.frameShim = tk.LabelFrame(self.frameLeft, text='Преобразование ШИМ')
