@@ -92,9 +92,9 @@ m_one_channel = 0
 m_channels_iterleaved = 1
 m_channels_alternate = 2
 
-w_type_trapeze = 1
-w_type_cos = 2
-w_type_s = 3
+w_form_trapeze = 0
+w_form_cos = 1
+w_form_s = 2
 
 w_method_no_window = 0
 w_method_atop = 1
@@ -134,8 +134,8 @@ c_meandr_pack_step = 'meandr_pack_step'
 c_sinus_pack_step = 'sinus_pack_step'
 
 # постобработка
-c_signal_window_type = 'signal_window_type'
-c_signal_window_method = 'signal_window_method' 
+c_signal_window_type = 'signal_window_type' 
+c_signal_window_form = 'signal_window_form'
 c_signal_window_place = 'signal_window_place'
 c_signal_window_duration = 'signal_window_duration'
 c_repeat_count = 'repeat_count'

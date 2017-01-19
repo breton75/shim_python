@@ -113,27 +113,27 @@ class mainFrame(Frame):
 	## << параметры сигнала
 
 	## >> наложение окна
-		self.framePostprocessing = tk.LabelFrame(self.frameLeft, text='Наложение окна')
-		self.framePostprocessing.grid(row=1, column=0, sticky=tk.N)
-
-		# метод наложения
-		self.lblSignalWindowMethod = tk.Label(self.framePostprocessing, text='Способ наложения', width=25).grid(row=1, column=0, sticky=tk.E)
-		self.cbSignalWindowMethod = ttk.Combobox(self.framePostprocessing, width=13, values=['Нет окна', 'Поверх сигнала', 'Добавить шум', 'Обрезать'])
-		self.cbSignalWindowMethod.grid(row=0, column=1, sticky=tk.W)
+		self.frameWindow = tk.LabelFrame(self.frameLeft, text='Наложение окна')
+		self.frameWindow.grid(row=1, column=0, sticky=tk.N)
 
 		# тип окна
-		self.lblSignalWindowType = tk.Label(self.framePostprocessing, text='Тип окна', width=25).grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalWindowType = ttk.Combobox(self.framePostprocessing, width=13, values=['Трапеция', 'Cosinus', 'S-образное'])
-		self.cbSignalWindowType.grid(row=1, column=1, sticky=tk.W)
+		self.lblSignalWindowType = tk.Label(self.frameWindow, text='Тип окна', width=25).grid(row=0, column=0, sticky=tk.E)
+		self.cbSignalWindowType = ttk.Combobox(self.frameWindow, width=13, values=['Нет окна', 'Поверх сигнала', 'Добавить шум', 'Обрезать'])
+		self.cbSignalWindowType.grid(row=0, column=1, sticky=tk.W)
+		
+		# форма окна
+		self.lblSignalWindowForm = tk.Label(self.frameWindow, text='Форма окна', width=25).grid(row=1, column=0, sticky=tk.E)
+		self.cbSignalWindowForm = ttk.Combobox(self.frameWindow, width=13, values=['Трапеция', 'Cosinus', 'S-образное'])
+		self.cbSignalWindowForm.grid(row=1, column=1, sticky=tk.W)
 
 		# куда накладывать
-		self.lblSignalWindowPlace = tk.Label(self.framePostprocessing, text='Место наложения', width=25).grid(row=2, column=0, sticky=tk.E)
-		self.cbSignalWindowPlace = ttk.Combobox(self.framePostprocessing, width=13, values=['Начало и конец каждой пачки', 'Начало каждой пачки', 'Конец каждой пачки', 'Начало и конец сигнала', 'Начало сигнала', 'Конец сигнала'])
+		self.lblSignalWindowPlace = tk.Label(self.frameWindow, text='Место наложения', width=25).grid(row=2, column=0, sticky=tk.E)
+		self.cbSignalWindowPlace = ttk.Combobox(self.frameWindow, width=13, values=['Начало и конец каждой пачки', 'Начало каждой пачки', 'Конец каждой пачки', 'Начало и конец сигнала', 'Начало сигнала', 'Конец сигнала'])
 		self.cbSignalWindowPlace.grid(row=2, column=1, sticky=tk.W)
 
 		# длительность окна
-		lblWindowDuration = tk.Label(self.framePostprocessing, text='Длительность окна, мс.', width=25).grid(row=3, column=0, sticky=tk.E)
-		self.editWindowDuration = tk.Entry(self.framePostprocessing, width=16)
+		lblWindowDuration = tk.Label(self.frameWindow, text='Длительность окна, мс.', width=25).grid(row=3, column=0, sticky=tk.E)
+		self.editWindowDuration = tk.Entry(self.frameWindow, width=16)
 		self.editWindowDuration.grid(row=3, column=1, sticky=tk.W)
 	## << наложение окна
 
@@ -412,6 +412,10 @@ class mainFrame(Frame):
 		self.editDuration.insert(0, get_cfg_param(self.config, c_duration, '1000'))
 		self.editHush.delete(0, END)
 		self.editHush.insert(0, get_cfg_param(self.config, c_hush, '0'))
+		self.editRepeatCount.delete(0, END)
+		self.editRepeatCount.insert(0, get_cfg_param(self.config, c_repeat_count, '1'))	
+		self.editPause.delete(0, END)
+		self.editPause.insert(0, get_cfg_param(self.config, c_pause, '0'))	
 		self.editAmplitude.delete(0, END)
 		self.editAmplitude.insert(0, get_cfg_param(self.config, c_amplitude, '1024'))
 		self.editKoeff.delete(0, END)
@@ -419,17 +423,13 @@ class mainFrame(Frame):
 		# self.editAmplitude.configure(state=DISABLED) #, disabledbackground='white', disabledforeground='black')
 	## << параметры сигнала ##
 
-	## >> постобработка
-		self.cbSignalWindowMethod.current(newindex=get_cfg_param(self.config, c_signal_window_method, 0, 'i'))
+	## >> наложение окна
 		self.cbSignalWindowType.current(newindex=get_cfg_param(self.config, c_signal_window_type, 0, 'i'))
+		self.cbSignalWindowForm.current(newindex=get_cfg_param(self.config, c_signal_window_form, 0, 'i'))
 		self.cbSignalWindowPlace.current(newindex=get_cfg_param(self.config, c_signal_window_place, 0, 'i'))
 		self.editWindowDuration.delete(0, END)
 		self.editWindowDuration.insert(0, get_cfg_param(self.config, c_signal_window_duration, '1'))	
-		self.editRepeatCount.delete(0, END)
-		self.editRepeatCount.insert(0, get_cfg_param(self.config, c_repeat_count, '1'))	
-		self.editPause.delete(0, END)
-		self.editPause.insert(0, get_cfg_param(self.config, c_pause, '0'))	
-	## << постобработка
+	## << наложение окна
 
 	## >> редактор формы спектра ##
 		self.editSpectrumFormFile.delete(0, END)
@@ -691,7 +691,7 @@ class mainFrame(Frame):
 				c_repeat_count: 		   int(self.editRepeatCount.get()),
 				c_pause: 				   int(self.editPause.get()),
 				c_signal_window_type:		int(self.cbSignalWindowType.current()),
-				c_signal_window_method:		int(self.cbSignalWindowMethod.current()),
+				c_signal_window_form:		int(self.cbSignalWindowForm.current()),
 				c_signal_window_place:		int(self.cbSignalWindowPlace.current()),
 				c_signal_window_duration:	int(self.editWindowDuration.get()),
 				c_koeff: 				   	float(self.editKoeff.get()),

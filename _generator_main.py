@@ -62,7 +62,7 @@ def generate(config=None, **kwargs):
         pause = int(config[c_pause])
 
         window_type = int(config[c_signal_window_type])
-        window_method = int(config[c_signal_window_method])
+        window_form = int(config[c_signal_window_form])
         window_place = int(config[c_signal_window_place])
         window_duration = int(config[c_signal_window_duration])
 
@@ -86,7 +86,7 @@ def generate(config=None, **kwargs):
         if signal_type == s_type_noise:
             y_raw = [random.uniform(-signal_amplitude * koeff, signal_amplitude * koeff) for _counter in range(signal_point_count)]
 
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
@@ -98,7 +98,7 @@ def generate(config=None, **kwargs):
             # y_raw = [signal_amplitude * math.sin( x_step * _counter * math.pi * 2 + 0.5) for _counter in range(signal_point_count)]
             y_raw = [signal_amplitude * koeff * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count)]
             
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
@@ -112,7 +112,7 @@ def generate(config=None, **kwargs):
 
             if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
@@ -132,7 +132,7 @@ def generate(config=None, **kwargs):
                 config[c_meandr_interval_width] = interval0
                 y_raw.extend(meandr(config, **kwargs))
                 
-                if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+                if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                     y_raw = apply_window(config, y_raw)
                     if y_raw is None: raise Exception('не удалось сформировать сигнал')
                 
@@ -157,7 +157,7 @@ def generate(config=None, **kwargs):
             k = 0.5
             y_raw = [(signal_amplitude * koeff * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(signal_point_count)]
             
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
@@ -174,7 +174,7 @@ def generate(config=None, **kwargs):
 
             y_raw = [signal_amplitude * koeff * math.cos(2 * math.pi * f0 / fd * n + d * math.pi * (f1 - f0) / fd * n**2) for n in range(signal_point_count)]
             
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
@@ -188,7 +188,7 @@ def generate(config=None, **kwargs):
 
             y_raw = ifft(spec).real
 
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
     ## << s_type_flat_spectrum ##
@@ -236,22 +236,25 @@ def generate(config=None, **kwargs):
 
             a = duty.read_file(config[c_spectrum_source_file], 'f', 110175 * 4, 48828)
             sform = fft(a)
-            sfmax = max(abs(sform))
+
+            sfmax = max(abs(snoise))
 
             norm_level = int(config[c_spectrum_norm_level])
-            divider = int(config[c_spectrum_divider])
+            # divider = int(config[c_spectrum_divider])
             # koeff = float(config[c_koeff])
 
             # print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
 
-            A = signal_amplitude
+            A = signal_amplitude * koeff
             for i in np.arange(_f0, _f1):
                 
                 j = int(f0 + (i - _f0) / T)
                 
                 k = koeff * sfmax / (abs(sform[j]) + 1)
-                k = k if k <= norm_level else k / sfmax * norm_level
-                # k=1
+                if k > norm_level:
+                    k /= (sfmax * norm_level)
+
+                k=1
                 # print('spcmmax=%0.1f\t apcm[%i]=%0.2f \t\t spcm[%i]=%f \t k=%f' % (spcmmax, oi, apcm[oi], oi, spcm[oi], k))
                 
                 imag = k * A * cmath.cos(cmath.phase(snoise[i]))  # x
@@ -288,7 +291,7 @@ def generate(config=None, **kwargs):
             
 
             # накладываем окно на пачку, если необходимо
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
@@ -359,7 +362,7 @@ def generate(config=None, **kwargs):
             # print('len _y=%i, type: %s of %s' % (len(_y), type(_y), type(_y[0])))
 
             # накладываем окно на пачку, если необходимо
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 y_raw = apply_window(config, y_raw)
                 if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
@@ -374,26 +377,26 @@ def generate(config=None, **kwargs):
             y.extend(y_raw)
 
         # добавляем окно ко всему сигналу, если необходимо        
-        if window_method != w_method_no_window and window_place in [w_place_signal_begin_end, w_place_signal_begin, w_place_signal_end]:
+        if window_type != w_method_no_window and window_place in [w_place_signal_begin_end, w_place_signal_begin, w_place_signal_end]:
             y = apply_window(config, y)
             if y == None: raise Exception('не удалось сформировать сигнал')
 
         # определяем общуюу длину получившегося сигнала
-        if window_method == w_method_add:
+        if window_type == w_method_add:
             
             if window_place == w_place_signal_begin_end:  config[c_duration] = signal_duration * repeat_count + window_duration * 2 + pause
             elif window_place in [w_place_signal_begin, w_place_signal_end]:    config[c_duration] = signal_duration * repeat_count + window_duration + pause
             elif window_place == w_place_pack_begin_end:    config[c_duration] = (signal_duration + window_duration * 2) * repeat_count + pause
             elif window_place in [w_place_pack_begin, w_place_pack_end]:    config[c_duration] = (signal_duration + window_duration) * repeat_count + pause
         
-        elif window_method == w_method_cut:
+        elif window_type == w_method_cut:
 
             if window_place == w_place_signal_begin_end:  config[c_duration] = signal_duration * repeat_count - window_duration * 2 + pause
             elif window_place in [w_place_signal_begin, w_place_signal_end]:    config[c_duration] = signal_duration * repeat_count - window_duration + pause
             elif window_place == w_place_pack_begin_end:    config[c_duration] = (signal_duration - window_duration * 2) * repeat_count + pause
             elif window_place in [w_place_pack_begin, w_place_pack_end]: config[c_duration] = (signal_duration - window_duration) * repeat_count + pause
 
-        else: # window_method == w_method_atop == w_method_no_window:
+        else: # window_type == w_method_atop == w_method_no_window:
 
             config[c_duration] = signal_duration * repeat_count + pause
 
@@ -664,7 +667,7 @@ def sinus_pack(config):
         signal_count = int(sampling * (signal_duration - hush_duration) / 1000)
         hush_count = int(sampling * hush_duration / 1000)
     
-        window_method = int(config[c_signal_window_method])
+        window_type = int(config[c_signal_window_type])
         window_place = int(config[c_signal_window_place])
 
         koeff = config[c_koeff]
@@ -675,7 +678,7 @@ def sinus_pack(config):
             x_step = f0 / sampling
             _y = [amplitude * koeff * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_count)]
             
-            if window_method != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
                 _y = apply_window(config, _y)
                 if _y is None: raise Exception('не удалось сформировать сигнал')
 
@@ -703,18 +706,18 @@ def apply_window(config, y_raw):
         hush_duration = int(config[c_hush])
         
         window_type = int(config[c_signal_window_type])
-        window_method = int(config[c_signal_window_method])
+        window_form = int(config[c_signal_window_form])
         window_place = int(config[c_signal_window_place])
         window_duration = int(config[c_signal_window_duration])
     
         window_point_count = int(signal_sampling * window_duration / 1000)
         hush_point_count = int(signal_sampling * hush_duration / 1000)
 
-        if window_method == w_method_no_window or window_point_count == 0:
+        if window_type == w_method_no_window or window_point_count == 0:
             return y_raw
     
         _y = []
-        if window_method == w_method_cut: # обрезка сигнала
+        if window_type == w_method_cut: # обрезка сигнала
             
             _y.extend(y_raw)
 
@@ -737,7 +740,7 @@ def apply_window(config, y_raw):
 
             return _y
 
-        elif window_method == w_method_add:
+        elif window_type == w_method_add:
             if window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_signal_begin, w_place_signal_begin_end]:
                 _y.extend([random.uniform(-amp, amp) for _counter in range(window_point_count)])
     
@@ -754,7 +757,7 @@ def apply_window(config, y_raw):
                 _y.extend([random.uniform(-amp, amp) for _counter in range(window_point_count)])
     
 
-        else: # c_signal_window_method == w_method_atop:
+        else: # c_signal_window_type == w_method_atop:
             _y.extend(y_raw)
 
             # если необходимо вставить окно в конец всего сигнала, то его надо вставить перед тишиной в конце последней пачки.
@@ -769,30 +772,27 @@ def apply_window(config, y_raw):
             k =1
     
             # >> S-образное окно
-            if window_type == w_type_s:
+            if window_form == w_form_s:
                 m = math.sin((-math.pi/2) + math.pi * (i / window_point_count))
                 k = (m + 1)/2
-                # print(kk)
             # << S-образное окно
     
             # >> трапеция
-            if window_type == w_type_trapeze:
+            if window_form == w_form_trapeze:
                 k = i / window_point_count
             # << трапеция
     
             # >> cosinus окно
-            if window_type == w_type_cos:
+            if window_form == w_form_cos:
                 m = math.cos(math.pi/2 * (i / window_point_count))
                 k = 1 - m
             # << cosinus окно
     
             if window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_signal_begin, w_place_signal_begin_end]:
                 _y[i] *= k
-                # _y[i] = (-1)**(i%2) * amp * k
 
             if window_place in [w_place_pack_begin_end, w_place_pack_end, w_place_signal_end, w_place_signal_begin_end]:
                 _y[-i] *= k
-                # _y[-i] = (-1)**(i%2) * amp * k
     
             
         # если у нас конец всего сигнала, то вставляем тишину в конце, которую удаляли

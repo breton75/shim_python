@@ -472,7 +472,7 @@ def edit_spectrum(config, **kwargs):
         # создаем графические элементы
         fig, ax = plt.subplots()
         plt.vlines(xs, 0, ys, label=' ', color='b', lw=3)
-        plt.legend(title='Редактор формы спектра\nctrl + r - сброс\nctrl + w - сохранить и выйти\n0..9 - установить уровень регулятора', loc='upper left', shadow=True, frameon=True, fontsize='small')
+        plt.legend(title='Редактор формы спектра (%i - %i Гц)\nctrl + r - сброс\nctrl + w - сохранить и выйти\n0..9 - установить уровень регулятора' % (minX, maxX), loc='upper left', shadow=True, frameon=True, fontsize='small')
         plt.axis([fmin, fmax, 0, spectrumMax * 1.5])
         plt.xticks(arange(fmin, fmax, int(get_xstep(fmax - fmin, controls_count)) * 2)) #, arange(0, len(aspec), get_xstep(len(aspec), controls_count) * 4))
         
