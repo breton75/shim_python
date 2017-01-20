@@ -736,19 +736,11 @@ class mainFrame(Frame):
 
 
 			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval,
-								 c_save_log,
+								 c_save_log, c_spec_form_edit_control_count,
 								 c_sinus_pack_step, c_meandr_pack_step,
 								 c_spectrum_norm_level, c_spectrum_divider, c_spectrum_source_file])
 
-			log_file_name = None
 			
-			if get_cfg_param(self.config, c_save_log, True, 'b') == True:
-				# work_dir = self.config[c_workdir]
-				# if work_dir[-1] != '/': work_dir += '/'
-				# log_file_name = work_dir + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
-				log_file_name = self.config[c_work_dir] + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
-
-			self.config[c_log_file_name] = log_file_name
 
 			self.config[c_signal_name] = self.cbSignalType.get()
 
@@ -766,15 +758,19 @@ def do(config):
 	# config[] = time.strftime(c_time_format)
 
 	# пишем текущую конфигурацию в лог
-	if not config[c_log_file_name] is None:
-		with open(config[c_log_file_name], 'w') as log_file:
+	# log_file_name = None
+	if get_cfg_param(config, c_save_log, True, 'b') == True:
+		log_file_name = get_path(config, 'log') # self.config[c_workdir] + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
+
+	# if not config[c_log_file_name] is None:
+		with open(log_file_name, 'w') as log_file:
 			for key in config.keys():
 				log_file.write(key + '=' + str(config[key]) + '\n')
 
 			log_file.write('\n')
 
-	if get_cfg_param(config, c_save_log, True, 'b') == True and config[c_signal_type] == s_type_spectrum_form:
-		shutil.copyfile(config[c_spectrum_form_file], config[c_workdir] + time.strftime(c_date_format + ' ' + c_time_format) + '.spectrum')
+		if config[c_signal_type] == s_type_spectrum_form:
+			shutil.copyfile(config[c_spectrum_form_file], get_path(config, 'spectrum'))
 
 
 	# имена файлов
@@ -792,7 +788,7 @@ def do(config):
 	MAKE_WAV = config[c_make_wav]
 	MAKE_MATLAB = config[c_make_matlab]
 	
-	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (config[c_signal_type] != gen.s_type_sinus) and (config[c_signal_type] != gen.s_type_lfm)
+	filtrate = get_cfg_param(config, c_filtrate, True, 'b') and (config[c_signal_type] != gen.s_type_noise)
 	# apply_spectrum_form = get_cfg_param(config, c_apply_spectrum_form, False, 'b') and (signal_type != gen.s_type_sinus) and (signal_type != gen.s_type_lfm)
 
 	PLOT_SIGNAL = int(get_cfg_param(config, c_plot_signal, True, 'b'))

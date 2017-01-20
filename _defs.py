@@ -181,3 +181,4 @@ c_filename_template = 'filename_template'
 
 c_save_log='save_log'
 c_log_file_name = 'log_file_name'
+c_spec_form_edit_control_count = 'spec_form_edit_control_count'

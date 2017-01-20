@@ -301,10 +301,14 @@ def generate(config=None, **kwargs):
     ## >> s_type_spectrum_form ##
         elif signal_type == s_type_spectrum_form:
 
+            # читаем файл с сохраненной формой спектра
+            ver, controls_count, controls, minX, maxX = specm.read_spectrum_form_file(config, **kwargs)
+            
+            # формируем случайны йшумовой сигнал
             snoise = fft([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)])
 
-            f0 = config[c_freq0] # начальная частота
-            f1 = config[c_freq1] # конечная частота
+            f0 = minX # начальная частота config[c_freq0]
+            f1 = maxX # конечная частота config[c_freq1]
             fd = signal_sampling   # частота дискретизации
             T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
 
@@ -315,8 +319,6 @@ def generate(config=None, **kwargs):
             _f0 = int(f0 * T)
             _f1 = int(f1 * T)
 
-            # читаем файл с сохраненной формой спектра
-            ver, controls_count, controls, minX, maxX = specm.read_spectrum_form_file(config, **kwargs)
 
             # если не удалось прочитать сохраненную форму спектра, то выходим с ошибкой
             if controls_count is None or controls is None:
