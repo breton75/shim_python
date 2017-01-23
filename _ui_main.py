@@ -356,8 +356,8 @@ class mainFrame(Frame):
  		
  		# читаем файл _main.config
 		self.config = self.read_config_file()			
-		if self.config == {}:
-			raise Exception('wrong configuration')
+		# if self.config == {}:
+		# 	raise Exception('wrong configuration')
 		
 		self.set_widget_values()
 
@@ -372,12 +372,15 @@ class mainFrame(Frame):
 			filename = '_main.config'
 			if 'config_file_name' in kwargs:
 				filename = kwargs['config_file_name']
-	
+			
+			# если файл отстутствует, то он будет создан. если _main.config уже существует, то он не будет изменен
+			with open(filename, 'a', encoding="utf8") as configfile: pass
+
+			lst=[]
 			with open(filename, 'r', encoding="utf8") as configfile:
 				lines = configfile.readlines()
-	
+				
 				# разбираем параметры записанные в файле .config или .log
-				lst=[]
 				for line in lines: # если строка начинается не с буквы, то эту строку пропускаем
 					if line[0] in ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
 						lst.append(line.split('='))
@@ -391,7 +394,7 @@ class mainFrame(Frame):
 			# print(self.config)
 
 		except Exception as E:
-			print('error in func mainFrame.load_config(): %s' % E, file=sys.stderr, end='')
+			print('error in func mainFrame.read_config_file(): %s' % E, file=sys.stderr, end='')
 			
 		finally:
 			return config
@@ -417,7 +420,7 @@ class mainFrame(Frame):
 		self.editPause.delete(0, END)
 		self.editPause.insert(0, get_cfg_param(self.config, c_pause, '0'))	
 		self.editAmplitude.delete(0, END)
-		self.editAmplitude.insert(0, get_cfg_param(self.config, c_amplitude, '1024'))
+		self.editAmplitude.insert(0, get_cfg_param(self.config, c_amplitude, '65535'))
 		self.editKoeff.delete(0, END)
 		self.editKoeff.insert(0, get_cfg_param(self.config, c_koeff, '1.0'))
 		# self.editAmplitude.configure(state=DISABLED) #, disabledbackground='white', disabledforeground='black')
@@ -448,7 +451,7 @@ class mainFrame(Frame):
 	## << преобразование шим ##
 
 	## >> фильтрация ##
-		self.filtrate.set(get_cfg_param(self.config, c_filtrate, True, 'b'))
+		self.filtrate.set(get_cfg_param(self.config, c_filtrate, False, 'b'))
 		self.editFilterFreqMin.delete(0, END)
 		self.editFilterFreqMin.insert(0, get_cfg_param(self.config, c_filter_freq_min, '1000'))
 		self.editFilterFreqMax.delete(0, END)		
@@ -475,9 +478,9 @@ class mainFrame(Frame):
 	## >> отрисовка ##
 		self.plot_signal.set(get_cfg_param(self.config, c_plot_signal, True, 'b'))
 		self.plot_signal_spectrum.set(get_cfg_param(self.config, c_plot_signal_spectrum, True, 'b'))
-		self.plot_filtered_signal.set(get_cfg_param(self.config, c_plot_filtered_signal, True, 'b'))
-		self.plot_filtered_spectrum.set(get_cfg_param(self.config, c_plot_filtered_spectrum, True, 'b'))
-		self.plot_shim.set(get_cfg_param(self.config, c_plot_shim, True, 'b'))
+		self.plot_filtered_signal.set(get_cfg_param(self.config, c_plot_filtered_signal, False, 'b'))
+		self.plot_filtered_spectrum.set(get_cfg_param(self.config, c_plot_filtered_spectrum, False, 'b'))
+		self.plot_shim.set(get_cfg_param(self.config, c_plot_shim, False, 'b'))
 		self.plot_signal_saw.set(get_cfg_param(self.config, c_plot_signal_saw, False, 'b'))
 		self.editPlotFromPoint.delete(0, END)
 		self.editPlotFromPoint.insert(0, get_cfg_param(self.config, c_plot_from_point, '1'))
@@ -487,9 +490,9 @@ class mainFrame(Frame):
 
 	## >> общее ##
 		self.editWorkDir.delete(0, END)
-		self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, ''))
+		self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, './{DATE}'))
 		self.editFilenameTemplate.delete(0, END)
-		self.editFilenameTemplate.insert(0, get_cfg_param(self.config, c_filename_template, ''))
+		self.editFilenameTemplate.insert(0, get_cfg_param(self.config, c_filename_template, '{EXT}_{TIME}'))
 	## << общее ##
 
 
@@ -631,6 +634,7 @@ class mainFrame(Frame):
 		# читаем файл _main.config
 		try:
 
+			lines = []
 			with open('_main.config', 'r', encoding="utf8") as configfile:
 				lines = configfile.readlines()
 	  
@@ -654,23 +658,21 @@ class mainFrame(Frame):
 					configfile.write(str(p[0]) + '=' + str(p[1]) + '\n')
 	  
 		except Exception as E:
-			print('error in func _ui.save(): %s' % E, file=sys.stderr, end='')
+			print('error in func _ui_main.save(): %s' % E, file=sys.stderr, end='')
 
 
-	def re_read_params(self, pnames):
+	def re_read_params(self, params):
  		
 		try:
 			_cfg = self.read_config_file()
-			if _cfg == {}:
-				raise Exception('wrong configuration')
 
-			for param in pnames:
-				self.config[param] = _cfg[param]
+			for param in params:
+				self.config[param[0]] = get_cfg_param(_cfg, param[0], param[1]) 
 
 				# print(self.config)
 
 		except Exception as E:
-			print('error in func mainFrame.re_read_params(): %s' % E, file=sys.stderr)
+			print('error in func _ui_main.re_read_params(): %s' % E, file=sys.stderr)
 
 
 	def checkout_config(self):
@@ -727,18 +729,17 @@ class mainFrame(Frame):
 				c_workdir:                self.editWorkDir.get(),
 				c_filename_template:      self.editFilenameTemplate.get()
 			}
-
 			# рабочий каталог
 			self.config[c_workdir] = self.config[c_workdir].replace('\u005c', '/')
-			if self.config[c_workdir][-1] != '/': self.config[c_workdir] += '/'
+			if len(self.config[c_workdir]) > 0 and self.config[c_workdir][-1] != '/': self.config[c_workdir] += '/'
 			self.editWorkDir.delete(0, END)
 			self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, ''))
 
-
-			self.re_read_params([c_meandr_pulse_width, c_meandr_interval_width, c_meandr_type, c_meandr_random_interval,
-								 c_save_log, c_spec_form_edit_control_count,
-								 c_sinus_pack_step, c_meandr_pack_step,
-								 c_spectrum_norm_level, c_spectrum_divider, c_spectrum_source_file])
+			# перечитываем некоторые параметры из файла
+			self.re_read_params([[c_meandr_pulse_width, 20], [c_meandr_interval_width, 20], [c_meandr_type, 0], [c_meandr_random_interval, 0],
+								 [c_save_log, True], [c_spec_form_edit_control_count, 41],
+								 [c_sinus_pack_step, 100], [c_meandr_pack_step, 200],
+								 [c_spectrum_norm_level, 500], [c_spectrum_source_file, '']])
 
 			
 

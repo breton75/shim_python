@@ -20,7 +20,7 @@ def get_cfg_param(config, param_name, default, type='s'):
 			if param_name in config: return config[param_name]
 			else: return default
 	except Exception as E:
-		print('error in func _exec_main.get_cfg_param(): %s' % E, file=sys.stderr)
+		print('error in func _defs.get_cfg_param(): %s' % E, file=sys.stderr)
 		# print(E)
 		return None
 
