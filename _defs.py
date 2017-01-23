@@ -26,16 +26,18 @@ def get_cfg_param(config, param_name, default, type='s'):
 
 
 def replace_re(config, extention, string, **kwargs):
-	return string.replace("\u005c", "/") \
-			  .replace('{EXT}', extention) \
-			  .replace('{DATE}', time.strftime(c_date_format, config[c_cur_time])) \
-			  .replace('{TIME}', time.strftime(c_time_format, config[c_cur_time])) 
+	return string.replace('{EXT}', extention) \
+					.replace('{DATE}', time.strftime(c_date_format, config[c_cur_time])) \
+					.replace('{TIME}', time.strftime(c_time_format, config[c_cur_time])) 
+
 
 def get_folder_name(config, extention, **kwargs):
 	try:
 		workdir = replace_re(config, extention, config[c_workdir])
+		workdir = os.path.abspath(workdir)
+		workdir = workdir.replace("\u005c", "/")
 		if workdir[-1] != '/': workdir += '/'
-
+		
 		if not os.path.exists(workdir):
 			os.makedirs(workdir)
 
@@ -163,6 +165,7 @@ c_mode = 'mode'
 
 c_make_shim = 'make_shim'
 c_make_wav = 'make_wav'
+c_play_wav = 'play_wav'
 c_make_matlab = 'make_matlab'
 
 

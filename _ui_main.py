@@ -258,15 +258,19 @@ class mainFrame(Frame):
 		
 		self.make_shim = BooleanVar()
 		self.checkMakeShim = tk.Checkbutton(self.frameOutputFormats, text='ШИМ', variable=self.make_shim, width=36)
-		self.checkMakeShim.grid(row=0, column=0, sticky=tk.E, columnspan=1)
+		self.checkMakeShim.grid(row=0, column=0, sticky=tk.W, columnspan=1)
 
 		self.make_wav = BooleanVar()
 		self.checkMakeWav = tk.Checkbutton(self.frameOutputFormats, text='WAV', variable=self.make_wav, width=36)
-		self.checkMakeWav.grid(row=1, column=0, sticky=tk.E, columnspan=1)
+		self.checkMakeWav.grid(row=1, column=0, sticky=tk.W, columnspan=1)
+
+		# self.play_wav = BooleanVar()
+		# self.checkPlayWav = tk.Checkbutton(self.frameOutputFormats, text='Проиграть', variable=self.play_wav, width=10)
+		# self.checkPlayWav.grid(row=1, column=1, sticky=tk.W, columnspan=2)
 
 		self.make_matlab = BooleanVar()
 		self.checkMakeMatlab = tk.Checkbutton(self.frameOutputFormats, text='Matlab', variable=self.make_matlab, width=36)
-		self.checkMakeMatlab.grid(row=2, column=0, sticky=tk.E, columnspan=1)
+		self.checkMakeMatlab.grid(row=2, column=0, sticky=tk.W, columnspan=1)
 
 	## << выходные форматы ##
 
@@ -472,6 +476,7 @@ class mainFrame(Frame):
 	## >> выходные форматы ##
 		self.make_shim.set(get_cfg_param(self.config, c_make_shim, True, 'b'))
 		self.make_wav.set(get_cfg_param(self.config, c_make_wav, False, 'b'))
+		# self.play_wav.set(get_cfg_param(self.config, c_play_wav, False, 'b'))
 		self.make_matlab.set(get_cfg_param(self.config, c_make_matlab, True, 'b'))
 	## << выходные форматы ##
 
@@ -850,6 +855,8 @@ def do(config):
 
 	if MAKE_WAV:
 		wav.write_wav(config, data=arawf)
+		import os
+		os.startfile('%s' % get_path(config, 'wav'))
 		
 
 	if SEND and MAKE_SHIM:
@@ -861,7 +868,6 @@ def do(config):
 	 
 	if PLOT:
 		plot.plot(config, flags=FLAGS)
-
 
 
 def showWindow(version):
