@@ -510,8 +510,8 @@ class mainFrame(Frame):
 
 	def select_spectrum_form_file(self):
 		try:
-			
-			filename = filedialog.askopenfilename(defaultextension='spectrum', initialdir=self.config[c_workdir], multiple=False, filetypes=[('spectrum files', '.spectrum'), ('all files', '.*')])
+			self.config[c_workdir] = self.editWorkDir.get()
+			filename = filedialog.askopenfilename(defaultextension='spectrum', initialdir=get_folder_name(self.config, ''), multiple=False, filetypes=[('spectrum files', '.spectrum'), ('all files', '.*')])
 			
 			if filename:
 				self.editSpectrumFormFile.delete(0, END)
