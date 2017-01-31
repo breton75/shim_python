@@ -334,6 +334,10 @@ class mainFrame(Frame):
 		self.editFilenameTemplate = tk.Entry(self.frameGen, width=65)
 		self.editFilenameTemplate.grid(row=1, column=1, sticky=tk.W)
 
+		self.lastFileName = StringVar()
+		self.lblLastFile = tk.Label(self.frameGen, textvariable=self.lastFileName, width=25).grid(row=2, column=0, sticky=tk.E, columnspan=2)
+
+
 	## << общее ##
 
 	## >> кнопки ##
@@ -625,6 +629,8 @@ class mainFrame(Frame):
 
 			self.save()
 			do(self.config)
+
+			self.lastFileName.set("Последний файл: %s" % get_path(self.config, '', only_filename=True))
 	  
 		except Exception as E:
 			print('error in func _ui.start(): %s' % E, file=sys.stderr, end='')
