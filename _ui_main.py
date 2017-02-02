@@ -25,6 +25,18 @@ import _matlab as matlab
 import matplotlib.pyplot as plt
 
 
+def showWindow(version):
+	window = tk.Tk()
+	window.title("Генератор ШИМ v.{}".format(version))
+	# window.geometry("200x200")
+	
+	frame = mainFrame(window)
+	window.grid()
+	window.mainloop()
+	# print(frame.config)
+	# window.close()
+
+
 class mainFrame(Frame):
 	def __init__(self, master):
 		super(mainFrame, self).__init__(master)
@@ -220,7 +232,7 @@ class mainFrame(Frame):
 	## << фильтрация ##
 
 	## >> выгрузка на устройство ##
-		self.frameSend = tk.LabelFrame(self.frameRight, text='Выгрузка')
+		self.frameSend = tk.LabelFrame(self.frameRight, text='Работа с устройством')
 		self.frameSend.grid(row=2, column=0, sticky=tk.N)
 
 		self.send = BooleanVar()
@@ -242,13 +254,17 @@ class mainFrame(Frame):
 		self.cbMode = ttk.Combobox(self.frameSend, width=13, values=['ONE', 'LOOP'])
 		self.cbMode.grid(row=3, column=1, sticky=tk.W)
 
+		# начать воспроизведение
+		self.bnSendStart = tk.Button(self.frameSend, text='Пуск', command=self.send_start)
+		self.bnSendStart.grid(row=4, column=0, sticky=tk.W, columnspan=1)
+
 		# send STOP
-		self.bnSendStop = tk.Button(self.frameSend, text='Отправить STOP', command=self.send_stop)
-		self.bnSendStop.grid(row=4, column=0, sticky=tk.E, columnspan=2)
+		self.bnSendStop = tk.Button(self.frameSend, text='Стоп', command=self.send_stop)
+		self.bnSendStop.grid(row=4, column=1, sticky=tk.E, columnspan=1)
 
 		# выгрузить файл
 		self.bnSendFile = tk.Button(self.frameSend, text='Выгрузить файл', command=self.send_file)
-		self.bnSendFile.grid(row=5, column=0, sticky=tk.E, columnspan=2)
+		self.bnSendFile.grid(row=5, column=0, sticky=tk.E, columnspan=1)
 
 	## << выгрузка на устройство ##
 
@@ -345,11 +361,11 @@ class mainFrame(Frame):
 		self.frameButtons.grid(row=3, column=0, sticky=tk.W, columnspan=2)
 
 		# ПУСК
-		self.bnStart = tk.Button(self.frameButtons, text='Старт', width=80, command = self.start)
+		self.bnStart = tk.Button(self.frameButtons, text='Начать выполнение', width=80, command = self.start)
 		self.bnStart.grid(row=1, column=0, sticky=tk.E, columnspan=2)
 
 		# сохранить
-		self.bnSaveConfig = tk.Button(self.frameButtons, text='Сохранить', width=80, command = self.save)
+		self.bnSaveConfig = tk.Button(self.frameButtons, text='Сохранить текущие параметры', width=80, command = self.save)
 		self.bnSaveConfig.grid(row=3, column=0, sticky=tk.E, columnspan=2)
 
 		# загрузить конфигурацию
@@ -527,8 +543,24 @@ class mainFrame(Frame):
 				self.editSpectrumFormFile.insert(0, filename)
 
 		except Exception as E:
-			print(E, file=sys.stderr)
+			print('error in func _ui_main.select_spectrum_form_file(): %s' % E, file=sys.stderr)
 
+	def send_start(self):
+		try:
+			host = self.editHost.get()
+			port = int(self.editPort.get())
+			file_name = get_path(self.config, 'shim')
+
+			if self.cbMode.current() == sock.e_mode_loop:
+				if not sock.sendLOOP(host, port, file_name):
+					raise Exception('Не удалось выполнить команду')
+    
+			elif self.cbMode.current() == sock.e_mode_one:
+				if not sock.sendONE(host, port, file_name):
+					raise Exception('Не удалось выполнить команду')
+
+		except Exception as E:
+			print('error in func _ui_main.send_start(): %s' % E, file=sys.stderr)
 
 	def send_stop(self):
 		try:
@@ -537,7 +569,7 @@ class mainFrame(Frame):
 			sock.sendSTOP(h, p)
 
 		except Exception as E:
-			print(E, file=sys.stderr)
+			print('error in func _ui_main.send_stop(): %s' % E, file=sys.stderr)
 
 
 	def create_spectrum(self):
@@ -664,9 +696,16 @@ class mainFrame(Frame):
 						configfile.write(line)
 
 				# записываем оставшиеся в словаре пары
-				while len(cfg):
-					p = cfg.popitem()
-					configfile.write(str(p[0]) + '=' + str(p[1]) + '\n')
+				keys = []
+				keys.extend(cfg.keys())
+				keys.sort()
+			
+				for key in keys:
+					configfile.write(key + '=' + str(cfg[key]) + '\n')
+
+				# while len(cfg):
+				# 	p = cfg.popitem()
+				# 	configfile.write(str(p[0]) + '=' + str(p[1]) + '\n')
 	  
 		except Exception as E:
 			print('error in func _ui_main.save(): %s' % E, file=sys.stderr, end='')
@@ -709,9 +748,9 @@ class mainFrame(Frame):
 				c_signal_window_duration:	int(self.editWindowDuration.get()),
 				c_koeff: 				   	float(self.editKoeff.get()),
 				# c_meandr_pulse_width:	   get_cfg_param(cfg, c_meandr_pulse_width, 250, 'i'),
-				# c_meandr_interval_width:   get_cfg_param(cfg, c_meandr_interval_width, 100, 'i'),
+				# c_meandr_interval_0:   get_cfg_param(cfg, c_meandr_interval_0, 100, 'i'),
 				# c_meandr_type:  		   get_cfg_param(cfg, c_meandr_type, m_one_channel, 'i'),
-				# c_meandr_random_interval:  get_cfg_param(cfg, c_meandr_random_interval, 0, 'i'),
+				# c_meandr_interval_1:  get_cfg_param(cfg, c_meandr_interval_1, 0, 'i'),
 				c_filter_freq_min:   int(self.editFilterFreqMin.get()),
 				c_filter_freq_max:   int(self.editFilterFreqMax.get()),
 				c_filtrate:            bool(self.filtrate.get()),
@@ -747,7 +786,7 @@ class mainFrame(Frame):
 			self.editWorkDir.insert(0, get_cfg_param(self.config, c_workdir, ''))
 
 			# перечитываем некоторые параметры из файла
-			self.re_read_params([[c_meandr_pulse_width, 20], [c_meandr_interval_width, 20], [c_meandr_type, 0], [c_meandr_random_interval, 0],
+			self.re_read_params([[c_meandr_pulse_width, 20], [c_meandr_interval_0, 20], [c_meandr_type, 0], [c_meandr_interval_1, 0],
 								 [c_save_log, True], [c_spec_form_edit_control_count, 41],
 								 [c_sinus_pack_step, 100], [c_meandr_pack_step, 200],
 								 [c_spectrum_norm_level, 500], [c_spectrum_source_file, '']])
@@ -776,7 +815,11 @@ def do(config):
 
 	# if not config[c_log_file_name] is None:
 		with open(log_file_name, 'w') as log_file:
-			for key in config.keys():
+			keys = []
+			keys.extend(config.keys())
+			keys.sort()
+			
+			for key in keys:
 				log_file.write(key + '=' + str(config[key]) + '\n')
 
 			log_file.write('\n')
@@ -876,18 +919,6 @@ def do(config):
 		plot.plot(config, flags=FLAGS)
 
 
-def showWindow(version):
-	window = tk.Tk()
-	window.title("Генератор ШИМ v.{}".format(version))
-	# window.geometry("200x200")
-	
-	frame = mainFrame(window)
-	window.grid()
-	window.mainloop()
-	# print(frame.config)
-	# window.close()
-
-
 def intervals(config):
 	araw = arr.array('d')
 	dur = 0
@@ -901,11 +932,11 @@ def intervals(config):
 			
 			for low_int in np.arange(200, 260, 10): # 5 кГц - 4 кГц
 				
-				config[c_meandr_interval_width] = low_int
+				config[c_meandr_interval_0] = low_int
 				
 				for high_int in np.arange(500, 1050, 50): # 2 кГц - 1 кГц
 					
-					config[c_meandr_random_interval] = high_int
+					config[c_meandr_interval_1] = high_int
 					
 					a = gen.generate(config)
 					

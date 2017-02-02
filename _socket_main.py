@@ -177,40 +177,33 @@ def sendDATA(host, port, fileName):
 
 
 def sendLOOP(host, port, fileName):
-
     try:
-
+        #читаем заголовок файла шим, чтобы найти значение R
         arr = open(fileName, 'rb')
-        
-    except OSError as msg:
-        print(msg, file=sys.stderr)
+        header = struct.unpack(shim.HEADER_PACK, arr.read(struct.calcsize(shim.HEADER_PACK)))
+        arr.close
+
+        # отправляем команду и выходим
+        return send_cmd(host, port, b'LOOP:' + struct.pack('<I', int(header[shim.HEADER_PACK_KEYS.index('shim_R')])))
+
+    except Exception as E:
+        print('error in func _socket_main.sendLOOP(): %s' % E, file=sys.stderr)
         return False
-
-    #читаем заголовок файла, чтобы найти значение R
-    header = struct.unpack(shim.HEADER_PACK, arr.read(struct.calcsize(shim.HEADER_PACK)))
-    arr.close
-
-    # отправляем команду и выходим
-    return send_cmd(host, port, b'LOOP:' + struct.pack('<I', int(header[shim.HEADER_PACK_KEYS.index('shim_R')])))
     
 
 def sendONE(host, port, fileName):
-
     try:
-
+        #читаем заголовок файла шим, чтобы найти значение R
         arr = open(fileName, 'rb')
-        
-    except OSError as msg:
-        print(msg, file=sys.stderr)
+        header = struct.unpack(shim.HEADER_PACK, arr.read(struct.calcsize(shim.HEADER_PACK)))
+        arr.close
+
+        # отправляем команду и выходим
+        return send_cmd(host, port, b'LOOP:' + struct.pack('<I', int(header[shim.HEADER_PACK_KEYS.index('shim_R')])))
+
+    except Exception as E:
+        print('error in func _socket_main.sendLOOP(): %s' % E, file=sys.stderr)
         return False
-
-    #читаем заголовок файла, чтобы найти значение R
-    header = struct.unpack(shim.HEADER_PACK, arr.read(struct.calcsize(shim.HEADER_PACK)))
-    arr.close
-
-    # отправляем команду и выходим
-    return send_cmd(host, port, b'LOOP:' + struct.pack('<I', int(header[shim.HEADER_PACK_KEYS.index('shim_R')])))
-
 
 ###############################################        
 

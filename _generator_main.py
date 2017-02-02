@@ -121,15 +121,15 @@ def generate(config=None, **kwargs):
 
     ## >> s_type_meandr_pack ##
         elif signal_type == s_type_meandr_pack:
-            interval0 = get_cfg_param(config, c_meandr_interval_width, 0, 'i') # config[]
-            interval1 = get_cfg_param(config, c_meandr_random_interval, 0, 'i')
-            config[c_meandr_random_interval] = 0
+            interval0 = get_cfg_param(config, c_meandr_interval_0, 0, 'i') # config[]
+            interval1 = get_cfg_param(config, c_meandr_interval_1, 0, 'i')
+            config[c_meandr_interval_1] = 0
             istep = get_cfg_param(config, c_meandr_pack_step, 100, 'i')
 
             y_raw = []
             cnt = 0
             while interval0 <= interval1:
-                config[c_meandr_interval_width] = interval0
+                config[c_meandr_interval_0] = interval0
                 y_raw.extend(meandr(config, **kwargs))
                 
                 if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
@@ -142,7 +142,7 @@ def generate(config=None, **kwargs):
                 interval0 += istep
 
             signal_duration *= cnt
-            config[c_meandr_random_interval] = interval1
+            config[c_meandr_interval_1] = interval1
     ## << s_type_meandr_pack ##
 
     ## >> s_type_sinus_pack ##    
@@ -478,9 +478,9 @@ def meandr(config, **kwargs):
         point_count = int(signal_sampling * (signal_duration - hush_duration) / 1000)
 
         meandr_pulse_width = get_cfg_param(config, c_meandr_pulse_width, 250, 'i') # config[]
-        meandr_interval_width = get_cfg_param(config, c_meandr_interval_width, 0, 'i') # config[]
+        meandr_interval_0 = get_cfg_param(config, c_meandr_interval_0, 0, 'i') # config[]
         meandr_type = get_cfg_param(config, c_meandr_type, m_one_channel, 'i') # config[]
-        meandr_random_interval = get_cfg_param(config, c_meandr_random_interval, 0, 'i')
+        meandr_interval_1 = get_cfg_param(config, c_meandr_interval_1, 0, 'i')
 
         koeff = config[c_koeff]
 

@@ -129,9 +129,9 @@ c_koeff = 'koeff'
 c_spectrum_source_file = 'spectrum_source_file'
 
 c_meandr_pulse_width = 'meandr_pulse_width'
-c_meandr_interval_width = 'meandr_interval_width'
+c_meandr_interval_0 = 'meandr_interval_0'
+c_meandr_interval_1='meandr_interval_1'
 c_meandr_type = 'meandr_type'
-c_meandr_random_interval='meandr_random_interval'
 c_meandr_pack_step = 'meandr_pack_step'
 c_sinus_pack_step = 'sinus_pack_step'
 
