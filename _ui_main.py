@@ -392,9 +392,10 @@ class mainFrame(Frame):
 		config = {}
 
 		try:
-
 			filename = '_main.config'
-			if 'config_file_name' in kwargs:
+			fromlog = 'config_file_name' in kwargs
+
+			if fromlog:
 				filename = kwargs['config_file_name']
 			
 			# если файл отстутствует, то он будет создан. если _main.config уже существует, то он не будет изменен
@@ -407,12 +408,22 @@ class mainFrame(Frame):
 				# разбираем параметры записанные в файле .config или .log
 				for line in lines: # если строка начинается не с буквы, то эту строку пропускаем
 					if line[0] in ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
-						lst.append(line.split('='))
-		  
+						key_n_val = line.split('=')
+						if len(key_n_val) == 2 and \
+							not (key_n_val[0] in [c_cur_time, c_signal_name]) and \
+							not (fromlog == True and key_n_val[0] in [c_workdir, c_filename_template, \
+																		c_send, c_plot_signal, c_plot_shim, \
+																		c_plot_signal_spectrum, c_plot_filtered_signal, \
+																		c_plot_filtered_spectrum, c_plot_signal_saw, \
+																		c_plot_from_point, c_plot_to_point, \
+																		c_make_wav, c_make_shim, c_make_matlab]):
+							lst.append(key_n_val)
+
 				for i in range(len(lst)):
 					for j in range(len(lst[i])):
 						lst[i][j] = lst[i][j].strip()
-	
+
+							
 			config = dict(lst)
 			# self.config = dict(lst)
 			# print(self.config)
@@ -639,8 +650,10 @@ class mainFrame(Frame):
 
 	def load_config(self):
 		try:
-			
-			filename = filedialog.askopenfilename(defaultextension='config', initialdir=self.config[c_workdir], multiple=False, filetypes=[('config files', '.config'), ('log files', '.log'), ('all files', '.*')])
+			self.config[c_workdir] = self.editWorkDir.get()
+			self.config[c_cur_time] = datetime.now().timetuple()
+
+			filename = filedialog.askopenfilename(defaultextension='log', initialdir=get_folder_name(self.config, 'log'), multiple=False, filetypes=[('log files', '.log'), ('config files', '.config'), ('all files', '.*')])
 			
 			if not filename:
 				return
@@ -817,6 +830,8 @@ def do(config):
 		with open(log_file_name, 'w') as log_file:
 			keys = []
 			keys.extend(config.keys())
+			keys.remove(c_cur_time)
+			keys.remove(c_signal_name)
 			keys.sort()
 			
 			for key in keys:

@@ -37,7 +37,6 @@ def get_folder_name(config, extention, **kwargs):
 		workdir = os.path.abspath(workdir)
 		workdir = workdir.replace("\u005c", "/")
 		if workdir[-1] != '/': workdir += '/'
-		
 		if not os.path.exists(workdir):
 			os.makedirs(workdir)
 

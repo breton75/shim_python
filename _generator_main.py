@@ -501,12 +501,12 @@ def meandr(config, **kwargs):
 
 
         # >> 1. случай, когда все интервалы равны
-        if meandr_random_interval <= meandr_interval_width:
+        if meandr_interval_1 <= meandr_interval_0:
 
                                  
             # количество отсчетов (сэмплов) на один интервал
-            n_int = int(meandr_interval_width * signal_sampling / 1000000)
-            if meandr_interval_width % (1000000 // signal_sampling) != 0:
+            n_int = int(meandr_interval_0 * signal_sampling / 1000000)
+            if meandr_interval_0 % (1000000 // signal_sampling) != 0:
                 raise Exception('При заданной дискретизации длина интервала между импульсами меандра должна быть кратна %i' % (1000000 // signal_sampling))
 
             # длина одного периода
@@ -516,7 +516,7 @@ def meandr(config, **kwargs):
             if point_count % n != 0:
                 print('Предпреждение: количество периодов меандра не кратно длине сигнала')
 
-            # print('sample_time=%f  pulse_time=%f  interval_time=%f  n_imp=%i  n_int=%i  n=%i  meandr_pulse_width=%i  meandr_interval_width=%i' % (sample_time, pulse_time, interval_time, n_imp, n_int, n, meandr_pulse_width, meandr_interval_width))
+            # print('sample_time=%f  pulse_time=%f  interval_time=%f  n_imp=%i  n_int=%i  n=%i  meandr_pulse_width=%i  meandr_interval_0=%i' % (sample_time, pulse_time, interval_time, n_imp, n_int, n, meandr_pulse_width, meandr_interval_width))
 
             # пустой массив
             y_raw = np.empty(point_count, dtype=float)
@@ -558,13 +558,13 @@ def meandr(config, **kwargs):
             pulse_time = round(ms * meandr_pulse_width, 9)
             
             # длительность одного интервала
-            interval_time = round(ms * meandr_interval_width, 9)
+            interval_time = round(ms * meandr_interval_0, 9)
 
             # определяем минимальное и максимальное количество отсчетов (сэмплов) на один интервал
-            n_int_min = int(meandr_interval_width * signal_sampling / 1000000)
-            n_int_max = int(meandr_random_interval * signal_sampling / 1000000)
+            n_int_min = int(meandr_interval_0 * signal_sampling / 1000000)
+            n_int_max = int(meandr_interval_1 * signal_sampling / 1000000)
             
-            # if meandr_interval_width % (1000000 // signal_sampling) != 0:
+            # if meandr_interval_0 % (1000000 // signal_sampling) != 0:
                 # raise Exception('При заданной дискретизации длина интервала между импульсами меандра должна быть кратна %i' % (1000000 // signal_sampling))
 
             # пустой массив
