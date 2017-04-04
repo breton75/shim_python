@@ -273,20 +273,24 @@ class mainFrame(Frame):
 		self.frameOutputFormats.grid(row=3, column=0, sticky=tk.N)
 		
 		self.make_shim = BooleanVar()
-		self.checkMakeShim = tk.Checkbutton(self.frameOutputFormats, text='ШИМ', variable=self.make_shim, width=36)
-		self.checkMakeShim.grid(row=0, column=0, sticky=tk.W, columnspan=1)
+		self.checkMakeShim = tk.Checkbutton(self.frameOutputFormats, text='ШИМ', variable=self.make_shim, width=18)
+		self.checkMakeShim.grid(row=0, column=0, sticky=tk.W, columnspan=2)
 
 		self.make_wav = BooleanVar()
-		self.checkMakeWav = tk.Checkbutton(self.frameOutputFormats, text='WAV', variable=self.make_wav, width=36)
+		self.checkMakeWav = tk.Checkbutton(self.frameOutputFormats, text='WAV', variable=self.make_wav, width=18)
 		self.checkMakeWav.grid(row=1, column=0, sticky=tk.W, columnspan=1)
+
+		# взять PCM
+		self.bnPcm = tk.Button(self.frameOutputFormats, text='Взять PCM', command = self.get_pcm, width=18)
+		self.bnPcm.grid(row=1, column=1, sticky=tk.W, columnspan=1)
 
 		# self.play_wav = BooleanVar()
 		# self.checkPlayWav = tk.Checkbutton(self.frameOutputFormats, text='Проиграть', variable=self.play_wav, width=10)
 		# self.checkPlayWav.grid(row=1, column=1, sticky=tk.W, columnspan=2)
 
 		self.make_matlab = BooleanVar()
-		self.checkMakeMatlab = tk.Checkbutton(self.frameOutputFormats, text='Matlab', variable=self.make_matlab, width=36)
-		self.checkMakeMatlab.grid(row=2, column=0, sticky=tk.W, columnspan=1)
+		self.checkMakeMatlab = tk.Checkbutton(self.frameOutputFormats, text='Matlab', variable=self.make_matlab, width=18)
+		self.checkMakeMatlab.grid(row=2, column=0, sticky=tk.W, columnspan=2)
 
 	## << выходные форматы ##
 
@@ -365,12 +369,12 @@ class mainFrame(Frame):
 		self.bnStart.grid(row=1, column=0, sticky=tk.E, columnspan=2)
 
 		# сохранить
-		self.bnSaveConfig = tk.Button(self.frameButtons, text='Сохранить текущие параметры', width=80, command = self.save)
-		self.bnSaveConfig.grid(row=3, column=0, sticky=tk.E, columnspan=2)
+		self.bnSaveConfig = tk.Button(self.frameButtons, text='Сохранить текущие параметры', width=40, command = self.save)
+		self.bnSaveConfig.grid(row=3, column=0, sticky=tk.E, columnspan=1)
 
 		# загрузить конфигурацию
-		self.bnLoadConfig = tk.Button(self.frameButtons, text='Загрузить конфигурацию', width=80, command = self.load_config)
-		self.bnLoadConfig.grid(row=4, column=0, sticky=tk.E, columnspan=2)
+		self.bnLoadConfig = tk.Button(self.frameButtons, text='Загрузить конфигурацию', width=40, command = self.load_config)
+		self.bnLoadConfig.grid(row=3, column=1, sticky=tk.E, columnspan=1)
 
 		# редактор параметров
 		self.bnEditSignalParams = tk.Button(self.frameButtons, text='Редактировать параметры', width=80, command=self.edit_signal_params)
@@ -555,6 +559,18 @@ class mainFrame(Frame):
 
 		except Exception as E:
 			print('error in func _ui_main.select_spectrum_form_file(): %s' % E, file=sys.stderr)
+
+	def get_pcm(self):
+		try:
+			self.config[c_workdir] = self.editWorkDir.get()
+			filename = filedialog.askopenfilename(defaultextension='pcm', initialdir=self.config[c_pcm_folder] if c_pcm_folder in self.config else '', multiple=False, filetypes=[('pcm files', '.pcm'), ('all files', '.*')])
+			
+			if filename:
+				shutil.copyfile(filename, get_path(self.config, 'pcm'))
+
+		except Exception as E:
+			print('error in func _ui_main.get_pcm(): %s' % E, file=sys.stderr)	
+				
 
 	def send_start(self):
 		try:

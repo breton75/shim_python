@@ -10,7 +10,7 @@ import tkinter as tk
 # from _ui import get_cfg_param
 
 
-version = '1.1.1.3'
+version = '1.1.2.0'
 
 # ******** Script starts here ************* #
 

@@ -46,6 +46,7 @@ def generate(config=None, **kwargs):
 
         print('формируем сигнал ... ', end='')
         
+        # import pdb; pdb.set_trace()
 
         signal_type = int(config[c_signal_type])
         signal_frequency0 = int(config[c_freq0])
