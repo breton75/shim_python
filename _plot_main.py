@@ -89,7 +89,7 @@ def plot(config, **kwargs):
         # рисуем исходный сигнал
         if flag_signal:
             try:
-                araw = duty.read_file(get_path(config, 'raw'), 'd', 0, POINT_COUNT)
+                araw = duty.read_file(get_path(config, C_RAW), 'd', 0, POINT_COUNT)
 
                 if araw is None:
                     raise Exception('raw signal data not specified')
@@ -127,7 +127,7 @@ def plot(config, **kwargs):
         #     try:
         #         if araw is None:
         #             if 'raw' in kwargs:
-        #                 araw = duty.read_file(kwargs['raw'], 'd', 0, POINT_COUNT)
+        #                 araw = duty.read_file(kwargs[C_RAW], 'd', 0, POINT_COUNT)
 
         #         if araw is None:
         #             raise Exception('raw signal data not specified')
@@ -170,7 +170,7 @@ def plot(config, **kwargs):
         # рисуем спектр исходного сигнала
         if flag_signal_spectrum:
             try:
-                araw = duty.read_file(get_path(config, 'raw'), 'd', 0, POINT_COUNT)
+                araw = duty.read_file(get_path(config, C_RAW), 'd', 0, POINT_COUNT)
     
                 if araw is None:
                     raise Exception('raw signal data not specified')
@@ -196,7 +196,7 @@ def plot(config, **kwargs):
         # рисуем отфильтрованный сигнал
         if flag_filtered:
             try:
-                arawf = duty.read_file(get_path(config, 'rawf'), 'd', 0, POINT_COUNT)                    
+                arawf = duty.read_file(get_path(config, C_RAWF), 'd', 0, POINT_COUNT)                    
     
                 if arawf is None:
                     raise Exception('filtered signal data not specified')
@@ -214,7 +214,7 @@ def plot(config, **kwargs):
         # рисуем спектр отфильтрованного сигнала
         if flag_filtered_spectrum:
             try:
-                arawf = duty.read_file(get_path(config, 'rawf'), 'd', 0, POINT_COUNT)
+                arawf = duty.read_file(get_path(config, C_RAWF), 'd', 0, POINT_COUNT)
     
                 if arawf is None:
                     raise Exception('filtered signal data not specified')
@@ -240,7 +240,7 @@ def plot(config, **kwargs):
         # рисуем шим
         if flag_shim:
             try:
-                shim_file_name = get_path(config, 'shim')
+                shim_file_name = get_path(config, C_SHIM)
                 print('here')
                 # читаем заголовок файла
                 header = duty.read_header(shim_file_name, shim.HEADER_PACK)
@@ -336,7 +336,7 @@ def plot(config, **kwargs):
         # # рисуем сигнал (с пересчитанными под пилу уровнями) + пилу
         if flag_signal_saw:
             try:
-                araw = duty.read_file(get_path(config, 'raw'), 'd', 0, POINT_COUNT)
+                araw = duty.read_file(get_path(config, C_RAW), 'd', 0, POINT_COUNT)
 
                 if araw is None:
                     raise Exception('raw signal data not specified')

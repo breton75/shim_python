@@ -76,6 +76,17 @@ c_cur_time = 'cur_time'
 c_date_format = '%Y_%m_%d'
 c_time_format = '%H_%M_%S'
 
+# имена стандартных папок
+C_RECEIVED = 'received'
+C_MATLAB = 'm'
+C_RAW = 'raw'
+C_RAWF = 'rawf'
+C_WAV = 'wav'
+C_SHIM = 'shim'
+C_SPECTRUM = 'spectrum'
+C_LOG = 'log'
+
+
 # тип сигналов
 s_type_noise = 0
 s_type_sinus = 1
@@ -181,7 +192,8 @@ c_plot_to_point = 'plot_to_point'
 c_workdir = 'workdir'
 c_filename_template = 'filename_template'
 
-c_pcm_folder = 'pcm_folder'
+c_received_folder = 'received_folder'
+c_received_data_file = 'received_data_file'
 
 c_save_log='save_log'
 c_log_file_name = 'log_file_name'

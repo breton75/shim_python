@@ -280,9 +280,9 @@ class mainFrame(Frame):
 		self.checkMakeWav = tk.Checkbutton(self.frameOutputFormats, text='WAV', variable=self.make_wav, width=18)
 		self.checkMakeWav.grid(row=1, column=0, sticky=tk.W, columnspan=1)
 
-		# взять PCM
-		self.bnPcm = tk.Button(self.frameOutputFormats, text='Взять PCM', command = self.get_pcm, width=18)
-		self.bnPcm.grid(row=1, column=1, sticky=tk.W, columnspan=1)
+		# взять принятый файл
+		self.bnReceivedData = tk.Button(self.frameOutputFormats, text='Данные с микрофона', command = self.get_received_data, width=18)
+		self.bnReceivedData.grid(row=1, column=1, sticky=tk.W, columnspan=1)
 
 		# self.play_wav = BooleanVar()
 		# self.checkPlayWav = tk.Checkbutton(self.frameOutputFormats, text='Проиграть', variable=self.play_wav, width=10)
@@ -539,7 +539,7 @@ class mainFrame(Frame):
 	def send_file(self):
 		try:
 			
-			filename = filedialog.askopenfilename(defaultextension='shim', initialdir=self.config[c_workdir], multiple=False, filetypes=[('shim files', '.shim'), ('all files', '.*')])
+			filename = filedialog.askopenfilename(defaultextension=C_SHIM, initialdir=self.config[c_workdir], multiple=False, filetypes=[('shim files', '.shim'), ('all files', '.*')])
 			
 			if filename:
 				sock.send(self.config, fname=filename)
@@ -551,7 +551,7 @@ class mainFrame(Frame):
 	def select_spectrum_form_file(self):
 		try:
 			self.config[c_workdir] = self.editWorkDir.get()
-			filename = filedialog.askopenfilename(defaultextension='spectrum', initialdir=get_folder_name(self.config, ''), multiple=False, filetypes=[('spectrum files', '.spectrum'), ('all files', '.*')])
+			filename = filedialog.askopenfilename(defaultextension=C_SPECTRUM, initialdir=get_folder_name(self.config, ''), multiple=False, filetypes=[('spectrum files', '.spectrum'), ('all files', '.*')])
 			
 			if filename:
 				self.editSpectrumFormFile.delete(0, END)
@@ -560,23 +560,46 @@ class mainFrame(Frame):
 		except Exception as E:
 			print('error in func _ui_main.select_spectrum_form_file(): %s' % E, file=sys.stderr)
 
-	def get_pcm(self):
+
+	def get_received_data(self):
 		try:
+			if not c_cur_time in self.config:
+				return
+
+			# self.config[c_cur_time] = datetime.now().timetuple()
 			self.config[c_workdir] = self.editWorkDir.get()
-			filename = filedialog.askopenfilename(defaultextension='pcm', initialdir=self.config[c_pcm_folder] if c_pcm_folder in self.config else '', multiple=False, filetypes=[('pcm files', '.pcm'), ('all files', '.*')])
 			
-			if filename:
-				shutil.copyfile(filename, get_path(self.config, 'pcm'))
+			received_file_path = filedialog.askopenfilename(defaultextension='', initialdir=self.config[c_received_folder] if c_received_folder in self.config else '', multiple=False, filetypes=[('all files', '.*'), ('pcm files', '.pcm'), ('dat files', '.dat')])
+			
+			if received_file_path :
+				_fp = get_folder_name(self.config, C_RECEIVED)
+				if not _fp:
+					return
+
+				received_file_name = os.path.split(received_file_path)[1]
+				
+				shutil.copyfile(received_file_path, _fp + received_file_name)
+
+				if bool(self.make_matlab.get()):
+					matlab.write_m_file(self.config, received_file_name)
+					# matlab_path = get_path(self.config, C_MATLAB)
+					# with open(matlab_path, 'r', encoding="utf8") as mfile:
+					# 	lines = mfile.readlines()
+
+					# 	for line in lines:
+					# 		if line
+
+					
 
 		except Exception as E:
-			print('error in func _ui_main.get_pcm(): %s' % E, file=sys.stderr)	
+			print('error in func _ui_main.get_received_data(): %s' % E, file=sys.stderr)	
 				
 
 	def send_start(self):
 		try:
 			host = self.editHost.get()
 			port = int(self.editPort.get())
-			file_name = get_path(self.config, 'shim')
+			file_name = get_path(self.config, C_SHIM)
 
 			if self.cbMode.current() == sock.e_mode_loop:
 				if not sock.sendLOOP(host, port, file_name):
@@ -669,7 +692,7 @@ class mainFrame(Frame):
 			self.config[c_workdir] = self.editWorkDir.get()
 			self.config[c_cur_time] = datetime.now().timetuple()
 
-			filename = filedialog.askopenfilename(defaultextension='log', initialdir=get_folder_name(self.config, 'log'), multiple=False, filetypes=[('log files', '.log'), ('config files', '.config'), ('all files', '.*')])
+			filename = filedialog.askopenfilename(defaultextension=C_LOG, initialdir=get_folder_name(self.config, C_LOG), multiple=False, filetypes=[('log files', '.log'), ('config files', '.config'), ('all files', '.*')])
 			
 			if not filename:
 				return
@@ -840,7 +863,7 @@ def do(config):
 	# пишем текущую конфигурацию в лог
 	# log_file_name = None
 	if get_cfg_param(config, c_save_log, True, 'b') == True:
-		log_file_name = get_path(config, 'log') # self.config[c_workdir] + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
+		log_file_name = get_path(config, C_LOG) # self.config[c_workdir] + time.strftime(c_date_format + ' ' + c_time_format) + '.log'
 
 	# if not config[c_log_file_name] is None:
 		with open(log_file_name, 'w') as log_file:
@@ -856,14 +879,14 @@ def do(config):
 			log_file.write('\n')
 
 		if config[c_signal_type] == s_type_spectrum_form:
-			shutil.copyfile(config[c_spectrum_form_file], get_path(config, 'spectrum'))
+			shutil.copyfile(config[c_spectrum_form_file], get_path(config, C_SPECTRUM))
 
 
 	# имена файлов
-	filename_raw = get_path(config, 'raw')
-	filename_flt = get_path(config, 'rawf')
-	filename_shim = get_path(config, 'shim')
-	filename_spectrum = get_path(config, 'spectrum')
+	filename_raw = get_path(config, C_RAWF)
+	filename_flt = get_path(config, C_RAWF)
+	filename_shim = get_path(config, C_SHIM)
+	filename_spectrum = get_path(config, C_SPECTRUM)
 
 	#####################################################
 	#####################################################
@@ -936,7 +959,7 @@ def do(config):
 	if MAKE_WAV:
 		wav.write_wav(config, data=arawf)
 		import os
-		os.startfile('%s' % get_path(config, 'wav'))
+		os.startfile('%s' % get_path(config, C_WAV))
 		
 
 	if SEND and MAKE_SHIM:
@@ -981,7 +1004,7 @@ def intervals(config):
 			config[c_duration] = dur
 
 		
-		with open(get_path(config, 'raw'), 'wb') as f:
+		with open(get_path(config, C_RAW), 'wb') as f:
 			araw.tofile(f)
 
 		print('полный файл записан ok')

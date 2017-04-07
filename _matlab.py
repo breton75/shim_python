@@ -14,12 +14,12 @@ from _defs import *
 from datetime import datetime, date, time
 import time
 
-def write_m_file(config, **kwargs):
+def write_m_file(config, received_file_name=None, **kwargs):
     print('формируем m файл ... ', end='')
 
     try:
 
-        m_file_name = get_path(config, 'm')  # путь к файлу в который будет производиться запись
+        m_file_name = get_path(config, C_MATLAB)  # путь к файлу в который будет производиться запись
 
         with open(m_file_name, 'w') as m:
             m.write("function f()\n")
@@ -39,11 +39,13 @@ def write_m_file(config, **kwargs):
             # m.write("\t\n")
             # m.write("\tday = '%i'; month = '%i'; year = '%i';\n" % (config[c_cur_time][2], config[c_cur_time][1], config[c_cur_time][0])) # https://docs.python.org/2/library/time.html#time.struct_time
             m.write("\t\n")
-            m.write("\tpcm = ['%s ' '00' '_' '00' '_' '00' ' 2 6 ' int2str(fdr) '.pcm'];\n" % (time.strftime(c_date_format, config[c_cur_time])))
+            # m.write("\tpcm = ['%s ' '00' '_' '00' '_' '00' ' 2 6 ' int2str(fdr) '.pcm'];\n" % (time.strftime(c_date_format, config[c_cur_time])))
+            # print(kwargs)
+            m.write("\tpcm = '%s';\n" % (received_file_name if not received_file_name is None else '<RECEIVED_DATA_FILE>'))
 
-            # print('path1', get_folder_name(config, 'raw'), '\npath2', get_folder_name(config, 'm'), '\npath3', os.path.relpath(get_folder_name(config, 'raw'), get_folder_name(config, 'm')))
+            # print('path1', get_folder_name(config, C_RAW), '\npath2', get_folder_name(config, C_MATLAB), '\npath3', os.path.relpath(get_folder_name(config, C_RAW), get_folder_name(config, C_MATLAB)))
 
-            m.write("\traw = '%s';\n" % get_path(config, 'raw', only_filename=True))
+            m.write("\traw = '%s';\n" % get_path(config, C_RAW, only_filename=True))
             m.write("\t\n")
             m.write("\tstep = 24000;\n")
             m.write("\tp0 = 1;\n")
@@ -64,14 +66,14 @@ def write_m_file(config, **kwargs):
             m.write("%% открываем файлы\n")
             m.write("\t\n")
             
-            p = os.path.relpath(get_folder_name(config, 'pcm'), get_folder_name(config, 'm')).replace("\u005c", "/")
+            p = os.path.relpath(get_folder_name(config, C_RECEIVED), get_folder_name(config, C_MATLAB)).replace("\u005c", "/")
             if p[-1] != '/': p += '/'
             m.write("\tf=fopen(['%s' pcm], 'r');\n" % p)
             m.write("\t[RECEIVED_SIGNAL, received_cnt] = fread(f, 'float');\n")
             m.write("\tfclose(f);\n")
             m.write("\t\n")
 
-            p = os.path.relpath(get_folder_name(config, 'raw'), get_folder_name(config, 'm')).replace("\u005c", "/")
+            p = os.path.relpath(get_folder_name(config, C_RAW), get_folder_name(config, C_MATLAB)).replace("\u005c", "/")
             if p[-1] != '/': p += '/'
             m.write("\tf=fopen(['%s' raw]);\n" % p)
             m.write("\t[SOURCE_SIGNAL, source_cnt] = fread(f, 'double');\n")

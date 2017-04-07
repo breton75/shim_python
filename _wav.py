@@ -85,7 +85,7 @@ def write_wav(config, **kwargs):
         else: # иначе читаем исходный файл
             try:
                 
-                araw = get_path(config, 'rawf')
+                araw = get_path(config, C_RAWF)
 
                 with open(raw, 'rb') as f:
                     araw = arr.array('d')
@@ -100,7 +100,7 @@ def write_wav(config, **kwargs):
             raise Exception('Не указан источник исходного сигнала')
 
 
-        wav_file_name = get_path(config, 'wav')  # путь к файлу в который будет записан сигнал
+        wav_file_name = get_path(config, C_WAV)  # путь к файлу в который будет записан сигнал
 
         sampling = config[c_sampling]
         bps = struct.calcsize('i')  # Количество байт для одного сэмпла, включая все каналы.

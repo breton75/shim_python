@@ -41,7 +41,7 @@ def send(config, **kwargs):
             file_name = kwargs['fname']
             
         else:
-            file_name = get_path(config, 'shim')
+            file_name = get_path(config, C_SHIM)
 
     
         if not sendSTOP(host, port):

@@ -327,7 +327,7 @@ def signal2spectrum(config, **kwargs):
 
         else: # иначе читаем исходный файл
             try:
-                raw = get_path(config, 'raw')
+                raw = get_path(config, C_RAW)
 
                 with open(raw, 'rb') as f:
                         araw = arr.array('d')
@@ -376,7 +376,7 @@ def read_spectrum_form_file(config, **kwargs):
 
     try:
 
-        spectrum_form_file_name = config[c_spectrum_form_file]  # get_path(config, 'spectrum')
+        spectrum_form_file_name = config[c_spectrum_form_file]  # get_path(config, C_SPECTRUM)
 
         header = duty.read_header(spectrum_form_file_name, HEADER_STRUCT)
         
@@ -442,7 +442,7 @@ def edit_spectrum(config, **kwargs):
         if c_freq1 in config and config[c_freq1] in range(fmin, fmax): fmax = config[c_freq1]
 
         spectrumMax = 100 # в процентах %
-        # spectrum_form_file_name = config[c_spectrum_form_file] # get_path(config, 'spectrum')
+        # spectrum_form_file_name = config[c_spectrum_form_file] # get_path(config, C_SPECTRUM)
         
         newForm = 'newForm' in kwargs and kwargs['newForm'] == True
 
@@ -530,7 +530,7 @@ def apply_spectrum(config, **kwargs):
             
     #         print('appling spectrum form ...', end='')
 
-    #         spectrum_form_file_name = get_path(config, 'spectrum')
+    #         spectrum_form_file_name = get_path(config, C_SPECTRUM)
 
     #         # читаем файл с сохраненной формой спектра
     #         ver, controls_count, controls, minX, maxX = read_spectrum_form_file(config, **kwargs)
@@ -614,7 +614,7 @@ def apply_spectrum(config, **kwargs):
         # сохраняем отфильтрованный сигнал в файл
         print('сохраняю отфильтрованный сигнал ... ', end='')
         try:
-            rawf = get_path(config, 'rawf')  # путь к файлу в который будет записан отфильтрованный сигнал
+            rawf = get_path(config, C_RAWF)  # путь к файлу в который будет записан отфильтрованный сигнал
             
             with open(rawf, 'wb') as f:
                 aflt.tofile(f)

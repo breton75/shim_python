@@ -141,7 +141,7 @@ def shim(config, **kwargs):
         SIGNAL_SAMPLING = int(config[c_sampling])
         SIGNAL_DURATION = int(config[c_duration])
         SIGNAL_AMPLITUDE = int(config[c_amplitude])
-        SHIM_FILE_NAME = get_path(config, 'shim')
+        SHIM_FILE_NAME = get_path(config, C_SHIM)
         SHIM_ZERO_SMOOTH = int(config[c_zero_smooth])
         SHIM_CHANNEL_GAP = int(config[c_channel_gap])
         SHIM_CHANNEL_COUNT = int(config[c_channel_count])
@@ -167,7 +167,7 @@ def shim(config, **kwargs):
         else: # иначе читаем исходный файл
             try:
                 
-                araw = get_path(config, 'rawf')
+                araw = get_path(config, C_RAWF)
 
                 with open(raw, 'rb') as f:
                         araw = arr.array('d')
