@@ -564,12 +564,13 @@ class mainFrame(Frame):
 	def get_received_data(self):
 		try:
 			if not c_cur_time in self.config:
-				return
-
-			# self.config[c_cur_time] = datetime.now().timetuple()
-			self.config[c_workdir] = self.editWorkDir.get()
+				self.config[c_cur_time] = datetime.now().timetuple()
+			# self.config[c_workdir] = self.editWorkDir.get()
 			
-			received_file_path = filedialog.askopenfilename(defaultextension='', initialdir=self.config[c_received_folder] if c_received_folder in self.config else '', multiple=False, filetypes=[('all files', '.*'), ('pcm files', '.pcm'), ('dat files', '.dat')])
+			received_file_path = filedialog.askopenfilename(defaultextension='',
+				initialdir=self.config[c_received_folder] if c_received_folder in self.config else '',
+				multiple=False,
+				filetypes=[('all files', '.*'), ('pcm files', '.pcm'), ('dat files', '.dat')])
 			
 			if received_file_path :
 				_fp = get_folder_name(self.config, C_RECEIVED)
@@ -579,8 +580,8 @@ class mainFrame(Frame):
 				received_file_name = os.path.split(received_file_path)[1]
 				
 				shutil.copyfile(received_file_path, _fp + received_file_name)
-
-				if bool(self.make_matlab.get()):
+				
+				if bool(self.make_matlab.get()) and os.path.exists(get_path(self.config, C_MATLAB)):
 					matlab.write_m_file(self.config, received_file_name)
 					# matlab_path = get_path(self.config, C_MATLAB)
 					# with open(matlab_path, 'r', encoding="utf8") as mfile:
