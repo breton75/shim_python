@@ -124,6 +124,8 @@ def generate(config=None, **kwargs):
         elif signal_type == s_type_meandr_pack:
             interval0 = get_cfg_param(config, c_meandr_interval_0, 0, 'i') # config[]
             interval1 = get_cfg_param(config, c_meandr_interval_1, 0, 'i')
+
+            # хитрый ход, чтобы функция meandr сформировала одну пачку с интервалом c_meandr_interval_0
             config[c_meandr_interval_1] = 0
             istep = get_cfg_param(config, c_meandr_pack_step, 100, 'i')
 
@@ -143,7 +145,10 @@ def generate(config=None, **kwargs):
                 interval0 += istep
 
             signal_duration *= cnt
+
+            # возвращаем изначальное значение
             config[c_meandr_interval_1] = interval1
+            
     ## << s_type_meandr_pack ##
 
     ## >> s_type_sinus_pack ##    
@@ -154,15 +159,15 @@ def generate(config=None, **kwargs):
     ## << s_type_sinus_pack ##
 
     ## >> s_type_sinus_sinus_noise ##
-        elif signal_type == s_type_sinus_sinus_noise:
-            k = 0.5
-            y_raw = [(signal_amplitude * koeff * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(signal_point_count)]
+        # elif signal_type == s_type_sinus_sinus_noise:
+        #     k = 0.5
+        #     y_raw = [(signal_amplitude * koeff * math.sin( x_step * _counter * math.pi * 2) + (signal_amplitude * k) * math.sin(x_step * k * _counter * math.pi * 2)) * random.random()  for _counter in range(signal_point_count)]
             
-            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
-                y_raw = apply_window(config, y_raw)
-                if y_raw is None: raise Exception('не удалось сформировать сигнал')
+        #     if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+        #         y_raw = apply_window(config, y_raw)
+        #         if y_raw is None: raise Exception('не удалось сформировать сигнал')
 
-            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
+        #     y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
     ## << s_type_sinus_sinus_noise ##
 
     ## >> s_type_lfm ##
@@ -183,120 +188,123 @@ def generate(config=None, **kwargs):
     ## << s_type_lfm ##
 
     ## >> s_type_flat_spectrum ##
-        elif signal_type == s_type_flat_spectrum:
+        # elif signal_type == s_type_flat_spectrum:
             
-            spec = get_flat_spectrum(config)
+        #     spec = get_flat_spectrum(config)
 
-            y_raw = ifft(spec).real
+        #     y_raw = ifft(spec).real
 
-            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
-                y_raw = apply_window(config, y_raw)
-                if y_raw is None: raise Exception('не удалось сформировать сигнал')
+        #     if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+        #         y_raw = apply_window(config, y_raw)
+        #         if y_raw is None: raise Exception('не удалось сформировать сигнал')
+
+        #     y_raw = y_raw.tolist()
+        #     y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце пачки, если необходимо
     ## << s_type_flat_spectrum ##
 
     ## >> s_type_spectrum ##
-        elif signal_type == s_type_spectrum:
+        # elif signal_type == s_type_spectrum:
 
-            # get_flat_spectrum(config)
-            # raise Exception('aa')
+        #     # get_flat_spectrum(config)
+        #     # raise Exception('aa')
             
-            snoise = fft([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)])
-            # snoise = fft(meandr(config, **kwargs))
-            # snoise = fft([signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count - 50)])
+        #     snoise = fft([random.uniform(-signal_amplitude, signal_amplitude) for _counter in range(signal_point_count)])
+        #     # snoise = fft(meandr(config, **kwargs))
+        #     # snoise = fft([signal_amplitude * math.sin( x_step * _counter * math.pi * 2) for _counter in range(signal_point_count - 50)])
 
-            # from matplotlib import pyplot
-            # pyplot.subplot(111)
-            # plt.vlines(range(signal_point_count//2), 0, abs(snoise)[:signal_point_count//2])
-            # # pyplot.plot(abs(snoise)[:signal_point_count//2])
-            # pyplot.grid()
-            # pyplot.show()
+        #     # from matplotlib import pyplot
+        #     # pyplot.subplot(111)
+        #     # plt.vlines(range(signal_point_count//2), 0, abs(snoise)[:signal_point_count//2])
+        #     # # pyplot.plot(abs(snoise)[:signal_point_count//2])
+        #     # pyplot.grid()
+        #     # pyplot.show()
 
-            f0 = config[c_freq0] # начальная частота
-            f1 = config[c_freq1] # конечная частота
-            fd = signal_sampling   # частота дискретизации
-            T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
+        #     f0 = config[c_freq0] # начальная частота
+        #     f1 = config[c_freq1] # конечная частота
+        #     fd = signal_sampling   # частота дискретизации
+        #     T = (signal_duration - hush_duration) / 1000 # время чистого сигнала (без тишины!) в секундах
 
 
-            spectrum = np.empty(signal_point_count, dtype=complex)
-            spectrum.fill(complex(0.0, 0.0))
+        #     spectrum = np.empty(signal_point_count, dtype=complex)
+        #     spectrum.fill(complex(0.0, 0.0))
             
-            _f0 = int(f0 * T)
-            _f1 = int(f1 * T)
+        #     _f0 = int(f0 * T)
+        #     _f1 = int(f1 * T)
             
             
-            # список частот, которые отстутствуют в спектре (снимок)
-            # snapshot = [s * clean_duration + c for c in range(10) for s in [1400, 1700, 3100, 3500]]
+        #     # список частот, которые отстутствуют в спектре (снимок)
+        #     # snapshot = [s * clean_duration + c for c in range(10) for s in [1400, 1700, 3100, 3500]]
 
-            # список частот, которые должны присутствовать в спектре
-            # specform = [c * clean_duration for c in np.arange(1100, 1901)]
-            # specform.extend([c * clean_duration for c in np.arange(2900, 4001)])
+        #     # список частот, которые должны присутствовать в спектре
+        #     # specform = [c * clean_duration for c in np.arange(1100, 1901)]
+        #     # specform.extend([c * clean_duration for c in np.arange(2900, 4001)])
             
-            # specform = array.array('i')
-            # specform.extend(np.arange(int(f0 * clean_duration), int(f1 + 10 * clean_duration)))
-            # specform.extend(np.arange(int(2900 * clean_duration), int(4010 * clean_duration)))
+        #     # specform = array.array('i')
+        #     # specform.extend(np.arange(int(f0 * clean_duration), int(f1 + 10 * clean_duration)))
+        #     # specform.extend(np.arange(int(2900 * clean_duration), int(4010 * clean_duration)))
 
-            a = duty.read_file(config[c_spectrum_source_file], 'f', 110175 * 4, 48828)
-            sform = fft(a)
+        #     a = duty.read_file(config[c_spectrum_source_file], 'f', 110175 * 4, 48828)
+        #     sform = fft(a)
 
-            sfmax = max(abs(snoise))
+        #     sfmax = max(abs(snoise))
 
-            norm_level = int(config[c_spectrum_norm_level])
-            # divider = int(config[c_spectrum_divider])
-            # koeff = float(config[c_koeff])
+        #     norm_level = int(config[c_spectrum_norm_level])
+        #     # divider = int(config[c_spectrum_divider])
+        #     # koeff = float(config[c_koeff])
 
-            # print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
+        #     # print(abs(sform[1]), type(abs(sform[1])), f0, f1, type(sfmax))
 
-            A = signal_amplitude * koeff
-            for i in np.arange(_f0, _f1):
+        #     A = signal_amplitude * koeff
+        #     for i in np.arange(_f0, _f1):
                 
-                j = int(f0 + (i - _f0) / T)
+        #         j = int(f0 + (i - _f0) / T)
                 
-                k = koeff * sfmax / (abs(sform[j]) + 1)
-                if k > norm_level:
-                    k /= (sfmax * norm_level)
+        #         k = koeff * sfmax / (abs(sform[j]) + 1)
+        #         if k > norm_level:
+        #             k /= (sfmax * norm_level)
 
-                k=1
-                # print('spcmmax=%0.1f\t apcm[%i]=%0.2f \t\t spcm[%i]=%f \t k=%f' % (spcmmax, oi, apcm[oi], oi, spcm[oi], k))
+        #         k=1
+        #         # print('spcmmax=%0.1f\t apcm[%i]=%0.2f \t\t spcm[%i]=%f \t k=%f' % (spcmmax, oi, apcm[oi], oi, spcm[oi], k))
                 
-                imag = k * A * cmath.cos(cmath.phase(snoise[i]))  # x
-                ireal = k * A * cmath.sin(cmath.phase(snoise[i])) # y
+        #         imag = k * A * cmath.cos(cmath.phase(snoise[i]))  # x
+        #         ireal = k * A * cmath.sin(cmath.phase(snoise[i])) # y
 
-                # if i not in snapshot:
-                spectrum[i] = complex(ireal, imag)
-                spectrum[-i] = complex(ireal, -imag)
+        #         # if i not in snapshot:
+        #         spectrum[i] = complex(ireal, imag)
+        #         spectrum[-i] = complex(ireal, -imag)
 
             
-        # >> синусоида
-            # spectrum = np.empty(190, dtype=complex)
-            # spectrum[:] = complex(0.0, 0.0)
+        # # >> синусоида
+        #     # spectrum = np.empty(190, dtype=complex)
+        #     # spectrum[:] = complex(0.0, 0.0)
 
-            # # spectrum[10] = complex(250.0, 0.0)
-            # # spectrum[-10] = complex(250.0, 0.0)
+        #     # # spectrum[10] = complex(250.0, 0.0)
+        #     # # spectrum[-10] = complex(250.0, 0.0)
             
-            # for i in np.arange(10, 11):
-            #     spectrum[i] = complex(1, 0)
-            #     spectrum[-i] = complex(1, 0)
+        #     # for i in np.arange(10, 11):
+        #     #     spectrum[i] = complex(1, 0)
+        #     #     spectrum[-i] = complex(1, 0)
 
-        # << синусоида
+        # # << синусоида
 
-            # обратное преобразование
-            _y = ifft(spectrum)
-            y_raw = array.array('d', _y.real)
-            # print('len _y=%i, type: %s of %s' % (len(_y), type(_y), type(_y[0])))
+        #     # обратное преобразование
+        #     _y = ifft(spectrum)
+        #     y_raw = array.array('d', _y.real)
+        #     # print('len _y=%i, type: %s of %s' % (len(_y), type(_y), type(_y[0])))
 
-            # from matplotlib import pyplot
-            # pyplot.subplot(111)
-            # pyplot.plot(_y.real)
-            # pyplot.grid()
-            # pyplot.show()
+        #     # from matplotlib import pyplot
+        #     # pyplot.subplot(111)
+        #     # pyplot.plot(_y.real)
+        #     # pyplot.grid()
+        #     # pyplot.show()
             
 
-            # накладываем окно на пачку, если необходимо
-            if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
-                y_raw = apply_window(config, y_raw)
-                if y_raw is None: raise Exception('не удалось сформировать сигнал')
+        #     # накладываем окно на пачку, если необходимо
+        #     if window_type != w_method_no_window and window_place in [w_place_pack_begin_end, w_place_pack_begin, w_place_pack_end]:
+        #         y_raw = apply_window(config, y_raw)
+        #         if y_raw is None: raise Exception('не удалось сформировать сигнал')
             
-            y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
+        #     y_raw.extend(np.zeros(hush_count)) # добавляем тишину в конце, если необходимо
     ## << s_type_spectrum ##
 
     ## >> s_type_spectrum_form ##

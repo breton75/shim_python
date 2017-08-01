@@ -92,12 +92,12 @@ s_type_noise = 0
 s_type_sinus = 1
 s_type_meandr = 2
 s_type_sinus_pack = 3
-s_type_sinus_sinus_noise = 4
-s_type_lfm = 5
-s_type_meandr_pack = 6
-s_type_spectrum = 7
-s_type_flat_spectrum = 8
-s_type_spectrum_form = 9
+# s_type_sinus_sinus_noise = 4
+s_type_lfm = 4
+s_type_meandr_pack = 5
+# s_type_spectrum = 7
+# s_type_flat_spectrum = 6
+s_type_spectrum_form = 6
 
 # тип меандра
 m_one_channel = 0

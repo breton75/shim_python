@@ -35,7 +35,7 @@ def write_m_file(config, received_file_name=None, **kwargs):
             m.write("%% ввод данных\n")
             m.write("\t\n")
             m.write("\tfds = %i; %% частота дискретизации исходного сигнала\n" % config[c_sampling])
-            m.write("\tfdr = 48828;  % частота дискретизации микрофона\n")
+            m.write("\tfdr = 100000;  % частота дискретизации микрофона\n")
             # m.write("\t\n")
             # m.write("\tday = '%i'; month = '%i'; year = '%i';\n" % (config[c_cur_time][2], config[c_cur_time][1], config[c_cur_time][0])) # https://docs.python.org/2/library/time.html#time.struct_time
             m.write("\t\n")

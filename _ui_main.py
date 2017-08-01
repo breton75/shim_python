@@ -67,7 +67,7 @@ class mainFrame(Frame):
 		# тип сигнала
 		self.lblSignalType = tk.Label(self.frameSignal, text='Тип сигнала', width=25)
 		self.lblSignalType.grid(row=0, column=0, sticky=tk.E)
-		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'Синус+Синус+Шум', 'ЛЧМ', 'Пакет меандров', 'Из спектра', 'Ровный спектр', 'Из формы спектра'])
+		self.cbSignalType = ttk.Combobox(self.frameSignal, width=13, values=['Шум', 'Синус', 'Меандр', 'Пакет синусов', 'ЛЧМ', 'Пакет меандров', 'Из формы спектра']) #, 'Синус+Синус+Шум' , 'Ровный спектр''Из спектра',
 		self.cbSignalType.grid(row=0, column=1, sticky=tk.W)
 	
 		# частота начальная
@@ -150,28 +150,28 @@ class mainFrame(Frame):
 	## << наложение окна
 
 	## >> преобразование шим ##
-		self.frameShim = tk.LabelFrame(self.frameLeft, text='Преобразование ШИМ')
-		self.frameShim.grid(row=2, column=0, sticky=tk.N)
+		# self.frameShim = tk.LabelFrame(self.frameLeft, text='Преобразование ШИМ')
+		# self.frameShim.grid(row=2, column=0, sticky=tk.N)
 
-		# кол-во каналов
-		self.lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
-		self.editChannelCount = tk.Entry(self.frameShim, width=16)
-		self.editChannelCount.grid(row=0, column=1, sticky=tk.W)
+		# # кол-во каналов
+		# self.lblChannelCount = tk.Label(self.frameShim, text='Кол-во каналов', width=25).grid(row=0, column=0, sticky=tk.E)
+		# self.editChannelCount = tk.Entry(self.frameShim, width=16)
+		# self.editChannelCount.grid(row=0, column=1, sticky=tk.W)
 
-		# пил на точку
-		self.lblSawpp = tk.Label(self.frameShim, text='Пил на точку', width=25).grid(row=1, column=0, sticky=tk.E)
-		self.editSawpp = tk.Entry(self.frameShim, width=16)
-		self.editSawpp.grid(row=1, column=1, sticky=tk.W)
+		# # пил на точку
+		# self.lblSawpp = tk.Label(self.frameShim, text='Пил на точку', width=25).grid(row=1, column=0, sticky=tk.E)
+		# self.editSawpp = tk.Entry(self.frameShim, width=16)
+		# self.editSawpp.grid(row=1, column=1, sticky=tk.W)
 
-		# размытие нуля
-		self.lblZeroSmooth = tk.Label(self.frameShim, text='Размытие нуля (%)', width=25).grid(row=2, column=0, sticky=tk.E)
-		self.editZeroSmooth = tk.Entry(self.frameShim, width=16)
-		self.editZeroSmooth.grid(row=2, column=1, sticky=tk.W)
+		# # размытие нуля
+		# self.lblZeroSmooth = tk.Label(self.frameShim, text='Размытие нуля (%)', width=25).grid(row=2, column=0, sticky=tk.E)
+		# self.editZeroSmooth = tk.Entry(self.frameShim, width=16)
+		# self.editZeroSmooth.grid(row=2, column=1, sticky=tk.W)
 
-		# разрыв между каналами
-		self.lblChannelGap = tk.Label(self.frameShim, text='Разрыв между каналами (%)', width=25).grid(row=3, column=0, sticky=tk.E)
-		self.editChannelGap = tk.Entry(self.frameShim, width=16)
-		self.editChannelGap.grid(row=3, column=1, sticky=tk.W)
+		# # разрыв между каналами
+		# self.lblChannelGap = tk.Label(self.frameShim, text='Разрыв между каналами (%)', width=25).grid(row=3, column=0, sticky=tk.E)
+		# self.editChannelGap = tk.Entry(self.frameShim, width=16)
+		# self.editChannelGap.grid(row=3, column=1, sticky=tk.W)
 
 	## << преобразование шим ##
 
@@ -180,13 +180,15 @@ class mainFrame(Frame):
 		self.frameSpectrumFormEditor.grid(row=0, column=0, sticky=tk.N)
 
 		# имя файла
-		lblSpectrumFormFile = tk.Label(self.frameSpectrumFormEditor, text='Файл', width=10).grid(row=0, column=0, sticky=tk.W, columnspan=2)
+		lblSpectrumFormFile = tk.Label(self.frameSpectrumFormEditor, text='Посл. файл', width=10).grid(row=0, column=0, sticky=tk.W, columnspan=2)
 		self.editSpectrumFormFile = tk.Entry(self.frameSpectrumFormEditor, width=32)
 		self.editSpectrumFormFile.grid(row=0, column=1, sticky=tk.W, columnspan=3)
+		# self.editSpectrumFormFile['state'] = DISABLED
+		# self.editSpectrumFormFile['disabledforeground'] = 'red'
 
 		# выбор файла
-		self.bnSelectSpectrumFormFile = tk.Button(self.frameSpectrumFormEditor, text='...', command=self.select_spectrum_form_file)
-		self.bnSelectSpectrumFormFile.grid(row=0, column=2, sticky=tk.E, columnspan=2)
+		# self.bnSelectSpectrumFormFile = tk.Button(self.frameSpectrumFormEditor, text='...', command=self.select_spectrum_form_file)
+		# self.bnSelectSpectrumFormFile.grid(row=0, column=2, sticky=tk.E, columnspan=2)
 
 		# новая форма спектра
 		self.bnCreateSpectrumForm = tk.Button(self.frameSpectrumFormEditor, text='Новая форма', command=self.create_spectrum)
@@ -205,29 +207,29 @@ class mainFrame(Frame):
 
 
 	## >> фильтрация ##
-		self.frameFilter = tk.LabelFrame(self.frameRight, text='Фильтрация')
-		self.frameFilter.grid(row=1, column=0, sticky=tk.N)
+		# self.frameFilter = tk.LabelFrame(self.frameRight, text='Фильтрация')
+		# self.frameFilter.grid(row=1, column=0, sticky=tk.N)
 
-		self.filtrate = BooleanVar()
-		self.checkFilter = tk.Checkbutton(self.frameFilter, text='Применить полосовой фильтр', variable=self.filtrate)
-		self.checkFilter.grid(row=0, column=0, sticky=tk.W, columnspan=2)
+		# self.filtrate = BooleanVar()
+		# self.checkFilter = tk.Checkbutton(self.frameFilter, text='Применить полосовой фильтр', variable=self.filtrate)
+		# self.checkFilter.grid(row=0, column=0, sticky=tk.W, columnspan=2)
 
-		# минимальная частота
-		self.lblFilterFreqMin = tk.Label(self.frameFilter, text='Мин. частота', width=25)
-		self.lblFilterFreqMin.grid(row=1, column=0, sticky=tk.E)
-		self.editFilterFreqMin = tk.Entry(self.frameFilter, width=16)
-		self.editFilterFreqMin.grid(row=1, column=1, sticky=tk.W)
+		# # минимальная частота
+		# self.lblFilterFreqMin = tk.Label(self.frameFilter, text='Мин. частота', width=25)
+		# self.lblFilterFreqMin.grid(row=1, column=0, sticky=tk.E)
+		# self.editFilterFreqMin = tk.Entry(self.frameFilter, width=16)
+		# self.editFilterFreqMin.grid(row=1, column=1, sticky=tk.W)
 
-		# максимальная частота
-		self.lblFilterFreqMax = tk.Label(self.frameFilter, text='Макс. частота', width=25)
-		self.lblFilterFreqMax.grid(row=2, column=0, sticky=tk.E)
-		self.editFilterFreqMax = tk.Entry(self.frameFilter, width=16)
-		self.editFilterFreqMax.grid(row=2, column=1, sticky=tk.W)
+		# # максимальная частота
+		# self.lblFilterFreqMax = tk.Label(self.frameFilter, text='Макс. частота', width=25)
+		# self.lblFilterFreqMax.grid(row=2, column=0, sticky=tk.E)
+		# self.editFilterFreqMax = tk.Entry(self.frameFilter, width=16)
+		# self.editFilterFreqMax.grid(row=2, column=1, sticky=tk.W)
 
-		# # применить форму спектра
-		# self.apply_spectrum_form = BooleanVar()
-		# self.checkApplySpectrumForm = tk.Checkbutton(self.frameFilter, text='Применить заданную форму спектра', variable=self.apply_spectrum_form)
-		# self.checkApplySpectrumForm.grid(row=4, column=0, sticky=tk.W, columnspan=2)
+		# # # применить форму спектра
+		# # self.apply_spectrum_form = BooleanVar()
+		# # self.checkApplySpectrumForm = tk.Checkbutton(self.frameFilter, text='Применить заданную форму спектра', variable=self.apply_spectrum_form)
+		# # self.checkApplySpectrumForm.grid(row=4, column=0, sticky=tk.W, columnspan=2)
 
 	## << фильтрация ##
 
@@ -309,15 +311,15 @@ class mainFrame(Frame):
 		self.checkSignalSpectrum = tk.Checkbutton(self.framePlot, text='Спектр сигнала', variable=self.plot_signal_spectrum)
 		self.checkSignalSpectrum.grid(row=0, column=1, sticky=tk.W, columnspan=4)
 
-		# отобразить отфильтрованный сигнал
-		self.plot_filtered_signal = BooleanVar()
-		self.checkPlotFiltered = tk.Checkbutton(self.framePlot, text='Отфильтрованный сигнал', variable=self.plot_filtered_signal)
-		self.checkPlotFiltered.grid(row=1, column=0, sticky=tk.W, columnspan=4)
+		# # отобразить отфильтрованный сигнал
+		# self.plot_filtered_signal = BooleanVar()
+		# self.checkPlotFiltered = tk.Checkbutton(self.framePlot, text='Отфильтрованный сигнал', variable=self.plot_filtered_signal)
+		# self.checkPlotFiltered.grid(row=1, column=0, sticky=tk.W, columnspan=4)
 
-		# отобразить спектр отфильтрованного сигнала
-		self.plot_filtered_spectrum = BooleanVar()
-		self.checkPlotFilteredSignalSpectrum = tk.Checkbutton(self.framePlot, text='Спектр отфильтрованного сигнала', variable=self.plot_filtered_spectrum)
-		self.checkPlotFilteredSignalSpectrum.grid(row=1, column=1, sticky=tk.W, columnspan=4)
+		# # отобразить спектр отфильтрованного сигнала
+		# self.plot_filtered_spectrum = BooleanVar()
+		# self.checkPlotFilteredSignalSpectrum = tk.Checkbutton(self.framePlot, text='Спектр отфильтрованного сигнала', variable=self.plot_filtered_spectrum)
+		# self.checkPlotFilteredSignalSpectrum.grid(row=1, column=1, sticky=tk.W, columnspan=4)
 
 		# отобразить ШИМ
 		self.plot_shim = BooleanVar()
@@ -479,24 +481,24 @@ class mainFrame(Frame):
 	## << редактор формы спектра ##
 
 	## >> преобразование шим ##
-		self.editChannelCount.delete(0, END)
-		self.editChannelCount.insert(0, get_cfg_param(self.config, c_channel_count, '2'))
-		self.editSawpp.delete(0, END)
-		self.editSawpp.insert(0, get_cfg_param(self.config, c_saw_count_per_point, '1'))
-		self.editZeroSmooth.delete(0, END)
-		self.editZeroSmooth.insert(0, get_cfg_param(self.config, c_zero_smooth, '0'))
-		self.editChannelGap.delete(0, END)
-		self.editChannelGap.insert(0, get_cfg_param(self.config, c_channel_gap, '0'))
+		# self.editChannelCount.delete(0, END)
+		# self.editChannelCount.insert(0, get_cfg_param(self.config, c_channel_count, '2'))
+		# self.editSawpp.delete(0, END)
+		# self.editSawpp.insert(0, get_cfg_param(self.config, c_saw_count_per_point, '1'))
+		# self.editZeroSmooth.delete(0, END)
+		# self.editZeroSmooth.insert(0, get_cfg_param(self.config, c_zero_smooth, '0'))
+		# self.editChannelGap.delete(0, END)
+		# self.editChannelGap.insert(0, get_cfg_param(self.config, c_channel_gap, '0'))
 	## << преобразование шим ##
 
 	## >> фильтрация ##
-		self.filtrate.set(get_cfg_param(self.config, c_filtrate, False, 'b'))
-		self.editFilterFreqMin.delete(0, END)
-		self.editFilterFreqMin.insert(0, get_cfg_param(self.config, c_filter_freq_min, '1000'))
-		self.editFilterFreqMax.delete(0, END)		
-		self.editFilterFreqMax.insert(0, get_cfg_param(self.config, c_filter_freq_max, '4000'))
-		# self.apply_spectrum_form.set(get_cfg_param(self.config, c_apply_spectrum_form, False, 'b'))
-		self.apply_accurately_to_form.set(get_cfg_param(self.config, c_apply_accurately_to_form, False, 'b'))
+		# self.filtrate.set(get_cfg_param(self.config, c_filtrate, False, 'b'))
+		# self.editFilterFreqMin.delete(0, END)
+		# self.editFilterFreqMin.insert(0, get_cfg_param(self.config, c_filter_freq_min, '1000'))
+		# self.editFilterFreqMax.delete(0, END)		
+		# self.editFilterFreqMax.insert(0, get_cfg_param(self.config, c_filter_freq_max, '4000'))
+		# # self.apply_spectrum_form.set(get_cfg_param(self.config, c_apply_spectrum_form, False, 'b'))
+		# self.apply_accurately_to_form.set(get_cfg_param(self.config, c_apply_accurately_to_form, False, 'b'))
 	## << фильтрация ##
 
 	## >> выгрузка на устройство ##
@@ -518,8 +520,8 @@ class mainFrame(Frame):
 	## >> отрисовка ##
 		self.plot_signal.set(get_cfg_param(self.config, c_plot_signal, True, 'b'))
 		self.plot_signal_spectrum.set(get_cfg_param(self.config, c_plot_signal_spectrum, True, 'b'))
-		self.plot_filtered_signal.set(get_cfg_param(self.config, c_plot_filtered_signal, False, 'b'))
-		self.plot_filtered_spectrum.set(get_cfg_param(self.config, c_plot_filtered_spectrum, False, 'b'))
+		# self.plot_filtered_signal.set(get_cfg_param(self.config, c_plot_filtered_signal, False, 'b'))
+		# self.plot_filtered_spectrum.set(get_cfg_param(self.config, c_plot_filtered_spectrum, False, 'b'))
 		self.plot_shim.set(get_cfg_param(self.config, c_plot_shim, False, 'b'))
 		self.plot_signal_saw.set(get_cfg_param(self.config, c_plot_signal_saw, False, 'b'))
 		self.editPlotFromPoint.delete(0, END)
@@ -625,7 +627,17 @@ class mainFrame(Frame):
 
 	def create_spectrum(self):
 		try:
+			self.config[c_workdir] = self.editWorkDir.get()
+			filename = filedialog.asksaveasfilename(title='Имя файла нового спектра', defaultextension=C_SPECTRUM, initialdir=get_folder_name(self.config, ''), confirmoverwrite=True, filetypes=[('spectrum files', '.spectrum')])
+			
+			if not filename:
+				return
+
+			self.editSpectrumFormFile.delete(0, END)
+			self.editSpectrumFormFile.insert(0, filename)
+
 			self.save()
+
 			spectrum.edit_spectrum(self.config, newForm=True)
 
 		except Exception as E:
@@ -634,6 +646,15 @@ class mainFrame(Frame):
 
 	def edit_spectrum(self):
 		try:
+			self.config[c_workdir] = self.editWorkDir.get()
+			filename = filedialog.askopenfilename(title='Выберите файл спектра', defaultextension=C_SPECTRUM, initialdir=get_folder_name(self.config, ''), multiple=False, filetypes=[('spectrum files', '.spectrum'), ('all files', '.*')])
+			
+			if not filename:
+				return
+
+			self.editSpectrumFormFile.delete(0, END)
+			self.editSpectrumFormFile.insert(0, filename)
+
 			self.save()
 			spectrum.edit_spectrum(self.config)
 
@@ -804,16 +825,16 @@ class mainFrame(Frame):
 				# c_meandr_interval_0:   get_cfg_param(cfg, c_meandr_interval_0, 100, 'i'),
 				# c_meandr_type:  		   get_cfg_param(cfg, c_meandr_type, m_one_channel, 'i'),
 				# c_meandr_interval_1:  get_cfg_param(cfg, c_meandr_interval_1, 0, 'i'),
-				c_filter_freq_min:   int(self.editFilterFreqMin.get()),
-				c_filter_freq_max:   int(self.editFilterFreqMax.get()),
-				c_filtrate:            bool(self.filtrate.get()),
+				# c_filter_freq_min:   int(self.editFilterFreqMin.get()),
+				# c_filter_freq_max:   int(self.editFilterFreqMax.get()),
+				# c_filtrate:            bool(self.filtrate.get()),
 				c_spectrum_form_file:  self.editSpectrumFormFile.get(),
 				# c_apply_spectrum_form: bool(self.apply_spectrum_form.get()),
 				c_apply_accurately_to_form: bool(self.apply_accurately_to_form.get()),
-				c_channel_count:    int(self.editChannelCount.get()),
-				c_saw_count_per_point:      int(self.editSawpp.get()),
-				c_zero_smooth:  int(self.editZeroSmooth.get()),
-				c_channel_gap: int(self.editChannelGap.get()),
+				# c_channel_count:    int(self.editChannelCount.get()),
+				# c_saw_count_per_point:      int(self.editSawpp.get()),
+				# c_zero_smooth:  int(self.editZeroSmooth.get()),
+				# c_channel_gap: int(self.editChannelGap.get()),
 				c_send:       bool(self.send.get()),
 				c_host:       self.editHost.get(),
 				c_port:       int(self.editPort.get()),
@@ -822,9 +843,9 @@ class mainFrame(Frame):
 				c_make_wav:  bool(self.make_wav.get()),
 				c_make_matlab:  bool(self.make_matlab.get()),
 				c_plot_signal:            bool(self.plot_signal.get()),
-				c_plot_filtered_signal:   bool(self.plot_filtered_signal.get()),
 				c_plot_signal_spectrum:   bool(self.plot_signal_spectrum.get()),
-				c_plot_filtered_spectrum: bool(self.plot_filtered_spectrum.get()),
+				c_plot_filtered_signal:   False, #bool(self.plot_filtered_signal.get()),
+				c_plot_filtered_spectrum: False, #bool(self.plot_filtered_spectrum.get()),
 				c_plot_shim:              bool(self.plot_shim.get()),
 				c_plot_signal_saw:        bool(self.plot_signal_saw.get()),
 				c_plot_from_point:          int(self.editPlotFromPoint.get()),
@@ -942,23 +963,23 @@ def do(config):
 		return
 
 	 
-	# sys.exit(0)
-	if filtrate: # or apply_spectrum_form:
-		arawf = spectrum.apply_spectrum(config, signal_data=araw)
+	# # sys.exit(0)
+	# if filtrate: # or apply_spectrum_form:
+	# 	arawf = spectrum.apply_spectrum(config, signal_data=araw)
 
-	else:
-		arawf = araw
+	# else:
+	# 	arawf = araw
 
-	if arawf is None:
-		return
+	# if arawf is None:
+	# 	return
 
 	 
 	if MAKE_SHIM:
-		if not shim.shim(config, data=arawf):
+		if not shim.shim(config, data=araw):
 			return
 
 	if MAKE_WAV:
-		wav.write_wav(config, data=arawf)
+		wav.write_wav(config, data=araw)
 		import os
 		os.startfile('%s' % get_path(config, C_WAV))
 		
