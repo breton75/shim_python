@@ -106,8 +106,6 @@ def write_wav(config, **kwargs):
         bps = struct.calcsize('i')  # Количество байт для одного сэмпла, включая все каналы.
         max_val = config[c_amplitude]
 
-        ttt = open("d:/testwav.dat", "wb")
-
         with open(wav_file_name, 'wb') as wav:
             wav.write(struct.pack(HEADER,
                                   b'RIFF',
@@ -126,13 +124,7 @@ def write_wav(config, **kwargs):
 
             for a in araw:
                 val = int((a / max_val) * 0x7FFFFFFF)
-                # print(val)
                 wav.write(struct.pack('i', val))
-
-                # with open("d:/testwav.dat", "ab") as ttt:
-                ttt.write(struct.pack('i', val))
-
-
 
 
         print('ok')
